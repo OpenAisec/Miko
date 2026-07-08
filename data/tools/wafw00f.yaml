@@ -1,0 +1,23 @@
+id: wafw00f
+category: web
+name: 'wafw00f'
+short_description: 'WAF识别和指纹识别工具'
+description: |
+  Wafw00f是一个Web应用防火墙（WAF）识别和指纹识别工具。
+  
+  **主要功能：**
+  - WAF检测
+  - WAF指纹识别
+  - 多种WAF支持
+  - 绕过技术检测
+  
+  **使用场景：**
+  - WAF识别
+  - 安全测试
+  - 渗透测试
+  - 安全评估
+invoke: cli
+bin: 'wafw00f'
+usage: 'wafw00f <target> [<additional_args>]'
+builtin: true
+bundled: true

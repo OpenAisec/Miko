@@ -1,0 +1,85 @@
+.Dd Jul 10, 2025
+.Dt RAVC2 1
+.Sh NAME
+.Nm ravc2
+.Nd Radare2 Version Control Interface
+.Sh SYNOPSIS
+.Nm ravc2
+.Op Fl qvhjH
+.Op Ar action
+.Op Ar args ...
+.Sh DESCRIPTION
+Provides a simple version control interface for Radare2 projects, functioning as both a Git frontend and a native versioning system for tracking project changes.
+.Sh OPTIONS
+.Bl -tag -width Fl
+.It Fl q
+Quiet mode
+.It Fl v
+Show version information
+.It Fl h
+Show usage help message
+.It Fl H Op var
+Display variable
+.It Fl j
+JSON output
+.El
+.Sh ACTIONS
+.Bl -tag -width Fl
+.It Cm init Op git | rvc
+Initialize a repository with the given version control system
+.It Cm branch Op name
+If a name is provided, create a branch with that name otherwise list branches
+.It Cm commit Op message Op files...
+Commit the files with the message
+.It Cm checkout Op branch
+Set the current branch to the given branch
+.It Cm status
+Print a status message
+.It Cm reset
+Remove all uncommited changes
+.It Cm log
+Print all commits
+.El
+.Sh ENVIRONMENT
+.Pp
+.Bl -tag -width Fl
+.It Ev RAVC2_USER
+Override cfg.user value to author commit
+.El
+.Sh EXAMPLES
+.Pp
+Initialize a new repository:
+.Pp
+  $ ravc2 init
+.Pp
+Create a new file and add it:
+.Pp
+  $ echo "Hello World" > README.md
+  $ ravc2 add README.md
+.Pp
+Check repository status:
+.Pp
+  $ ravc2 status
+.Pp
+Create and switch to a new branch:
+.Pp
+  $ ravc2 branch feature-branch
+  $ ravc2 checkout feature-branch
+.Pp
+List all branches:
+.Pp
+  $ ravc2 branch
+.Pp
+Commit changes:
+.Pp
+  $ ravc2 commit "Add README file" README.md
+.Pp
+View commit history:
+.Pp
+  $ ravc2 log
+.Sh SEE ALSO
+.Pp
+.Xr radare2(1)
+.Sh AUTHORS
+.Pp
+pancake <pancake@nopcode.org>

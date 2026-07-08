@@ -1,0 +1,208 @@
+.Dd September 21, 2025
+.Dt R_CONFIG 3
+.Os
+.Sh NAME
+.Nm r_config
+.Nd Configuration management library for radare2
+.Sh SYNOPSIS
+.In r_config.h
+.Pp
+.Sh DESCRIPTION
+The
+.Nm r_config
+API implements the configuration registry used by radare2 and its
+subcommands.  It stores named configuration keys (strings, integers and
+booleans), metadata (description, options and read-only flags), and
+supports setters/getters so components can react to configuration changes.
+Common uses include global defaults (architecture, bits), binding config
+keys to internal variables, temporary overrides for an operation and
+serializing configuration into project files.
+.Pp
+The primary container is
+.Vt struct r_config_t ,
+which keeps a list and hash table of
+.Vt struct r_config_node_t ,
+each node holding the key name, value, type flags, optional callbacks and
+a human-readable description.
+.Sh INITIALIZATION
+Create and destroy configuration objects.  An `RConfig` is typically
+attached to a higher-level context (for example a `RCore` instance keeps
+one `RConfig`).  Cloning produces a shallow copy of nodes suitable for
+temporary manipulation.
+.Bd -literal -offset indent
+/* prototypes */
+RConfig *r_config_new(void *user);
+RConfig *r_config_clone(RConfig *cfg);
+void r_config_free(RConfig *cfg);
+.Ed
+.Pp
+.Bd -literal -offset indent
+RConfig *cfg = r_config_new (core);
+/* ... use cfg ... */
+r_config_free (cfg);
+.Ed
+.Sh SETTING VALUES
+Setters update or create nodes and may call a node setter callback.
+Use the `_cb` variants or `r_config_set_setter*` helpers to bind a
+setter to propagate the change to internal state (see `libr/config/callback.c`).
+.Bd -literal -offset indent
+/* prototypes */
+RConfigNode *r_config_set(RConfig *cfg, const char *name, const char *value);
+RConfigNode *r_config_set_i(RConfig *cfg, const char *name, const ut64 i);
+RConfigNode *r_config_set_b(RConfig *cfg, const char *name, bool b);
+RConfigNode *r_config_set_cb(RConfig *cfg, const char *name, const char *value, RConfigCallback cb);
+RConfigNode *r_config_set_i_cb(RConfig *cfg, const char *name, int ivalue, RConfigCallback cb);
+RConfigNode *r_config_set_b_cb(RConfig *cfg, const char *name, bool bvalue, RConfigCallback cb);
+bool r_config_set_setter(RConfig *cfg, const char *key, RConfigCallback cb);
+.Ed
+.Pp
+Notes:
+- When a node has a setter, it is invoked after the new value is parsed.
+  If the setter returns false the previous value is restored.
+- The `r_config_set*` helpers create nodes if they do not exist; use
+  `r_config_node_new` for manual node construction when you need to
+  populate options or a long description first.
+.Pp
+.Bd -literal -offset indent
+/* example: CLI-style configuration used in many binaries */
+r_config_set (cfg, "asm.arch", "x86");
+r_config_set_i (cfg, "asm.bits", 64);
+r_config_set_b (cfg, "scr.interactive", false);
+.Ed
+.Sh GETTING VALUES
+Accessors return the current effective value for a key.  If a node has
+an attached getter callback it may compute values on demand.
+.Bd -literal -offset indent
+/* prototypes */
+const char *r_config_get(RConfig *cfg, const char *name);
+ut64 r_config_get_i(RConfig *cfg, const char *name);
+bool r_config_get_b(RConfig *cfg, const char *name);
+bool r_config_toggle(RConfig *cfg, const char *name);
+bool r_config_rm(RConfig *cfg, const char *name);
+.Ed
+.Pp
+.Bd -literal -offset indent
+const char *arch = r_config_get (cfg, "asm.arch");
+ut64 bits = r_config_get_i (cfg, "asm.bits");
+bool pseudo = r_config_get_b (cfg, "asm.pseudo");
+r_config_toggle (cfg, "asm.pseudo");
+.Ed
+.Sh ADVANCED FEATURES
+This section covers higher-level utilities used in real radare2 code: locks,
+short expression evaluation (used by CLI option parsers), bulk listing and
+the hold/restore pattern which captures values to restore them later.
+.Bd -literal -offset indent
+/* prototypes */
+void r_config_lock(RConfig *cfg, bool lock);
+char *r_config_eval(RConfig *cfg, const char *str, bool many, bool *error);
+RConfigHold *r_config_hold_new(RConfig *cfg);
+bool r_config_hold(RConfigHold *h, ...);
+void r_config_hold_restore(RConfigHold *h);
+void r_config_hold_free(RConfigHold *h);
+void r_config_bump(RConfig *cfg, const char *key);
+char *r_config_list(RConfig *cfg, const char *str, int rad);
+.Ed
+.Pp
+Behavior and tips:
+- `r_config_lock` sorts nodes and flips a lock flag (useful before
+  serializing a stable snapshot).
+- `r_config_eval` understands `key=value` to set keys, `key.` to list
+  matching keys, and colon-separated lists when `many` is true; this
+  mirrors how CLI handlers parse compact config expressions.
+- `r_config_hold_new` + `r_config_hold` capture current values for a list
+  of keys; `r_config_hold_restore` restores them.  This mirrors patterns
+  used when temporarily switching architectures or analysis depth.
+.Pp
+.Bd -literal -offset indent
+/* hold/restore example (used in several core components) */
+RConfigHold *hold = r_config_hold_new (cfg);
+r_config_hold (hold, "asm.arch", "asm.bits", NULL);
+/* temporarily override */
+r_config_set (cfg, "asm.arch", "arm");
+r_config_set_i (cfg, "asm.bits", 32);
+/* restore original */
+r_config_hold_restore (hold);
+r_config_hold_free (hold);
+.Ed
+.Sh NODE MANAGEMENT
+Direct node manipulation is useful when registering a config key with a
+long description, a collection of valid options or custom setter/getter
+callbacks.  Most callers use the `r_config_set*` helpers which create nodes
+implicitly; use the node API for more control.
+.Bd -literal -offset indent
+/* prototypes */
+RConfigNode *r_config_node_new(const char *name, const char *value);
+RConfigNode *r_config_node_get(RConfig *cfg, const char *name);
+RConfigNode *r_config_node_desc(RConfigNode *node, const char *desc);
+void r_config_node_add_option(RConfigNode *node, const char *option);
+void r_config_node_purge_options(RConfigNode *node);
+char *r_config_node_tostring(RConfigNode *node);
+void r_config_node_free(void *n);
+.Ed
+.Pp
+.Bd -literal -offset indent
+/* create a node with options and description */
+RConfigNode *node = r_config_node_new ("custom.var", "default");
+r_config_node_desc (node, "Description for UI and help output");
+r_config_node_add_option (node, "opt1");
+r_config_node_add_option (node, "opt2");
+/* attach node into cfg (internal helpers in libr/config do this) */
+r_config_node_free (node);
+.Ed
+.Sh SERIALIZATION
+Serialize and unserialize configuration into an `Sdb` database.  These
+routines are used when saving/loading projects so configuration survives
+between sessions.
+.Bd -literal -offset indent
+/* prototypes */
+void r_config_serialize(RConfig * R_NONNULL config, Sdb * R_NONNULL db);
+bool r_config_unserialize(RConfig * R_NONNULL config, Sdb * R_NONNULL db, char ** R_NULLABLE err);
+.Ed
+.Pp
+.Bd -literal -offset indent
+Sdb *db = sdb_new0 ();
+r_config_serialize (cfg, db);
+/* write sdb to disk via sdb API */
+sdb_free (db);
+.Ed
+.Sh EXAMPLES
+Examples below demonstrate patterns taken from real radare2 code: binding
+config keys to variables, temporary overrides, and evaluating compact
+config expressions.
+.Bd -literal -offset indent
+#include <r_config.h>
+
+int main(void) {
+    RConfig *cfg = r_config_new (NULL);
+
+    /* common set/get pattern used in many binaries */
+    r_config_set (cfg, "asm.arch", "x86");
+    r_config_set_i (cfg, "asm.bits", 64);
+    printf ("Arch: %s\n", r_config_get (cfg, "asm.arch"));
+
+    /* bind a config key to a C variable using setter helpers (see
+     * libr/config/callback.c for the implementation used in the tree): */
+    int term_color = 0;
+    r_config_set_setter_i (cfg, "scr.color", &term_color);
+    r_config_set_i (cfg, "scr.color", 2); /* updates term_color */
+
+    /* temporarily override and restore: */
+    RConfigHold *hold = r_config_hold_new (cfg);
+    r_config_hold (hold, "asm.arch", "asm.bits", NULL);
+    r_config_set (cfg, "asm.arch", "arm");
+    r_config_set_i (cfg, "asm.bits", 32);
+    r_config_hold_restore (hold);
+    r_config_hold_free (hold);
+
+    /* evaluate a compact CLI expression (used in CLI parsing code): */
+    char *res = r_config_eval (cfg, "asm.arch=arm:asm.bits=32", true, NULL);
+    free (res);
+
+    r_config_free (cfg);
+    return 0;
+}
+.Ed
+.Sh SEE ALSO
+.Xr r_core 3 ,
+.Xr r_util 3
+

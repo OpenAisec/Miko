@@ -1,0 +1,150 @@
+.Dd Jul 10, 2025
+.Dt RAHASH2 1
+.Sh NAME
+.Nm rahash2
+.Nd Block-Based Hashing, Encoding, and Encryption Utility
+.Sh SYNOPSIS
+.Nm rahash2
+.Op Fl BehjkLqRrvX
+.Op Fl b Ar S
+.Op Fl a Ar A
+.Op Fl c Ar H
+.Op Fl E Ar A
+.Op Fl D Ar A
+.Op Fl s Ar S
+.Op Fl f Ar O
+.Op Fl t Ar O
+.Op Fl i Ar num
+.Op Fl I Ar iv
+.Op Fl S Ar seed
+.Op Fl x Ar hexstr
+.Op Ar file ...
+.Sh DESCRIPTION
+A utility for computing, verifying, and displaying hash values for each block of a file, with a default block size of 32768 bytes. Reads from standard input using '-' and supports comparison against known hashes via exit status codes.
+.Pp
+Commonly used for forensic analysis, detecting file modifications, and efficient processing of large files.
+.Pp
+Supports entropy calculation, targeted hashing of file segments or strings, and encoding, decoding, encryption, and decryption using various cryptographic algorithms.
+.Bl -tag -width Fl
+.It Fl a Ar algo
+Comma separated list of algorithms (default is 'sha256')
+.It Fl b Ar bsize
+Specify the size of the block (instead of full file)
+.It Fl B
+Show per-block hash
+.It Fl c Ar hash
+Compare with this hash
+.It Fl e
+Swap endian (use little endian)
+.It Fl E Ar algo
+Encrypt. Use -S to set key and -I to set IV
+.It Fl D Ar algo
+Decrypt. Use -S to set key and -I to set IV
+.It Fl f Ar from
+Start hashing at given address
+.It Fl i Ar num
+Repeat hash N iterations (f.ex: 3DES)
+.It Fl I Ar iv
+Use give initialization vector (IV) (hexa or s:string)
+.It Fl j
+Output in json
+.It Fl J
+New simplified json output (same as -jj)
+.It Fl S Ar seed
+Use given seed (hexa or s:string) use ^ to prefix (key for -E)
+(- will slurp the key from stdin, the @ prefix points to a file
+.It Fl k
+Show hash using the openssh's randomkey algorithm
+.It Fl q
+Run in quiet mode (-qq to show only the hash)
+.It Fl L
+List muta plugins (combines with -q, used by -a, -E and -D)
+.It Fl r
+.No Output radare commands (comments), for example:
+.Bd -literal -offset indent
+$ rahash2 -a sha1 -r file | r2 -qni file
+.Ed
+.It Fl R
+.No Output radare2 sdb commands to store hashes under
+.No file.<algo> keys (works with any algorithm name), for example:
+.Bd -literal -offset indent
+$ rahash2 -a sha1 -R file | r2 -qni file
+.Ed
+.Pp
+.Nm
+.Fl R
+is incompatible with
+.Fl B
+(per-block hashing).
+.It Fl s Ar string
+Hash this string instead of files
+.It Fl t Ar to
+Stop hashing at given address
+.It Fl x Ar hexstr
+Hash this hexpair string instead of files
+.It Fl X
+Output in hexpairs instead of binary/plain
+.It Fl v
+Show version information
+.El
+.Sh ENVIRONMENT
+.Pp
+Rahash2 does not use any environment variables.
+.Sh EXAMPLES
+.Pp
+Calculate the MD5 hash of the 'ls' binary:
+.Pp
+  $ rahash2 -qqa md5 /bin/ls
+.Pp
+Calculate the SHA256 hash of string from stdin:
+.Pp
+  $ echo -n "Hello, World" | rahash2 -a sha256 -
+  $ rahash2 -a sha256 -s "Hello, World"
+.Pp
+Compare CRC32 of the given file didnt changed:
+.Pp
+  $ rahash2 -qqa crc32 /bin/ls
+  63212007
+  $ rahash2 -a crc32 -c 63212007 /bin/ls
+  INFO: Computed hash matches the expected one
+  $ echo $?
+  0
+.Pp
+List all muta (hash, crypto, encoder, charset) plugins:
+.Pp
+  $ rahash2 -L
+.Pp
+Encode the string "Hello World" with base64:
+.Pp
+  $ rahash2 -E base64 -s "Hello World"
+.Pp
+Calculate SHA256 hash of a specific part of a file:
+.Pp
+  $ rahash2 -qqa sha256 -f 0x1000 -t 0x2000 file_to_hash
+.Pp
+Encrypt and decrypt the "hello" string using the ror and rol plugins:
+.Pp
+  $ rahash2 -S 12333 -E ror -s hello && echo
+  Cell{
+  $ rahash2 -S 12333 -E rol -s Cell{ && echo
+  hello
+.Pp
+Encrypting and decrypting using AES-CBC:
+.Pp
+  $ export AES_KEY="11111111111111111111111111113211"
+  $ rahash2 -E aes-ecb -S "$AES_KEY" -s "hello world you bastard" > .file
+  $ cat .file | rahash2 -D aes-ecb -S "$AES_KEY" -s - && echo
+.Pp
+Encrypting a file using Blowfish and encode it into a json:
+.Pp
+  $ rahash2 -E blowfish -S "11111111111111111111111111113211" -j /bin/ls > ls.json
+.Sh DIAGNOSTICS
+.Ex -std
+.Pp
+When using the -c flag, an exit status of 0 indicates a match between the expected and computed hashes.
+.Sh SEE ALSO
+.Pp
+.Xr radare2(1)
+.Sh AUTHORS
+.Pp
+pancake <pancake@nopcode.org>

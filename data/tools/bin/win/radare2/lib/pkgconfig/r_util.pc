@@ -1,0 +1,10 @@
+prefix=D:/a/radare2/radare2/radare2-6.1.8-w64
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: r_util
+Description: radare foundation libraries
+Version: 6.1.8
+Libs: -L${libdir} -lr_util 
+Libs.private: -lpsapi
+Cflags: -I${includedir}/libr -I${includedir}/libr/sdb

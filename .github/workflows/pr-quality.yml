@@ -1,0 +1,288 @@
+name: PR Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  change-policy:
+    name: change-policy
+    runs-on: ubuntu-latest
+    outputs:
+      areas: ${{ steps.policy.outputs.areas }}
+      area_labels: ${{ steps.policy.outputs.area_labels }}
+      blocked: ${{ steps.policy.outputs.blocked }}
+      desktop_checks: ${{ steps.policy.outputs.desktop_checks }}
+      server_checks: ${{ steps.policy.outputs.server_checks }}
+      adapter_checks: ${{ steps.policy.outputs.adapter_checks }}
+      desktop_native_checks: ${{ steps.policy.outputs.desktop_native_checks }}
+      docs_checks: ${{ steps.policy.outputs.docs_checks }}
+      coverage_checks: ${{ steps.policy.outputs.coverage_checks }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run policy tests
+        run: bun run check:policy
+
+      - name: Collect changed files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename' > changed-files.txt
+          jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" > labels.txt
+
+      - name: Evaluate change policy
+        id: policy
+        run: bun run scripts/pr/change-policy.ts --files changed-files.txt --labels-file labels.txt
+
+  desktop-checks:
+    name: desktop-checks
+    needs: change-policy
+    if: needs.change-policy.outputs.desktop_checks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install root dependencies
+        run: bun install
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: bun install
+
+      - name: Run desktop checks
+        run: bun run check:desktop
+
+  server-checks:
+    name: server-checks
+    needs: change-policy
+    if: needs.change-policy.outputs.server_checks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install root dependencies
+        run: bun install
+
+      - name: Run server checks
+        run: bun run check:server
+
+  adapter-checks:
+    name: adapter-checks
+    needs: change-policy
+    if: needs.change-policy.outputs.adapter_checks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install adapter dependencies
+        working-directory: adapters
+        run: bun install
+
+      - name: Run adapter checks
+        run: bun run check:adapters
+
+  desktop-native-checks:
+    name: desktop-native-checks
+    needs: change-policy
+    if: needs.change-policy.outputs.desktop_native_checks == 'true'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential curl wget file \
+            libxdo-dev libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev patchelf \
+            libfuse2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: 'desktop/src-tauri -> target'
+
+      - name: Install root dependencies
+        run: bun install
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: bun install
+
+      - name: Install adapter dependencies
+        working-directory: adapters
+        run: bun install
+
+      - name: Run desktop native checks
+        run: bun run check:native
+
+  docs-checks:
+    name: docs-checks
+    needs: change-policy
+    if: needs.change-policy.outputs.docs_checks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Run docs checks
+        run: npm ci && npm run docs:build
+
+  coverage-checks:
+    name: coverage-checks
+    needs: change-policy
+    if: needs.change-policy.outputs.coverage_checks == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install root dependencies
+        run: bun install
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: bun install
+
+      - name: Install adapter dependencies
+        working-directory: adapters
+        run: bun install
+
+      - name: Run coverage checks
+        env:
+          COVERAGE_BASE_REF: origin/${{ github.base_ref }}
+        run: bun run check:coverage
+
+      - name: Summarize coverage report
+        if: always()
+        run: |
+          latest_report="$(find artifacts/coverage -name coverage-report.md -print | sort | tail -n 1)"
+          if [ -n "$latest_report" ]; then
+            cat "$latest_report" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: artifacts/coverage/
+          retention-days: 14
+
+  pr-quality-gate:
+    name: pr-quality-gate
+    needs:
+      - change-policy
+      - desktop-checks
+      - server-checks
+      - adapter-checks
+      - desktop-native-checks
+      - docs-checks
+      - coverage-checks
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all selected quality jobs to pass
+        run: |
+          failures=0
+
+          require_success() {
+            local name="$1"
+            local result="$2"
+            if [ "$result" != "success" ]; then
+              echo "::error::$name ended with result: $result"
+              failures=$((failures + 1))
+            else
+              echo "$name: success"
+            fi
+          }
+
+          allow_skip_or_success() {
+            local name="$1"
+            local result="$2"
+            case "$result" in
+              success|skipped)
+                echo "$name: $result"
+                ;;
+              *)
+                echo "::error::$name ended with result: $result"
+                failures=$((failures + 1))
+                ;;
+            esac
+          }
+
+          require_success "change-policy" "${{ needs.change-policy.result }}"
+          allow_skip_or_success "desktop-checks" "${{ needs.desktop-checks.result }}"
+          allow_skip_or_success "server-checks" "${{ needs.server-checks.result }}"
+          allow_skip_or_success "adapter-checks" "${{ needs.adapter-checks.result }}"
+          allow_skip_or_success "desktop-native-checks" "${{ needs.desktop-native-checks.result }}"
+          allow_skip_or_success "docs-checks" "${{ needs.docs-checks.result }}"
+          allow_skip_or_success "coverage-checks" "${{ needs.coverage-checks.result }}"
+
+          if [ "$failures" -gt 0 ]; then
+            exit 1
+          fi

@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {"text": "报告包含不安全的 yaml.load() 反序列化漏洞发现", "passed": true, "evidence": "Lines 59-78: dedicated yaml.load() deserialization finding"},
+    {"text": "报告包含 pickle.load() 反序列化漏洞发现", "passed": true, "evidence": "Lines 33-56: dedicated pickle.load() finding"},
+    {"text": "报告包含硬编码 API_TOKEN 发现", "passed": true, "evidence": "Lines 13-30: hardcoded API_TOKEN at line 14"},
+    {"text": "报告包含 MD5 密码哈希弱点发现", "passed": true, "evidence": "Lines 147-174: MD5 hashing with fixed salt finding"},
+    {"text": "报告包含不安全随机数生成发现（random 用于 token）", "passed": true, "evidence": "Lines 207-226: weak PRNG token generation finding"},
+    {"text": "报告包含路径遍历漏洞发现（process_file 的 os.path.join）", "passed": true, "evidence": "Lines 115-142: path traversal in process_file finding"},
+    {"text": "报告包含 tarfile 解压遍历风险发现（Zip Slip）", "passed": true, "evidence": "Lines 82-112: Tar Slip in extract_archive finding"},
+    {"text": "报告包含不安全的文件权限发现（chmod 0o777）", "passed": true, "evidence": "Lines 177-203: insecure file permissions chmod 0o777 finding"},
+    {"text": "每个漏洞发现都包含具体的代码位置和行号", "passed": true, "evidence": "Every finding includes case2_processor.py with specific line numbers"},
+    {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "Every finding includes concrete fix code"},
+    {"text": "报告包含安全评分或安全评级", "passed": true, "evidence": "Lines 263-264: Score 0/100, Rating F with calculation: 100 - 75 - 30 - 24 - 3"}
+  ],
+  "summary": {"passed": 11, "failed": 0, "total": 11, "pass_rate": 1.0}
+}

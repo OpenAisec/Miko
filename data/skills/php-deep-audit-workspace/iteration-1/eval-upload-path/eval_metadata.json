@@ -1,0 +1,11 @@
+{
+  "eval_id": 3,
+  "eval_name": "upload-path",
+  "prompt": "帮我对这个文件上传相关模块做深度审计...",
+  "assertions": [
+    "报告包含 filename 从 $_POST 到 file_put_contents 的完整 Source-to-Sink 传播链路",
+    "报告指出 MIME 类型检查仅依赖客户端 $file['type']（可伪造）",
+    "报告包含路径穿越的具体利用 payload（如 ../../config/database.php）",
+    "报告对每个漏洞给出了完整的修复代码示例"
+  ]
+}

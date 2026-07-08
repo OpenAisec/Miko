@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "auth-multi",
+  "prompt": "帮我深度审查这个认证模块的安全性...",
+  "assertions": [
+    "报告解释了 addslashes + GBK 宽字节注入的原理（含 %df%5c 字节序列分析）",
+    "报告指出 buildRedirectUrl 中 // 协议相对 URL 可绕过 strpos(http://) 检查",
+    "报告指出 ssoVerify 中 token/state 未 URL 编码导致查询参数注入"
+  ]
+}

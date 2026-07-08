@@ -1,0 +1,18 @@
+{
+  "eval_id": 1,
+  "eval_name": "data-processor",
+  "prompt": "I need a security audit on this Python data processor script at evals/files/case2_processor.py. Please produce a full security report.",
+  "assertions": [
+    "报告包含不安全的 yaml.load() 反序列化漏洞发现",
+    "报告包含 pickle.load() 反序列化漏洞发现",
+    "报告包含硬编码 API_TOKEN 发现",
+    "报告包含 MD5 密码哈希弱点发现",
+    "报告包含不安全随机数生成发现（random 模块用于 token 生成）",
+    "报告包含路径遍历漏洞发现（process_file 中的 os.path.join）",
+    "报告包含 tarfile 解压遍历风险发现（Zip Slip）",
+    "报告包含不安全的文件权限发现（chmod 0o777）",
+    "每个漏洞发现都包含具体的代码位置和行号",
+    "每个漏洞发现都包含修复建议",
+    "报告包含安全评分或安全评级"
+  ]
+}

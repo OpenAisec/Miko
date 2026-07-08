@@ -1,0 +1,283 @@
+{
+  "metadata": {
+    "skill_name": "php-deep-audit",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-17T08:47:43Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 40.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "\u62a5\u544a\u89e3\u91ca\u4e86 addslashes + GBK \u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u539f\u7406\uff08\u542b %df%5c \u5b57\u8282\u5e8f\u5217\u5206\u6790\uff09",
+          "passed": true,
+          "evidence": "\u5305\u542b\u8be6\u7ec6\u7684\u5bbd\u5b57\u8282\u6ce8\u5165\u539f\u7406\u8bf4\u660e\uff1a\u539f\u59cb\u5b57\u8282 0xDF 0x27 \u2192 addslashes\u540e 0xDF 0x5C 0x27 \u2192 GBK\u89e3\u7801 0xDF5C(\u904b) 0x27(')\uff0c\u5b8c\u6574\u89e3\u91ca\u4e86\u8f6c\u4e49\u7b26\u88ab'\u5403\u6389'\u7684\u8fc7\u7a0b"
+        },
+        {
+          "text": "\u62a5\u544a\u6307\u51fa buildRedirectUrl \u4e2d // \u534f\u8bae\u76f8\u5bf9 URL \u53ef\u7ed5\u8fc7 strpos(http://) \u68c0\u67e5",
+          "passed": true,
+          "evidence": "\u660e\u786e\u5199\u51fa'//evil.com \u4e0d\u542b http://\uff0c\u5b8c\u5168\u7ed5\u8fc7'\uff0c\u5e76\u8bf4\u660e\u4e86\u534f\u8bae\u76f8\u5bf9 URL \u7684\u6d4f\u89c8\u5668\u884c\u4e3a"
+        },
+        {
+          "text": "\u62a5\u544a\u6307\u51fa ssoVerify \u4e2d token/state \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u6ce8\u5165",
+          "passed": true,
+          "evidence": "\u6307\u51fa'\u76f4\u63a5\u62fc\u63a5\u5230 URL \u67e5\u8be2\u5b57\u7b26\u4e32\uff08\u672a urlencode\uff09'\uff0c\u7ed9\u51fa\u4e86\u53c2\u6570\u6ce8\u5165\u7684\u5177\u4f53\u573a\u666f\u5982 redirect_uri \u6ce8\u5165"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 45.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "\u62a5\u544a\u5305\u542b $_GET['order_id'] \u4ece Controller \u7ecf Service \u5230 Repository \u7684\u5b8c\u6574\u8de8\u6587\u4ef6\u4f20\u64ad\u94fe\u8def",
+          "passed": true,
+          "evidence": "\u4f20\u64ad\u94fe\u8def\u90e8\u5206\u5b8c\u6574\u5217\u51fa\u4e86: Source \u2192 OrderController.php:32 \u2192 OrderController.php:41 (\u8de8\u6587\u4ef6) \u2192 OrderService.php:18 \u2192 OrderService.php:22 (\u8de8\u6587\u4ef6) \u2192 OrderRepository.php:17 \u2192 OrderRepository.php:21 \u2192 OrderRepository.php:22 [SINK]\uff0c\u6bcf\u4e2a\u8282\u70b9\u6807\u6ce8\u4e86\u6587\u4ef6\u540d\u548c\u884c\u53f7"
+        },
+        {
+          "text": "\u62a5\u544a\u660e\u786e\u6307\u51fa $sortField \u5728 ORDER BY \u4e2d\u65e0\u6cd5\u901a\u8fc7\u53c2\u6570\u5316\u67e5\u8be2\u9632\u62a4\uff0c\u9700\u8981\u767d\u540d\u5355",
+          "passed": true,
+          "evidence": "\u5173\u952e\u5206\u6790\u660e\u786e\u5199\u9053\uff1a'ORDER BY / GROUP BY \u5b50\u53e5\u4e2d\u7684\u5b57\u6bb5\u540d\u4e0d\u80fd\u4f7f\u7528\u53c2\u6570\u5316\u67e5\u8be2\uff08\u9884\u5904\u7406\u4ec5\u652f\u6301\u503c\u7ed1\u5b9a\uff0c\u4e0d\u652f\u6301\u6807\u8bc6\u7b26\u7ed1\u5b9a\uff09\u3002\u56e0\u6b64\u5373\u4f7f\u7528\u4e86 PDO \u9884\u5904\u7406\uff0c$sortField \u4f9d\u7136\u9700\u8981\u767d\u540d\u5355\u6821\u9a8c\u3002'"
+        },
+        {
+          "text": "\u62a5\u544a\u5305\u542b\u5177\u4f53\u7684 SQL \u6ce8\u5165\u653b\u51fb payload \u793a\u4f8b",
+          "passed": true,
+          "evidence": "\u5229\u7528\u573a\u666f\u5305\u542b: UNION SELECT payload\u3001\u5e03\u5c14\u76f2\u6ce8 SUBSTRING \u793a\u4f8b\u3001\u65f6\u95f4\u76f2\u6ce8 SLEEP payload\u3001CASE WHEN \u5e03\u5c14\u76f2\u6ce8\uff08ORDER BY \u4e0a\u4e0b\u6587\uff09"
+        },
+        {
+          "text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5177\u4f53\u7684\u4fee\u590d\u4ee3\u7801\uff08\u4e0d\u4ec5\u662f\u5efa\u8bae\uff09",
+          "passed": true,
+          "evidence": "\u6bcf\u4e2a\u6f0f\u6d1e\u90fd\u6709\u5b8c\u6574\u4fee\u590d\u4ee3\u7801: (int)\u7c7b\u578b\u8f6c\u6362\u4ee3\u7801\u3001PDO bind_param \u4ee3\u7801\u3001\u767d\u540d\u5355 in_array \u6821\u9a8c\u4ee3\u7801"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 42.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "\u62a5\u544a\u5305\u542b filename \u4ece $_POST \u5230 file_put_contents \u7684\u5b8c\u6574 Source-to-Sink \u4f20\u64ad\u94fe\u8def",
+          "passed": true,
+          "evidence": "\u4f20\u64ad\u94fe\u8def\u5b8c\u6574\u5217\u51fa: $_POST['filename'] \u2192 UploadController.php:57 \u2192 UploadController.php:61 (\u8de8\u6587\u4ef6) \u2192 FileService.php:43 \u2192 FileService.php:47 ($exportDir\u62fc\u63a5) \u2192 FileService.php:50 (dirname) \u2192 FileService.php:52 (mkdir) \u2192 FileService.php:56 (file_put_contents)\uff0c\u6bcf\u6b65\u6807\u6ce8\u6587\u4ef6:\u884c\u53f7"
+        },
+        {
+          "text": "\u62a5\u544a\u6307\u51fa MIME \u7c7b\u578b\u68c0\u67e5\u4ec5\u4f9d\u8d56\u5ba2\u6237\u7aef $file['type']\uff08\u53ef\u4f2a\u9020\uff09",
+          "passed": true,
+          "evidence": "\u660e\u786e\u5199\u6709'$file['type'] = \u5ba2\u6237\u7aef Content-Type \u5934 \u2192 \u53ef\u4f2a\u9020'\uff0c\u5e76\u8bf4\u660e'\u653b\u51fb\u8005\u76f4\u63a5\u7528 Burp \u4fee\u6539 Content-Type \u4e3a image/png'"
+        },
+        {
+          "text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u7a7f\u8d8a\u7684\u5177\u4f53\u5229\u7528 payload\uff08\u5982 ../../config/database.php\uff09",
+          "passed": true,
+          "evidence": "\u5229\u7528\u573a\u666f\u5305\u542b4\u4e2a\u5177\u4f53 payload: ../../webroot/shell.php\uff08\u5199webshell\uff09\u3001../../.env\uff08\u8986\u5199\u914d\u7f6e\uff09\u3001../.htaccess\uff08\u542f\u7528PHP\u6267\u884c\uff09\u3001../../../root/.ssh/authorized_keys\uff08SSH\u5199\u5165\uff09"
+        },
+        {
+          "text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5b8c\u6574\u7684\u4fee\u590d\u4ee3\u7801\u793a\u4f8b",
+          "passed": true,
+          "evidence": "\u6bcf\u4e2a\u6f0f\u6d1e\u90fd\u6709\u5b8c\u6574\u4fee\u590d\u4ee3\u7801: basename() + bin2hex\u968f\u673a\u5316 + realpath()\u6821\u9a8c\u7684\u5b8c\u6574\u65b9\u6cd5\u3001finfo\u68c0\u6d4b\u771f\u5b9eMIME + getimagesize()\u9a8c\u8bc1 + \u968f\u673a\u5316\u6587\u4ef6\u540d\u7684\u5b8c\u6574\u65b9\u6cd5"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 3,
+        "total": 3,
+        "time_seconds": 12.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "\u62a5\u544a\u89e3\u91ca\u4e86 addslashes + GBK \u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u539f\u7406\uff08\u542b %df%5c \u5b57\u8282\u5e8f\u5217\u5206\u6790\uff09",
+          "passed": false,
+          "evidence": "\u4ec5\u63d0\u5230'addslashes() \u5728 GBK \u7f16\u7801\u4e0b\u4e0d\u53ef\u9760'\uff0c\u65e0\u5b57\u8282\u5e8f\u5217\u5206\u6790\uff0c\u65e0\u539f\u7406\u89e3\u91ca"
+        },
+        {
+          "text": "\u62a5\u544a\u6307\u51fa buildRedirectUrl \u4e2d // \u534f\u8bae\u76f8\u5bf9 URL \u53ef\u7ed5\u8fc7 strpos(http://) \u68c0\u67e5",
+          "passed": false,
+          "evidence": "\u4ec5\u8bf4'\u53ef\u4ee5\u7528 // \u534f\u8bae\u76f8\u5bf9URL\u7ed5\u8fc7'\uff0c\u672a\u89e3\u91ca\u4e3a\u4ec0\u4e48\u80fd\u7ed5\u8fc7 strpos \u68c0\u67e5\uff0c\u672a\u8bf4\u660e\u6d4f\u89c8\u5668\u7684\u534f\u8bae\u76f8\u5bf9 URL \u89e3\u6790\u884c\u4e3a"
+        },
+        {
+          "text": "\u62a5\u544a\u6307\u51fa ssoVerify \u4e2d token/state \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u6ce8\u5165",
+          "passed": false,
+          "evidence": "\u4ec5\u8bf4'\u76f4\u63a5\u62fc\u63a5\u5230 URL\uff0c\u672a\u505a URL \u7f16\u7801'\uff0c\u672a\u5206\u6790\u8fd9\u4f1a\u5bfc\u81f4\u4ec0\u4e48\u5b89\u5168\u95ee\u9898\uff08\u53c2\u6570\u622a\u65ad\u3001\u53c2\u6570\u8986\u76d6\uff09"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 15.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "\u62a5\u544a\u5305\u542b $_GET['order_id'] \u4ece Controller \u7ecf Service \u5230 Repository \u7684\u5b8c\u6574\u8de8\u6587\u4ef6\u4f20\u64ad\u94fe\u8def",
+          "passed": false,
+          "evidence": "\u4ec5\u63d0\u5230'OrderController.php:32 \u2192 OrderRepository.php:21'\uff0c\u7f3a\u5c11\u8de8\u6587\u4ef6 Service \u5c42\u7684\u4f20\u64ad\u7ec6\u8282\uff0c\u6ca1\u6709\u9010\u884c\u7684\u94fe\u8def\u8ffd\u8e2a\uff0c\u6ca1\u6709\u6807\u6ce8\u6bcf\u4e2a\u8282\u70b9\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7"
+        },
+        {
+          "text": "\u62a5\u544a\u660e\u786e\u6307\u51fa $sortField \u5728 ORDER BY \u4e2d\u65e0\u6cd5\u901a\u8fc7\u53c2\u6570\u5316\u67e5\u8be2\u9632\u62a4\uff0c\u9700\u8981\u767d\u540d\u5355",
+          "passed": false,
+          "evidence": "\u4ec5\u8bf4'\u4f7f\u7528\u5b57\u6bb5\u540d\u767d\u540d\u5355'\uff0c\u672a\u89e3\u91ca\u4e3a\u4ec0\u4e48\u53c2\u6570\u5316\u67e5\u8be2\u5bf9 ORDER BY \u65e0\u6548\uff0c\u7f3a\u5c11\u4e0a\u4e0b\u6587\u5206\u6790"
+        },
+        {
+          "text": "\u62a5\u544a\u5305\u542b\u5177\u4f53\u7684 SQL \u6ce8\u5165\u653b\u51fb payload \u793a\u4f8b",
+          "passed": false,
+          "evidence": "\u62a5\u544a\u4e2d\u65e0\u4efb\u4f55\u653b\u51fb payload \u793a\u4f8b"
+        },
+        {
+          "text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5177\u4f53\u7684\u4fee\u590d\u4ee3\u7801\uff08\u4e0d\u4ec5\u662f\u5efa\u8bae\uff09",
+          "passed": false,
+          "evidence": "\u53ea\u6709\u4e00\u53e5\u8bdd\u5efa\u8bae\u5982'\u4f7f\u7528 (int)$_GET['order_id']'\uff0c\u65e0\u5b8c\u6574\u4ee3\u7801\u793a\u4f8b"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 12.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "\u62a5\u544a\u5305\u542b filename \u4ece $_POST \u5230 file_put_contents \u7684\u5b8c\u6574 Source-to-Sink \u4f20\u64ad\u94fe\u8def",
+          "passed": false,
+          "evidence": "\u4ec5\u8bf4'$filename \u76f4\u63a5\u62fc\u63a5\u5230\u8def\u5f84\u4e2d'\uff0c\u65e0\u9010\u884c\u8ffd\u8e2a\uff0c\u65e0\u4e2d\u95f4\u8282\u70b9\u5206\u6790\uff0c\u65e0\u8de8\u6587\u4ef6\u4f20\u9012\u8bb0\u5f55"
+        },
+        {
+          "text": "\u62a5\u544a\u6307\u51fa MIME \u7c7b\u578b\u68c0\u67e5\u4ec5\u4f9d\u8d56\u5ba2\u6237\u7aef $file['type']\uff08\u53ef\u4f2a\u9020\uff09",
+          "passed": false,
+          "evidence": "\u4ec5\u8bf4'MIME \u7c7b\u578b\u4ec5\u68c0\u67e5 $file[\"type\"]\uff08\u5ba2\u6237\u7aef\u53ef\u63a7\uff0c\u53ef\u4f2a\u9020\uff09'\uff0c\u672a\u89e3\u91ca $file['type'] \u4e3a\u4ec0\u4e48\u6765\u81ea\u5ba2\u6237\u7aef\u3001\u5982\u4f55\u4f2a\u9020"
+        },
+        {
+          "text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u7a7f\u8d8a\u7684\u5177\u4f53\u5229\u7528 payload\uff08\u5982 ../../config/database.php\uff09",
+          "passed": false,
+          "evidence": "\u4ec5\u63d0\u5230'../../config/database.php'\u4f5c\u4e3a\u793a\u4f8b\uff0c\u65e0\u5b8c\u6574\u7684\u5229\u7528\u573a\u666f\u8bf4\u660e"
+        },
+        {
+          "text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5b8c\u6574\u7684\u4fee\u590d\u4ee3\u7801\u793a\u4f8b",
+          "passed": false,
+          "evidence": "\u4ec5\u6709\u4e00\u53e5\u8bdd\u5efa\u8bae\u5982'\u4f7f\u7528 basename($filename)'\u6216'\u4f7f\u7528 finfo \u68c0\u6d4b\u771f\u5b9e MIME \u7c7b\u578b'\uff0c\u65e0\u5b8c\u6574\u4ee3\u7801"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 42.3333,
+        "stddev": 2.5166,
+        "min": 40.0,
+        "max": 45.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "time_seconds": {
+        "mean": 13.0,
+        "stddev": 1.7321,
+        "min": 12.0,
+        "max": 15.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "+1.00",
+      "time_seconds": "+29.3",
+      "tokens": "+0"
+    }
+  },
+  "notes": []
+}

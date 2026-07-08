@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {"text": "报告包含不安全的 yaml.load() 反序列化漏洞发现", "passed": true, "evidence": "Finding #2: Unsafe YAML Deserialization at line 20"},
+    {"text": "报告包含 pickle.load() 反序列化漏洞发现", "passed": true, "evidence": "Finding #3: Unsafe Pickle Deserialization at line 26"},
+    {"text": "报告包含硬编码 API_TOKEN 发现", "passed": true, "evidence": "Finding #1: Hardcoded API Token at line 14"},
+    {"text": "报告包含 MD5 密码哈希弱点发现", "passed": true, "evidence": "Finding #7: Weak Password Hashing (MD5 + fixed salt) at lines 42-45"},
+    {"text": "报告包含不安全随机数生成发现（random 用于 token）", "passed": true, "evidence": "Finding #9: Predictable Token Generation at lines 48-50"},
+    {"text": "报告包含路径遍历漏洞发现（process_file 的 os.path.join）", "passed": true, "evidence": "Finding #4: Path Traversal in process_file() at lines 55-58"},
+    {"text": "报告包含 tarfile 解压遍历风险发现（Zip Slip）", "passed": true, "evidence": "Finding #5: Tar Slip in extract_archive() at lines 38-39"},
+    {"text": "报告包含不安全的文件权限发现（chmod 0o777）", "passed": true, "evidence": "Finding #6: World-Writable File Permissions at line 77"},
+    {"text": "每个漏洞发现都包含具体的代码位置和行号", "passed": true, "evidence": "Every finding includes specific line numbers in a consistent table format"},
+    {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "Every finding includes detailed remediation code"},
+    {"text": "报告包含安全评分或安全评级", "passed": false, "evidence": "No numerical score/100 or A-F grade present. Has qualitative 'Overall Assessment' but no formal scoring"}
+  ],
+  "summary": {"passed": 10, "failed": 1, "total": 11, "pass_rate": 0.909}
+}

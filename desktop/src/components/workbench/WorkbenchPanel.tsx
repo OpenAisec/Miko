@@ -1,0 +1,92 @@
+import { FolderOpen, Globe, X } from 'lucide-react'
+import { useTranslation } from '../../i18n'
+import {
+  useWorkspacePanelStore,
+  type WorkbenchMode,
+} from '../../stores/workspacePanelStore'
+import { useBrowserPanelStore } from '../../stores/browserPanelStore'
+import { WorkspacePanel } from '../workspace/WorkspacePanel'
+import { BrowserSurface } from '../browser/BrowserSurface'
+
+type WorkbenchPanelProps = {
+  sessionId: string
+}
+
+const MODE_ITEMS: ReadonlyArray<{
+  mode: WorkbenchMode
+  labelKey: 'workbench.modeWorkspace' | 'workbench.modeBrowser'
+  Icon: typeof FolderOpen
+}> = [
+  { mode: 'workspace', labelKey: 'workbench.modeWorkspace', Icon: FolderOpen },
+  { mode: 'browser', labelKey: 'workbench.modeBrowser', Icon: Globe },
+]
+
+/**
+ * Unified right-side "Workbench" panel. Hosts the file workspace and the native
+ * browser surface behind a single per-session mode switch (file ↔ browser),
+ * sharing the panel's open state and width via {@link useWorkspacePanelStore}.
+ */
+export function WorkbenchPanel({ sessionId }: WorkbenchPanelProps) {
+  const t = useTranslation()
+  const mode = useWorkspacePanelStore((state) => state.getMode(sessionId))
+  const setMode = useWorkspacePanelStore((state) => state.setMode)
+  const closePanel = useWorkspacePanelStore((state) => state.closePanel)
+  const ensureBlankBrowser = useBrowserPanelStore((state) => state.ensureBlank)
+
+  const handleModeSelect = (nextMode: WorkbenchMode) => {
+    if (nextMode === 'browser') {
+      ensureBlankBrowser(sessionId)
+    }
+    setMode(sessionId, nextMode)
+  }
+
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col bg-[var(--color-surface)]">
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface-container-lowest)] px-2.5">
+        <div
+          role="tablist"
+          aria-label={t('workbench.modeSwitch')}
+          className="inline-flex items-center gap-0.5 rounded-[8px] border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5"
+        >
+          {MODE_ITEMS.map(({ mode: itemMode, labelKey, Icon }) => {
+            const isActive = mode === itemMode
+            return (
+              <button
+                key={itemMode}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleModeSelect(itemMode)}
+                className={`inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/35 ${
+                  isActive
+                    ? 'bg-[var(--color-surface-selected)] text-[var(--color-text-primary)] shadow-[inset_0_0_0_1px_var(--color-border-focus)]'
+                    : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
+                }`}
+              >
+                <Icon size={15} strokeWidth={2} aria-hidden="true" className="shrink-0" />
+                <span>{t(labelKey)}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <button
+          type="button"
+          aria-label={t('workbench.close')}
+          onClick={() => closePanel(sessionId)}
+          className="ml-auto inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]/35"
+        >
+          <X size={16} strokeWidth={2} aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        {mode === 'browser' ? (
+          <BrowserSurface sessionId={sessionId} />
+        ) : (
+          <WorkspacePanel sessionId={sessionId} embedded />
+        )}
+      </div>
+    </div>
+  )
+}

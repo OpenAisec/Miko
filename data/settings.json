@@ -1,0 +1,13 @@
+{
+  "skipWebFetchPreflight": true,
+  "model": "deepseek-v4-pro",
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.example.com/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "sk-test",
+    "ANTHROPIC_MODEL": "gpt-5.5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "gpt-5.5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "gpt-5.5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "gpt-5.5"
+  },
+  "autoMemoryExtract": false
+}

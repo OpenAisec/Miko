@@ -1,0 +1,22 @@
+id: waybackurls
+category: asset
+name: 'waybackurls'
+short_description: '从Wayback Machine获取历史URL'
+description: |
+  Waybackurls从Wayback Machine获取目标域名的历史URL。
+  
+  **主要功能：**
+  - 历史URL发现
+  - 版本获取
+  - 子域名支持
+  
+  **使用场景：**
+  - 历史URL收集
+  - Bug bounty侦察
+  - 安全测试
+  - 内容发现
+invoke: cli
+bin: 'waybackurls'
+usage: 'waybackurls <domain> [-get-versions <get_versions>] [-no-subs <no_subs>] [<additional_args>]'
+builtin: true
+bundled: true

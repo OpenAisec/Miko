@@ -1,0 +1,34 @@
+{
+  "expectations": [
+    {
+      "text": "报告包含 $_GET['order_id'] 从 Controller 经 Service 到 Repository 的完整跨文件传播链路",
+      "passed": true,
+      "evidence": "传播链路部分完整列出了: Source → OrderController.php:32 → OrderController.php:41 (跨文件) → OrderService.php:18 → OrderService.php:22 (跨文件) → OrderRepository.php:17 → OrderRepository.php:21 → OrderRepository.php:22 [SINK]，每个节点标注了文件名和行号"
+    },
+    {
+      "text": "报告明确指出 $sortField 在 ORDER BY 中无法通过参数化查询防护，需要白名单",
+      "passed": true,
+      "evidence": "关键分析明确写道：'ORDER BY / GROUP BY 子句中的字段名不能使用参数化查询（预处理仅支持值绑定，不支持标识符绑定）。因此即使用了 PDO 预处理，$sortField 依然需要白名单校验。'"
+    },
+    {
+      "text": "报告包含具体的 SQL 注入攻击 payload 示例",
+      "passed": true,
+      "evidence": "利用场景包含: UNION SELECT payload、布尔盲注 SUBSTRING 示例、时间盲注 SLEEP payload、CASE WHEN 布尔盲注（ORDER BY 上下文）"
+    },
+    {
+      "text": "报告对每个漏洞给出了具体的修复代码（不仅是建议）",
+      "passed": true,
+      "evidence": "每个漏洞都有完整修复代码: (int)类型转换代码、PDO bind_param 代码、白名单 in_array 校验代码"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 45.0,
+    "total_duration_seconds": 45.0
+  }
+}

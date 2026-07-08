@@ -1,0 +1,140 @@
+.Dd Jul 10, 2025
+.Dt R2PM 1
+.Sh NAME
+.Nm r2pm
+.Nd Radare2 Package Manager
+.Sh SYNOPSIS
+.Nm r2pm
+.Op Fl acdeHhijlpqrRstuUvw
+.Op Ar pkgs...
+.Sh DESCRIPTION
+The package manager for Radare2, allowing installation, update, uninstallation, and discovery of plugins and tools.
+.Bl -tag -width Fl
+.It Fl a Ar repository
+Add or delete external repository. Using '-a repository' adds a repository, and '-a -repository' deletes it. Use with no arguments to list all registered repos.
+.It Fl c Ar pkgname
+Clear cached sources for the given package. Use
+.Fl cp
+to clean the user plugin directory
+.It Fl d, Cm doc Ar pkgname
+Show documentation and source for given package script
+.It Fl e Ar pkgname
+Edit using $EDITOR the given package script
+.It Fl f
+Force operation. Requires
+.Fl U ,
+.Fl i
+or
+.Fl u
+.It Fl gi Ar pkg
+Global install (system-wide)
+.It Fl h
+Display help message
+.It Fl H Op variable
+List all or selected r2pm environment variables
+.It Fl i Ar pkgname
+Install/update package and its dependencies
+.It Fl I
+Information about the repository and installed packages
+.It Fl j
+JSON output. Requires
+.Fl l ,
+.Fl s
+or
+.Fl v
+.It Fl l
+List installed packages
+.It Fl q
+Be quiet. Requires an action
+.It Fl r Ar cmd ...args
+Run shell command with R2PM_BINDIR in PATH
+.It Fl R Ar pkgname
+Reload plugin (See R2PM_RELOAD code block package)
+.It Fl s Op keyword
+Search available packages in database matching a string. Return error code if no package was found
+.It Fl t Ar YYYY-MM-DD
+Set the package checkout date. Requires an action
+.It Fl u Ar pkgname
+Uninstall package (see -f to force uninstall)
+.It Fl uci Ar pkgname
+Uninstall + clean + install
+.It Fl ui Ar pkgname
+Uninstall + install
+.It Fl U
+Download/initialize or update database (-f for a clean clone)
+.It Fl UU
+Same as -U but upgrade all the installed r2 plugins
+.It Fl v
+Show version
+.El
+.Sh ENVIRONMENT
+.Pp
+.Bl -tag -width Fl
+.It Ev SUDO
+Command to use for system-wide installs (default: sudo)
+.It Ev R2PM_PLUGDIR
+Directory for user plugins (default: ~/.local/share/radare2/plugins)
+.It Ev R2PM_BINDIR
+Directory for user binaries (default: ~/.local/share/radare2/prefix/bin)
+.It Ev R2PM_MANDIR
+Directory for user man pages (default: ~/.local/share/radare2/prefix/man)
+.It Ev R2PM_DOCDIR
+Directory for user documentation (default: ~/.local/share/radare2/prefix/doc)
+.It Ev R2PM_OFFLINE
+Disable online operations (default: 0)
+.It Ev R2PM_DBDIR
+Directory for r2pm database (default: ~/.local/share/radare2/r2pm/db)
+.It Ev R2PM_GITDIR
+Directory for git repositories (default: ~/.local/share/radare2/r2pm/git)
+.It Ev R2PM_GITSKIP
+Skip git pull operations when set
+.It Ev R2PM_TIME
+Point in time to use for git checkout (format: YYYY-MM-DD)
+.It Ev R2_LOG_LEVEL
+Control verbosity of log messages
+.It Ev R2PM_INCDIR
+Directory for include files
+.It Ev R2PM_LIBDIR
+Directory for libraries
+.It Ev R2PM_PREFIX
+Installation prefix
+.El
+.Sh EXAMPLES
+.Pp
+Install a package
+.Pp
+  $ r2pm -i yara3
+.Pp
+Clean cache and then install (don't git pull on $R2PM_GITDIR/yara3)
+.Pp
+  $ r2pm -ci yara3
+.Pp
+Avoid init/update calls (don't git pull on $R2PM_DBDIR)
+.Pp
+  $ R2PM_OFFLINE=1 r2pm -i yara
+.Pp
+Uninstall a package
+.Pp
+  $ r2pm -u yara3
+.Pp
+Force uninstall a package
+.Pp
+  $ r2pm -fu yara3
+.Pp
+Search a package
+.Pp
+  $ r2pm -s yara
+.Pp
+List installed packages
+.Pp
+  $ r2pm -l
+.Pp
+Update database and upgrade all installed packages
+.Pp
+  $ r2pm -UU
+.Sh SEE ALSO
+.Pp
+.Xr radare2(1)
+.Sh AUTHORS
+.Pp
+Written by pancake <pancake@nopcode.org>.

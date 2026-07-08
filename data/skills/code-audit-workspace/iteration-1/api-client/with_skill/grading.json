@@ -1,0 +1,15 @@
+{
+  "expectations": [
+    {"text": "报告包含 SSRF 漏洞发现（用户可控 URL 被直接请求）", "passed": true, "evidence": "Lines 93-177: Two SSRF findings for fetch_resource() and forward_webhook()"},
+    {"text": "报告包含硬编码认证 Token 发现", "passed": true, "evidence": "Lines 63-89: Hardcoded Bearer Token at line 8"},
+    {"text": "报告包含 XXE/XML 外部实体注入漏洞发现", "passed": false, "evidence": "No XXE finding in the report. The parse_xml_payload() method at line 34 using xml.etree.ElementTree was not flagged"},
+    {"text": "报告包含敏感信息泄露发现（print 输出 token）", "passed": true, "evidence": "Lines 181-214: Information leakage via print() at line 30"},
+    {"text": "报告包含代码注入漏洞发现（exec() 执行远程下载代码）", "passed": true, "evidence": "Lines 12-59: Code injection via exec() in download_and_import at line 54"},
+    {"text": "报告包含不安全的文件写入发现（upload_file 路径由 URL 决定）", "passed": false, "evidence": "upload_file() method vulnerability not specifically flagged as a file write security issue"},
+    {"text": "每个漏洞发现都包含具体的文件名和行号", "passed": true, "evidence": "Every finding includes case3_api.py with specific line numbers"},
+    {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "Every finding includes concrete fix code"},
+    {"text": "报告包含安全评分或安全评级", "passed": true, "evidence": "Lines 218-219: Score 12/100, Rating F"},
+    {"text": "报告按严重程度排序", "passed": true, "evidence": "Order: Critical→Critical→High→High→Low"}
+  ],
+  "summary": {"passed": 8, "failed": 2, "total": 10, "pass_rate": 0.8}
+}

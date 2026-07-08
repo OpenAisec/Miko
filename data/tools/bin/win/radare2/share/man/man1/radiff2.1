@@ -1,0 +1,156 @@
+.Dd Jul 10, 2025
+.Dt RADIFF2 1
+.Nm radiff2
+.Nd Binary Diffing Utility
+.Sh SYNOPSIS
+.Nm radiff2
+.Op Fl abcCdDehiJjlmnoOprqsStuUvVxXzZ
+.Op Fl A Op A
+.Op Fl B Ar addr
+.Op Fl g Ar sym
+.Op Fl m Ar mode
+.Op Fl o Ar offset
+.Op Fl l Ar length
+.Op Fl t Ar %
+.Op Fl S Ar name
+.Ar file1 file2
+.Sh DESCRIPTION
+A utility for diffing binary code and data within the Radare2 suite, supporting architecture and bits specification, delta diffing, and graph-based comparisons.
+.Pp
+It supports a wide range of formats and features, including architecture and
+bits specification, delta diffing, graph diffing, and more.
+.Sh OPTIONS
+.Bl -tag -width Fl
+.It Fl a Ar arch
+Specify architecture plugin to use (x86, arm, etc.).
+.It Fl A Op A
+Run aaa or aaaa after loading each binary (see -C).
+.It Fl b Ar bits
+Specify register size for architecture (16 (thumb), 32, 64, etc.).
+.It Fl B Ar addr
+Define the base address to add the offsets when listing.
+.It Fl c Ar cmd
+Run an r2 command on every RCore instance created.
+.It Fl C
+Graphdiff code (columns: off-A, match-ratio, off-B) (see -A).
+.It Fl d
+Use delta diffing.
+.It Fl D
+Show disasm instead of hexpairs.
+.It Fl e Ar k=v
+Set eval config var value for all RCore instances.
+.It Fl f Ar format
+Select output format (see -f help for details).
+.It Fl g Ar sym
+Graph diff of [sym] or functions in [off1,off2].
+.It Fl i Ar type
+Compare bin information (imports, exports, symbols, sections, etc.). See -i help for details.
+.It Fl j
+Output in JSON format.
+.It Fl l Ar len
+Specify final offset (length) for diffing, can use A:B format to specify different lengths for each file.
+.It Fl m Ar mode
+Choose the graph output mode (aditsjJ). See -m help for details.
+.It Fl n
+Count number of changes.
+.It Fl o Ar offset
+Specify initial offset for diffing, can use A:B format to specify different offsets for each file.
+.It Fl O
+Code diffing with opcode bytes only.
+.It Fl p
+Use physical addressing (io.va=false) (only for radiff2 -AC).
+.It Fl q
+Quiet mode (disable colors, reduce output).
+.It Fl r
+Output in radare commands.
+.It Fl s
+Compute edit distance (no substitution, Eugene W. Myers O(ND) diff algorithm).
+.It Fl ss
+Compute Levenshtein edit distance (substitution is allowed, O(N^2)).
+.It Fl S Ar name
+Sort code diff (name, namelen, addr, size, type, dist) (only for -C or -g).
+.It Fl t Ar %
+Set threshold for code diff (default is 70%).
+.It Fl T
+Analyze files in threads (EXPERIMENTAL, 30% faster and crashy).
+.It Fl u
+Unified output (---+++).
+.It Fl U
+Unified output using system 'diff'.
+.It Fl v
+Show version information.
+.It Fl V
+Be verbose (current only for -s).
+.It Fl x
+Show two-column hexdump diffing.
+.TP
+.It Fl X
+Use xpatch format for the diffing output.
+.El
+.Sh ENVIRONMENT
+.Pp
+No environment variables are used.
+.Sh "GRAPH OUTPUT FORMATS (-m [mode])"
+.Bl -tag -width Fl
+.It Fl a
+ASCII art (default).
+.It Fl s
+r2 commands.
+.It Fl d
+Graphviz dot.
+.It Fl g
+Graph Modelling Language (GML).
+.It Fl j
+JSON.
+.It Fl J
+JSON with disassembly.
+.It Fl k
+sdb key-value.
+.It Fl t
+Tiny ASCII art.
+.It Fl i
+Interactive ASCII art.
+.El
+.Sh USAGE EXAMPLES
+.Bl -tag -width Fl
+.It Comparing two binaries
+$ radiff2 bin1 bin2
+.It Using graph diffing to compare functions by name
+$ radiff2 -g main bin1 bin2
+.It Counting the number of changes between two binaries
+$ radiff2 -n bin1 bin2
+.It Outputting the diff in a unified format
+$ radiff2 -u bin1 bin2
+.It Comparing the opcodes of two functions
+$ radiff2 -O bin1 bin2
+.It Compare specific sections of binaries with custom offsets
+$ radiff2 -o 0x1000 bin1 bin2
+.It Compare different sections with different offsets
+$ radiff2 -o 0x1000:0x2000 bin1 bin2
+.It Compare specific lengths from given offsets
+$ radiff2 -o 0x1000 -l 0x500 bin1 bin2
+.El
+.Sh RADARE2 COMMANDS
+The 'c' command in r2 is used for various comparison operations within data inside the same file. Here are some examples of its usage:
+.Bl -tag -width Fl
+.It Compare a plain string with escaped chars
+c "string to compare"
+.It Compare byte at a specific address with current offset
+c1 0x100
+.It Compare block size bytes from current offset and the 0x100 offset
+cc 0x100
+.It Unified diff of disassembly from current seek and given address
+cud 0x200 @ 0x100
+.It Compare memory hexdumps in unified diff format
+cu 0x100 @ 0x200
+.El
+For more detailed usage of the 'c' command, refer to the `c[?dfx] [argument]` help section.
+.Sh SEE ALSO
+.Pp
+.Xr radare2 1
+.Sh WWW
+.Pp
+https://www.radare.org/
+.Sh AUTHOR
+.Pp
+pancake <pancake@nopcode.org>

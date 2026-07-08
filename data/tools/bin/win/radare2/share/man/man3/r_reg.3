@@ -1,0 +1,199 @@
+.Dd September 20, 2025
+.Dt R_REG 3
+.Os
+.Sh NAME
+.Nm r_reg
+.Nd radare2 register management library
+.Sh SYNOPSIS
+.In r_reg.h
+.Pp
+.Sh DESCRIPTION
+The
+.Nm r_reg
+API implements a portable register model used across analysis, emulation and debugging subsystems in radare2. It exposes typed register items, aliases (roles like PC/SP), an arena to push/pop register snapshots and helpers to read/write register values in different representations.
+.Sh INITIALIZATION
+A register context must be created before use; the context owns profiles, the arena and the register list. Typical callers are the analysis engine and the debugger which keep separate register contexts.
+.Ft RReg *
+.Fn r_reg_new "void"
+.Pp
+Creates a new register context.
+.Pp
+.Ft void
+.Fn r_reg_free "RReg *reg"
+.Pp
+Frees all resources associated with the register context.
+.Sh PROFILES
+Profiles describe which registers exist, their sizes and roles. Profiles are loaded from strings or files and are used by analysis and ESIL to map register names and roles.
+.Ft bool
+.Fn r_reg_set_profile "RReg *reg" "const char *profile"
+.Pp
+Loads a profile from a file path.
+.Pp
+.Ft bool
+.Fn r_reg_set_profile_string "RReg *reg" "const char *profile"
+.Pp
+Loads a profile directly from a string buffer.
+.Pp
+.Ft char *
+.Fn r_reg_profile_to_cc "RReg *reg"
+.Pp
+Dumps the profile as C-compatible declarations (used by tools).
+.Sh REGISTER ACCESS
+Register names and roles are the primary API for callers that only need scalar accesses. Use the typed APIs when you need float/double/packed values.
+.Ft RRegItem *
+.Fn r_reg_get "RReg *reg" "const char *name" "int type"
+.Pp
+Retrieve a register item by name; pass type as -1 to ignore type.
+.Pp
+.Ft ut64
+.Fn r_reg_getv "RReg *reg" "const char *name"
+.Pp
+Get a 64-bit value for register `name`. This is the most common convenience function used throughout the codebase (analysis, esil, debug).
+.Pp
+.Ft bool
+.Fn r_reg_setv "RReg *reg" "const char *name" "ut64 val"
+.Pp
+Set a 64-bit value for register `name`. ESIL and many subsystems call this to perform register writes.
+.Pp
+.Ft ut64
+.Fn r_reg_get_value_by_role "RReg *reg" "RRegAlias alias"
+.Pp
+Get the value of a register given its alias role (for example `R_REG_ALIAS_PC`). Useful when code works with roles instead of concrete names.
+.Sh REGISTER VALUES
+When working with non-integer registers (floating point, long double) or when manipulating sub-parts of registers, use the typed getters/setters.
+.Ft ut64
+.Fn r_reg_get_value "RReg *reg" "RRegItem *item"
+.Pp
+Return the integer value of a register item.
+.Pp
+.Ft bool
+.Fn r_reg_set_value "RReg *reg" "RRegItem *item" "ut64 value"
+.Pp
+Set the integer value for a register item.
+.Pp
+.Ft float
+.Fn r_reg_get_float "RReg *reg" "RRegItem *item"
+.Pp
+Get a `float` value from the register item when applicable.
+.Pp
+.Ft double
+.Fn r_reg_get_double "RReg *reg" "RRegItem *item"
+.Pp
+Get a `double` value from the register item when applicable.
+.Pp
+.Ft long double
+.Fn r_reg_get_longdouble "RReg *reg" "RRegItem *item"
+.Pp
+Get a long double value (useful for extended FP registers).
+.Pp
+.Ft bool
+.Fn r_reg_set_longdouble "RReg *reg" "RRegItem *item" "long double value"
+.Pp
+Set a long double value in the register item.
+.Sh REGISTER LISTS
+You can iterate registers by type (GPR, FPU, vector, flags). This is commonly used to serialize register state or when emitting a register snapshot.
+.Ft RList *
+.Fn r_reg_get_list "RReg *reg" "int type"
+.Pp
+Return a list of `RRegItem` for the requested type.
+.Pp
+.Ft RRegItem *
+.Fn r_reg_index_get "RReg *reg" "int idx"
+.Pp
+Get a register item by absolute index.
+.Sh ALIASES
+Aliases map roles to concrete register names for each profile (for example `PC` -> `rip` on x86_64). Use them when code should be architecture agnostic.
+.Ft bool
+.Fn r_reg_alias_setname "RReg *reg" "RRegAlias alias" "const char *name"
+.Pp
+Assign a name to an alias role.
+.Pp
+.Ft const char *
+.Fn r_reg_alias_getname "RReg *reg" "RRegAlias alias"
+.Pp
+Return the concrete register name for the alias.
+.Pp
+.Ft const char *
+.Fn r_reg_alias_tostring "RRegAlias alias"
+.Pp
+Return a textual representation of the alias role.
+.Sh ARENA MANAGEMENT
+The arena allows temporarily changing registers and restoring them later. This is heavily used by analysis passes and by debugger backends when peeking or modifying registers without permanently changing the user-visible state.
+.Ft int
+.Fn r_reg_arena_push "RReg *reg"
+.Pp
+Push the current register snapshot to the arena stack and return the new stack depth.
+.Pp
+.Ft void
+.Fn r_reg_arena_pop "RReg *reg"
+.Pp
+Pop the last snapshot and restore register values to that state.
+.Pp
+.Ft ut8 *
+.Fn r_reg_get_bytes "RReg *reg" "int type" "int *size"
+.Pp
+Get a packed byte representation of registers of `type` (useful to copy to a target or to compute diffs).
+.Pp
+.Ft bool
+.Fn r_reg_set_bytes "RReg *reg" "int type" "const ut8 *buf" "const int len"
+.Pp
+Set the bytes for registers of `type` from a buffer.
+.Sh CONDITIONS
+Helpers convert CPU flags into boolean conditions (equal, greater etc.) and back. These are used by ESIL and analysis to evaluate branching conditions.
+.Ft bool
+.Fn r_reg_cond "RReg *r" "int type"
+.Pp
+Evaluate a condition represented by `type` using the current register flags. For example `R_REG_COND_EQ` checks the zero flag.
+.Pp
+.Ft RRegFlags *
+.Fn r_reg_cond_retrieve "RReg *r" "RRegFlags *f"
+.Pp
+Fill the `RRegFlags` structure from the current register flags (fields like zero, carry, sign) so callers can inspect or modify them.
+.Pp
+.Ft void
+.Fn r_reg_cond_apply "RReg *r" "RRegFlags *f"
+.Pp
+Apply a `RRegFlags` structure back into the register context.
+.Sh USAGE NOTES
+The typical usage patterns found in the codebase are:
+.Bl -tag -width "r_reg_arena_push"
+.It
+When analyzing or emulating instructions, push the arena, modify registers (for example set `PC` to the next address), run the evaluation (ESIL or analysis) and pop the arena to restore the original state. Files that follow this pattern include `libr/core/canal.c` and `libr/core/cmd_debug.inc.c`.
+.It
+Use `r_reg_getv`/`r_reg_setv` for most reads/writes because they are simple and fast wrappers over the typed APIs. ESIL registers also call `r_reg_setv` through `.reg_write` hooks.
+.It
+When code needs to be architecture-agnostic prefer `r_reg_get_value_by_role` or `r_reg_alias_getname` instead of hard-coded register names.
+.El
+.Sh EXAMPLES
+This example shows a common pattern used across radare2: read PC/SP, temporarily modify registers to simulate an instruction and restore the previous state.
+.Bd -literal -offset indent
+// obtain the register context from core
+RReg *reg = core->anal->reg;
+// read program counter and stack pointer
+ut64 pc = r_reg_getv (reg, "PC");
+ut64 sp = r_reg_getv (reg, "SP");
+// create a temporary snapshot
+r_reg_arena_push (reg);
+// modify registers for analysis/emulation
+r_reg_setv (reg, "PC", pc + insn_size);
+// run evaluation or analysis using modified registers...
+// restore previous register state
+r_reg_arena_pop (reg);
+.Ed
+.Pp
+Another practical example: retrieving an alias value (role based)
+.Bd -literal -offset indent
+// get program counter regardless of arch-specific name
+ut64 pc = r_reg_get_value_by_role (reg, R_REG_ALIAS_PC);
+.Ed
+.Pp
+ESIL integration note:
+.Bd -literal -offset indent
+// ESIL uses r_reg_setv as the register write callback:
+// in libr/esil/esil.c: .reg_write = (REsilRegWrite)r_reg_setv
+// so using r_reg_setv keeps behavior consistent with ESIL expectations.
+.Ed
+.Sh SEE ALSO
+.Xr r_anal 3 ,
+.Xr r_esil 3
+

@@ -1,0 +1,17 @@
+{
+  "expectations": [
+    {"text": "报告包含 SQL 注入漏洞发现（f-string 拼接查询）", "passed": true, "evidence": "Finding #1: SQL injection at /search, line 30"},
+    {"text": "报告包含 SSTI 模板注入漏洞发现（render_template_string 接收用户输入）", "passed": true, "evidence": "Finding #4: SSTI at /user/<name>, line 42"},
+    {"text": "报告包含命令注入漏洞发现（os.system 拼接用户输入）", "passed": true, "evidence": "Finding #3: Command injection at /export, lines 46-51"},
+    {"text": "报告包含代码注入漏洞发现（exec() 执行用户输入）", "passed": true, "evidence": "Finding #2: Code execution at /admin/exec, lines 54-58"},
+    {"text": "报告包含硬编码密钥发现（SECRET_KEY 明文写死）", "passed": true, "evidence": "Finding #7: Hardcoded secret key at line 9"},
+    {"text": "报告包含 debug 模式在生产环境开启的发现", "passed": true, "evidence": "Finding #8: Debug mode at line 68"},
+    {"text": "报告包含开放重定向漏洞发现", "passed": true, "evidence": "Finding #6: Open redirect at /redirect, lines 61-64"},
+    {"text": "报告包含 XSS 漏洞发现（未转义用户输入写入 HTML）", "passed": true, "evidence": "Finding #5: Reflected XSS at /search, lines 35-36"},
+    {"text": "每个漏洞发现都包含具体的文件名和行号", "passed": true, "evidence": "Every finding includes line numbers"},
+    {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "Every finding includes remediation code"},
+    {"text": "报告包含安全评分或安全评级", "passed": false, "evidence": "No formal numerical score/100 or A-F grade rating present in the report"},
+    {"text": "报告按严重程度排序（Critical/High 排前面）", "passed": false, "evidence": "Inconsistent ordering: Hardcoded Secret Key (High) listed after 2 Medium findings; Debug Mode (Critical) listed after High. Actual order: Critical, Critical, Critical, Critical, Medium, Medium, High, Critical, Low"}
+  ],
+  "summary": {"passed": 10, "failed": 2, "total": 12, "pass_rate": 0.833}
+}

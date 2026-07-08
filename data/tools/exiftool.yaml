@@ -1,0 +1,23 @@
+id: exiftool
+category: forensics
+name: 'exiftool'
+short_description: '元数据提取工具'
+description: |
+  ExifTool用于读取、写入和编辑各种文件格式的元数据。
+  
+  **主要功能：**
+  - 元数据提取
+  - 多种文件格式支持
+  - 元数据编辑
+  - 批量处理
+  
+  **使用场景：**
+  - 取证分析
+  - 元数据检查
+  - 隐私保护
+  - 文件分析
+invoke: cli
+bin: 'exiftool'
+usage: 'exiftool <file_path> [-json <output_json>] [-X <output_xml>] [-csv <output_csv>] [<tags>] [<additional_args>]'
+builtin: true
+bundled: true

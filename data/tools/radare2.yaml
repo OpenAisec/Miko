@@ -1,0 +1,35 @@
+id: radare2
+category: binary
+name: 'radare2'
+short_description: '二进制分析和逆向工程框架，支持反汇编、调试和脚本分析'
+description: |
+  Radare2是一个完整的二进制分析和逆向工程框架，支持多种架构和文件格式。
+  
+  **主要功能：**
+  - 反汇编和反编译：支持多种架构（x86, ARM, MIPS等）
+  - 调试支持：本地和远程调试
+  - 脚本支持：支持r2pipe脚本和r2命令脚本
+  - 多种文件格式：ELF, PE, Mach-O, 固件等
+  - 交互式分析：命令行界面和可视化模式
+  - 自动化分析：批量分析和脚本化分析
+  
+  **使用场景：**
+  - 二进制文件分析
+  - 逆向工程和漏洞研究
+  - 恶意软件分析
+  - CTF竞赛中的逆向题目
+  - 固件分析
+  - 漏洞利用开发
+  
+  **注意事项：**
+  - 可以使用 -c 参数执行命令后退出（非交互模式）
+  - 可以使用 -i 参数执行脚本文件
+  - 可以使用 -q 参数静默模式（不显示启动信息）
+  - 可以使用 -A 参数自动分析二进制文件
+  - 可以使用 -d 参数附加到进程进行调试
+invoke: cli
+bin: 'radare2'
+bundledEntry: 'radare2/bin/radare2.exe'
+usage: 'radare2 <target> [-c <commands>] [-i <script_file>] [-a <arch>] [-b <bits>] [-A <auto_analyze>] [-d <debug>] [-q <quiet>] [-s <seek>] [-B <base_address>] [-e <eval>] [-p <project>] [<additional_args>]'
+builtin: true
+bundled: true

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+#Get your current working directory and export it as an environment variable.
+export CALLER_DIR="${CALLER_DIR:-$(pwd -W 2>/dev/null || pwd)}"
+
+cd "$ROOT_DIR"
+
+# kimo 数据根 —— 主变量。直接指数据目录本身（开发时即源码目录下的 data/）。
+# getDataDir() 优先读它，server 与 CLI 子进程统一解析到这里，杜绝数据分裂。
+export KIMO_DATA_ROOT="${KIMO_DATA_ROOT:-$ROOT_DIR/data}"
+# KIMO_DATA_DIR：legacy 兼容变量（部分 adapter 仍读它，会自动追加 /data）。
+# 与 KIMO_DATA_ROOT 解析到同一个根；新逻辑一律以 KIMO_DATA_ROOT 为准。
+export KIMO_DATA_DIR="${KIMO_DATA_DIR:-$ROOT_DIR}"
+# Use native file search (avoids ripgrep PATH issues in background processes)
+export CLAUDE_CODE_USE_NATIVE_FILE_SEARCH="${CLAUDE_CODE_USE_NATIVE_FILE_SEARCH:-1}"
+
+# When spawned by the desktop/web server as a child CLI process,
+# skip .env loading — the server has already set the correct env
+# via kimo/settings.json. Loading .env would re-inject stale
+# provider keys (e.g., a MiniMax key as ANTHROPIC_API_KEY) that
+# override the active provider config.
+if [[ "${KIMO_SKIP_DOTENV:-0}" == "1" ]]; then
+  # Bun auto-loads .env by default; explicitly point to /dev/null to suppress.
+  ENV_FILE_FLAG="--env-file=/dev/null"
+elif [[ -f .env ]]; then
+  ENV_FILE_FLAG="--env-file=.env"
+else
+  ENV_FILE_FLAG=""
+fi
+
+# Force recovery CLI (simple readline REPL, no Ink TUI)
+if [[ "${CLAUDE_CODE_FORCE_RECOVERY_CLI:-0}" == "1" ]]; then
+  exec bun $ENV_FILE_FLAG ./src/localRecoveryCli.ts "$@"
+fi
+
+# Default: full CLI with Ink TUI
+exec bun $ENV_FILE_FLAG ./src/entrypoints/cli.tsx "$@"

@@ -1,0 +1,23 @@
+id: gdb
+category: binary
+name: 'gdb'
+short_description: 'GNU调试器，用于二进制分析和调试'
+description: |
+  GDB是GNU调试器，用于调试和分析二进制程序。
+  
+  **主要功能：**
+  - 程序调试
+  - 内存分析
+  - 反汇编
+  - 断点设置
+  
+  **使用场景：**
+  - 二进制分析
+  - 漏洞研究
+  - 逆向工程
+  - 程序调试
+invoke: cli
+bin: 'gdb'
+usage: 'gdb <binary> [-ex <commands>] [-x <script_file>] [<additional_args>]'
+builtin: true
+bundled: true

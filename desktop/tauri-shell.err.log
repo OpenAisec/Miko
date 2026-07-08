@@ -1,0 +1,11 @@
+所在位置 行:1 字符: 29
++ $env:PATH = $env:USERPROFILE\.bun\bin;$env:USERPROFILE\.cargo\bin;$en ...
++                             ~~~~~~~~~
+表达式或语句中包含意外的标记“\.bun\bin”。
+所在位置 行:1 字符: 55
++ ... :PATH = $env:USERPROFILE\.bun\bin;$env:USERPROFILE\.cargo\bin;$env:PA ...
++                                                       ~~~~~~~~~~~
+表达式或语句中包含意外的标记“\.cargo\bin”。
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : UnexpectedToken
+ 

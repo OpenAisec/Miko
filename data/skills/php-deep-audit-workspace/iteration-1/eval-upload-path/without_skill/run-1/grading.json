@@ -1,0 +1,34 @@
+{
+  "expectations": [
+    {
+      "text": "报告包含 filename 从 $_POST 到 file_put_contents 的完整 Source-to-Sink 传播链路",
+      "passed": false,
+      "evidence": "仅说'$filename 直接拼接到路径中'，无逐行追踪，无中间节点分析，无跨文件传递记录"
+    },
+    {
+      "text": "报告指出 MIME 类型检查仅依赖客户端 $file['type']（可伪造）",
+      "passed": false,
+      "evidence": "仅说'MIME 类型仅检查 $file[\"type\"]（客户端可控，可伪造）'，未解释 $file['type'] 为什么来自客户端、如何伪造"
+    },
+    {
+      "text": "报告包含路径穿越的具体利用 payload（如 ../../config/database.php）",
+      "passed": false,
+      "evidence": "仅提到'../../config/database.php'作为示例，无完整的利用场景说明"
+    },
+    {
+      "text": "报告对每个漏洞给出了完整的修复代码示例",
+      "passed": false,
+      "evidence": "仅有一句话建议如'使用 basename($filename)'或'使用 finfo 检测真实 MIME 类型'，无完整代码"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "timing": {
+    "executor_duration_seconds": 12.0,
+    "total_duration_seconds": 12.0
+  }
+}

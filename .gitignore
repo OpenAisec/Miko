@@ -1,0 +1,157 @@
+.env
+.env.*
+!.env.example
+node_modules
+openspec
+.DS_Store
+
+# Computer Use runtime (auto-generated)
+.runtime/
+extracted-natives/
+
+# Adapter attachment cache (created at runtime by AttachmentStore when
+# running adapter tests or the feishu/telegram adapters locally)
+.lark-attachments/
+.tg-attachments/
+
+# Playwright MCP snapshots & logs
+.playwright-mcp/
+
+# OMX state/logs
+.omx/
+
+# E2E screenshots
+e2e-*.png
+
+# Quality gate reports
+artifacts/quality-runs/
+artifacts/coverage/
+
+# Desktop build output
+desktop/dist/
+desktop/build-artifacts/
+desktop/src-tauri/binaries/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/package-lock.json
+
+# Desktop brand asset candidates (keep only selected ones in public/)
+desktop/brand-assets/
+
+# Claude local config & auto-generated
+.claude/
+
+# Superpowers plans & specs (local only)
+docs/superpowers/
+.superpowers/
+
+# Temp server/web logs
+.tmp-*.log
+
+# Debug / temp screenshots (root dir only)
+/*.png
+bug_attachments/
+
+# Private keys & credentials
+*.pem
+*.key
+*.p12
+credentials*.json
+
+# TS build cache
+*.tsbuildinfo
+
+# Temp markdown snapshots
+sidebar-snapshot.md
+
+# VitePress
+docs/.vitepress/dist
+docs/.vitepress/cache
+runtime/__pycache__
+
+# IDE
+.idea
+
+# Codex logs
+.codex-logs/
+
+# Local AI assistant artifacts (graph, notes)
+CLAUDE.md
+graphify-out/
+
+# 工具台账二进制：Windows 二进制入 git（保证 clone 即可打包，开箱即用）；
+# linux/darwin 暂无二进制，保持忽略（将来补齐后再放行对应行）
+# data/tools/bin/win/*   ← 已放行，Windows 二进制随仓库分发
+data/tools/bin/linux/*
+data/tools/bin/darwin/*
+!data/tools/bin/**/.gitkeep
+!data/tools/bin/README.md
+# 工具探测状态缓存（可重建，非真相源）
+data/tools/.status.json
+# 用户为 requiresUserPath 工具配置的本机路径（用户机器相关，不入 git）
+data/tools/.userpaths.json
+
+# ─────────────────────────────────────────────────────────
+# 开源发布：排除运行时数据，保留目录结构（靠 .gitkeep）
+# ─────────────────────────────────────────────────────────
+
+# 真实密钥文件（用户运行时生成，含明文 apiKey）
+# 模板见 data/kimo/providers.example.json
+data/kimo/providers.json
+
+# 诊断/遥测日志（会话运行产生）
+data/kimo/diagnostics/
+
+# 会话记录（保留目录，只忽略内容）
+data/projects/*
+!data/projects/.gitkeep
+data/sessions/*
+!data/sessions/.gitkeep
+data/security/*
+!data/security/.gitkeep
+data/shell-snapshots/*
+!data/shell-snapshots/.gitkeep
+data/file-history/*
+!data/file-history/.gitkeep
+data/tasks/*
+!data/tasks/.gitkeep
+data/uploads/*
+!data/uploads/.gitkeep
+
+# 运行时日志/缓存残留
+data/backend.log
+data/backend.err
+data/vite.log
+data/vite.err
+data/*.log
+data/*.err
+cookies*.txt
+
+# ─────────────────────────────────────────────────────────
+# 运行时缓存 / 实战残留（严禁开源）
+# ─────────────────────────────────────────────────────────
+
+# Cache 目录（MCP 日志等运行时缓存）
+Cache/
+
+# HVV/实战真实目标资产（IP段、证书、target数据）——严禁公开
+src-hvv/
+
+# 根目录运行时数据（非 data/ 下的外层残留）
+/tasks/
+/shell-snapshots/
+/backups/
+/file-history/
+/dogfood-output/
+/kimo.json
+/server.out.log
+/server.err.log
+
+# 渗透测试临时产物（payload / exploit / 提取脚本）
+*.bin
+*_exploit.py
+temp_extract.py
+test_builtins.py
+run_extract.*
+run_script.*
+ssti_*.py

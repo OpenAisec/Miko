@@ -1,0 +1,11 @@
+prefix=D:/a/radare2/radare2/radare2-6.1.8-w64
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: r_io
+Description: radare foundation libraries
+Version: 6.1.8
+Requires: r_util, r_cons, r_muta, r_socket
+Libs: -L${libdir} -lr_io 
+Libs.private: -lpsapi -lws2_32 -lwininet
+Cflags: -I${includedir}/libr

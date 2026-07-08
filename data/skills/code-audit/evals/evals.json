@@ -1,0 +1,62 @@
+{
+  "skill_name": "code-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我审计一下 evals/files/case1_webapp.py 这个 Flask 应用的安全性，输出完整的安全审计报告。",
+      "expected_output": "一份结构化安全审计报告，包含：SQL注入、SSTI模板注入、命令注入(os.system)、exec()代码注入、硬编码SECRET_KEY、XSS、开放重定向、debug模式开启等漏洞发现，每个发现附代码位置和修复建议",
+      "files": ["evals/files/case1_webapp.py"],
+      "expectations": [
+        "报告包含 SQL 注入漏洞发现（f-string 拼接查询）",
+        "报告包含 SSTI 模板注入漏洞发现（render_template_string 接收用户输入）",
+        "报告包含命令注入漏洞发现（os.system 拼接用户输入）",
+        "报告包含代码注入漏洞发现（exec() 执行用户输入）",
+        "报告包含硬编码密钥发现（SECRET_KEY 明文写死）",
+        "报告包含 debug 模式在生产环境开启的发现",
+        "报告包含开放重定向漏洞发现",
+        "报告包含 XSS 漏洞发现（未转义用户输入写入 HTML）",
+        "每个漏洞发现都包含具体的文件名和行号",
+        "每个漏洞发现都包含修复建议",
+        "报告包含安全评分或安全评级",
+        "报告按严重程度排序（Critical/High 排前面）"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need a security audit on this Python data processor script at evals/files/case2_processor.py. Please produce a full security report.",
+      "expected_output": "结构化安全审计报告，包含：unsafe yaml.load()、pickle反序列化、硬编码API_TOKEN、MD5密码哈希、不安全的random生成token、路径遍历、tarfile解压风险(Zip Slip)、chmod 0o777等多个漏洞发现",
+      "files": ["evals/files/case2_processor.py"],
+      "expectations": [
+        "报告包含不安全的 yaml.load() 反序列化漏洞发现",
+        "报告包含 pickle.load() 反序列化漏洞发现",
+        "报告包含硬编码 API_TOKEN 发现",
+        "报告包含 MD5 密码哈希弱点发现",
+        "报告包含不安全随机数生成发现（random 用于 token）",
+        "报告包含路径遍历漏洞发现（process_file 的 os.path.join）",
+        "报告包含 tarfile 解压遍历风险发现（Zip Slip）",
+        "报告包含不安全的文件权限发现（chmod 0o777）",
+        "每个漏洞发现都包含具体的代码位置和行号",
+        "每个漏洞发现都包含修复建议",
+        "报告包含安全评分或安全评级"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "这个 API 客户端代码 evals/files/case3_api.py 有没有安全问题？帮我做一次完整的安全审查，给出报告。",
+      "expected_output": "结构化安全审计报告，包含：SSRF漏洞、硬编码Bearer Token、XML外部实体注入(XXE)、敏感信息通过print泄露、exec()执行远程代码等漏洞发现",
+      "files": ["evals/files/case3_api.py"],
+      "expectations": [
+        "报告包含 SSRF 漏洞发现（用户可控 URL 被直接请求）",
+        "报告包含硬编码认证 Token 发现",
+        "报告包含 XXE/XML 外部实体注入漏洞发现",
+        "报告包含敏感信息泄露发现（print 输出 token）",
+        "报告包含代码注入漏洞发现（exec() 执行远程下载代码）",
+        "报告包含不安全的文件写入发现（upload_file 路径由 URL 决定）",
+        "每个漏洞发现都包含具体的文件名和行号",
+        "每个漏洞发现都包含修复建议",
+        "报告包含安全评分或安全评级",
+        "报告按严重程度排序"
+      ]
+    }
+  ]
+}

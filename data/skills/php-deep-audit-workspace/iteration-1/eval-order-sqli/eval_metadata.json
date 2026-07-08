@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "order-sqli",
+  "prompt": "帮我对这个订单模块做深度安全审计，重点追踪用户输入从 Controller 到 Repository 的完整传播路径...",
+  "assertions": [
+    "报告包含 $_GET['order_id'] 从 Controller 经 Service 到 Repository 的完整跨文件传播链路",
+    "报告明确指出 $sortField 在 ORDER BY 中无法通过参数化查询防护，需要白名单",
+    "报告包含具体的 SQL 注入攻击 payload 示例",
+    "报告对每个漏洞给出了具体的修复代码（不仅是建议）"
+  ]
+}

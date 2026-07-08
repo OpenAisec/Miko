@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "报告解释了 addslashes + GBK 宽字节注入的原理（含 %df%5c 字节序列分析）",
+      "passed": false,
+      "evidence": "仅提到'addslashes() 在 GBK 编码下不可靠'，无字节序列分析，无原理解释"
+    },
+    {
+      "text": "报告指出 buildRedirectUrl 中 // 协议相对 URL 可绕过 strpos(http://) 检查",
+      "passed": false,
+      "evidence": "仅说'可以用 // 协议相对URL绕过'，未解释为什么能绕过 strpos 检查，未说明浏览器的协议相对 URL 解析行为"
+    },
+    {
+      "text": "报告指出 ssoVerify 中 token/state 未 URL 编码导致查询参数注入",
+      "passed": false,
+      "evidence": "仅说'直接拼接到 URL，未做 URL 编码'，未分析这会导致什么安全问题（参数截断、参数覆盖）"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 3,
+    "total": 3,
+    "pass_rate": 0.0
+  },
+  "timing": {
+    "executor_duration_seconds": 12.0,
+    "total_duration_seconds": 12.0
+  }
+}

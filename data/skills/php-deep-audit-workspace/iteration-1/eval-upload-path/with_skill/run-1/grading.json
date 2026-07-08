@@ -1,0 +1,34 @@
+{
+  "expectations": [
+    {
+      "text": "报告包含 filename 从 $_POST 到 file_put_contents 的完整 Source-to-Sink 传播链路",
+      "passed": true,
+      "evidence": "传播链路完整列出: $_POST['filename'] → UploadController.php:57 → UploadController.php:61 (跨文件) → FileService.php:43 → FileService.php:47 ($exportDir拼接) → FileService.php:50 (dirname) → FileService.php:52 (mkdir) → FileService.php:56 (file_put_contents)，每步标注文件:行号"
+    },
+    {
+      "text": "报告指出 MIME 类型检查仅依赖客户端 $file['type']（可伪造）",
+      "passed": true,
+      "evidence": "明确写有'$file['type'] = 客户端 Content-Type 头 → 可伪造'，并说明'攻击者直接用 Burp 修改 Content-Type 为 image/png'"
+    },
+    {
+      "text": "报告包含路径穿越的具体利用 payload（如 ../../config/database.php）",
+      "passed": true,
+      "evidence": "利用场景包含4个具体 payload: ../../webroot/shell.php（写webshell）、../../.env（覆写配置）、../.htaccess（启用PHP执行）、../../../root/.ssh/authorized_keys（SSH写入）"
+    },
+    {
+      "text": "报告对每个漏洞给出了完整的修复代码示例",
+      "passed": true,
+      "evidence": "每个漏洞都有完整修复代码: basename() + bin2hex随机化 + realpath()校验的完整方法、finfo检测真实MIME + getimagesize()验证 + 随机化文件名的完整方法"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 42.0,
+    "total_duration_seconds": 42.0
+  }
+}

@@ -1,0 +1,23 @@
+id: katana
+category: web
+name: 'katana'
+short_description: '下一代Web爬虫和蜘蛛工具'
+description: |
+  Katana是一个快速、智能的Web爬虫工具，用于发现Web应用中的端点和资源。
+  
+  **主要功能：**
+  - 智能Web爬虫
+  - JavaScript渲染支持
+  - 表单提取
+  - 端点发现
+  
+  **使用场景：**
+  - Web应用侦察
+  - 端点发现
+  - 内容爬取
+  - 安全测试
+invoke: cli
+bin: 'katana'
+usage: 'katana -u <url> [-d <depth>] [-jc <js_crawl>] [-fx <form_extraction>] [<additional_args>]'
+builtin: true
+bundled: true

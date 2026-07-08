@@ -1,0 +1,11 @@
+prefix=D:/a/radare2/radare2/radare2-6.1.8-w64
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: r_arch
+Description: radare foundation libraries
+Version: 6.1.8
+Requires: r_util, r_esil, r_muta, r_reg
+Libs: -L${libdir} -lr_arch 
+Libs.private: -lpsapi
+Cflags: -I${includedir}/libr

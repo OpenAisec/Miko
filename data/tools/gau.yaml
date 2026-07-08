@@ -1,0 +1,23 @@
+id: gau
+category: asset
+name: 'gau'
+short_description: '从多个数据源获取所有URL'
+description: |
+  Gau (Get All URLs) 从多个数据源获取目标域名的所有URL。
+  
+  **主要功能：**
+  - 从Wayback Machine获取URL
+  - 从CommonCrawl获取URL
+  - 从OTX获取URL
+  - 从URLScan获取URL
+  
+  **使用场景：**
+  - URL发现
+  - 历史URL收集
+  - Bug bounty侦察
+  - 安全测试
+invoke: cli
+bin: 'gau'
+usage: 'gau <domain> [-providers <providers>] [-subs <include_subs>] [<additional_args>]'
+builtin: true
+bundled: true

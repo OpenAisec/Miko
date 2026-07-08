@@ -1,0 +1,10 @@
+prefix=D:/a/radare2/radare2/radare2-6.1.8-w64
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: sdb
+Description: Simple DataBase
+URL: https://github.com/radareorg/sdb
+Version: 2.4.6
+Libs: -L${libdir} -llibsdb
+Cflags: -I${includedir}/sdb

@@ -1,0 +1,148 @@
+.Dd Jul 10, 2025
+.Dt RASM2 1
+.Sh NAME
+.Nm rasm2
+.Nd Radare2 Assembler and Disassembler Tool
+.Sh SYNOPSIS
+.Nm rasm2
+.Op Fl ACdDehHjLvwrNqxp
+.Op Fl a Ar arch
+.Op Fl b Ar bits
+.Op Fl c Ar cpu
+.Op Fl F Ar parser
+.Op Fl k Ar kernel
+.Op Fl o Ar ofile
+.Op Fl s Ar addr
+.Op Fl @ Ar addr
+.Op Fl S Ar syntax
+.Op Fl i Ar len
+.Op Fl l Ar len
+.Op Ar code|hex|-
+.Sh DESCRIPTION
+Assembles and disassembles code or hexpair strings for multiple architectures and syntax formats.
+.Pp
+.Bl -tag -width Fl
+.It Fl a Ar arch
+Set architecture plugin
+.It Fl A
+Show analysis information of given hexpair string
+.It Fl b Ar bits
+Set architecture bits (8, 16, 32, 64)
+.It Fl B
+Binary input/output (\-l is mandatory for binary input)
+.It Fl c Ar cpu
+Select specific CPU (depends on \-a arch)
+.It Fl C
+Output in C format
+.It Fl d
+Disassemble hexpair bytes. rasm2 \-d 9090
+.It Fl D
+Disassemble showing hexpair and opcode
+.It Fl e
+Use big endian instead of little endian
+.It Fl E
+Output disassembled instructions in ESIL format
+.It Fl f Ar file
+Read data from file instead of ARG
+.It Fl F Ar parser
+Specify parse plugin to be used (pseudo)
+.It Fl h
+Show usage help message
+.It Fl hh
+Show long help message including supported assembler directives
+.It Fl H Op var
+Display variable
+.It Fl i Ar len
+Ignore/skip N bytes from the beginning of the input buffer
+.It Fl j
+Output in json format
+.It Fl k Ar kernel
+Select operating system (linux, windows, darwin, android, ios, ...)
+.It Fl l Ar len
+Input/Output length
+.It Fl L Op name
+List RArch plugins: (a=asm, d=disasm, e=esil, p=parse)
+.It Fl LL Op name
+List RAsm parse plugins
+.It Fl N
+Don't load any plugin, same as R2_NOPLUGINS=1 or r2 -N
+.It Fl o Ar ofile
+Output to file, for example 'rasm2 \-Bf a.asm'
+.It Fl p
+Run SPP over input for assembly
+.It Fl q
+Quiet output (handy for -L, -v, ...)
+.It Fl r
+Show output in r2 script
+.It Fl s Ar addr
+Define initial start/seek address (default 0)
+.It Fl @ Ar addr
+Alias for -s
+.It Fl S Ar syntax
+Select syntax output (intel, att, masm, ...)
+.It Fl v
+Show version information
+.It Fl w
+Describe opcode (what's op)
+.It Fl x
+Use hex dwords instead of hexpairs in the assembler output
+.El
+.Sh ENVIRONMENT
+.Pp
+.Bl -tag -width Fl
+.It Ev R2_NOPLUGINS
+Do not load shared plugins (speedup loading)
+.It Ev R2_PLUGINS_ORDER
+Plugin load order: i=internal, e=env, h=home, s=system; default=iehs; ? prints help
+.It Ev R2_LOG_LEVEL
+Change the log level
+.It Ev R2_DEBUG
+If defined, show error messages and crash signal
+.It Ev R2_DEBUG_ASSERT
+Enables runtime assertions for debugging
+.It Ev RASM2_ARCH
+Same as rasm2 -a
+.It Ev RASM2_BITS
+Same as rasm2 -b
+.El
+.Sh DIRECTIVES
+.Pp
+List the supported assembler and preprocessor directives with:
+.Pp
+ $ rasm2 -hh
+.Pp
+.Sh EXAMPLES
+.Pp
+Assemble opcode:
+.Pp
+  $ rasm2 \-a x86 \-b 32 'mov eax, 33'
+.Pp
+Disassemble opcode:
+.Pp
+  $ rasm2 \-d 90
+.Pp
+Show all supported architectures:
+.Pp
+  $ rasm2 -L
+.Pp
+Assemble with specific syntax:
+.Pp
+  $ rasm2 -a x86 -b 32 -S att 'mov eax, 33'
+.Pp
+Output in JSON format:
+.Pp
+  $ rasm2 -j -a x86 -b 32 'mov eax, 33'
+.Pp
+Use big endian:
+.Pp
+  $ rasm2 -e -a arm -b 32 'add r0, r0, r1'
+.Pp
+Disassemble and show ESIL output:
+.Pp
+  $ rasm2 -d -E 90
+.Sh SEE ALSO
+.Pp
+.Xr radare2(1)
+.Sh AUTHORS
+.Pp
+pancake <pancake@nopcode.org>

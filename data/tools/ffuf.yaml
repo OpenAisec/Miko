@@ -1,0 +1,24 @@
+id: ffuf
+category: web
+name: 'ffuf'
+short_description: '快速Web模糊测试工具，用于目录、参数和内容发现'
+description: |
+  FFuf是一个快速的Web模糊测试工具，用于目录发现、参数模糊测试和内容发现。
+  
+  **主要功能：**
+  - 快速目录和文件发现
+  - 参数模糊测试
+  - 虚拟主机发现
+  - 自定义过滤器和匹配器
+  - 多线程支持
+  
+  **使用场景：**
+  - Web应用安全测试
+  - 目录枚举
+  - 参数发现
+  - 内容发现
+invoke: cli
+bin: 'ffuf'
+usage: 'ffuf -u <url> [-w <wordlist>] [-mc <match_codes>] [<additional_args>]'
+builtin: true
+bundled: true

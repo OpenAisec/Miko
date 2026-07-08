@@ -1,0 +1,17 @@
+{
+  "runs": [
+    {
+      "id": "9eb78297a664",
+      "taskId": "ff992c88",
+      "taskName": "trigger trim",
+      "startedAt": "2026-06-23T11:04:38.646Z",
+      "status": "failed",
+      "prompt": "trigger trim",
+      "completedAt": "2026-06-23T11:04:43.681Z",
+      "output": "",
+      "exitCode": 143,
+      "durationMs": 5035,
+      "error": ""
+    }
+  ]
+}

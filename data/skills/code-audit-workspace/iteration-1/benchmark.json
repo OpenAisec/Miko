@@ -1,0 +1,221 @@
+{
+  "metadata": {
+    "skill_name": "code-audit",
+    "skill_path": "D:/code/agent/miko/miko/miko/data/skills/code-audit",
+    "executor_model": "deepseek-v4-pro",
+    "analyzer_model": "deepseek-v4-pro",
+    "timestamp": "2026-06-18T04:14:25Z",
+    "evals_run": [0, 1, 2],
+    "runs_per_configuration": 1
+  },
+
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "webapp-flask",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 12,
+        "failed": 0,
+        "total": 12,
+        "time_seconds": 46.1,
+        "tokens": 24855,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "报告包含 SQL 注入漏洞发现", "passed": true, "evidence": "Lines 131-167"},
+        {"text": "报告包含 SSTI 模板注入漏洞发现", "passed": true, "evidence": "Lines 171-201"},
+        {"text": "报告包含命令注入漏洞发现", "passed": true, "evidence": "Lines 51-97"},
+        {"text": "报告包含代码注入漏洞发现", "passed": true, "evidence": "Lines 13-48"},
+        {"text": "报告包含硬编码密钥发现", "passed": true, "evidence": "Lines 99-127"},
+        {"text": "报告包含 debug 模式发现", "passed": true, "evidence": "Lines 235-259"},
+        {"text": "报告包含开放重定向漏洞发现", "passed": true, "evidence": "Lines 266-301"},
+        {"text": "报告包含 XSS 漏洞发现", "passed": true, "evidence": "Lines 205-231"},
+        {"text": "每个漏洞发现都包含文件名和行号", "passed": true, "evidence": "All findings include line numbers"},
+        {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "All findings include fix code"},
+        {"text": "报告包含安全评分或安全评级", "passed": true, "evidence": "Score 0/100, Rating F"},
+        {"text": "报告按严重程度排序", "passed": true, "evidence": "Critical→High→Low order maintained"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "webapp-flask",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.833,
+        "passed": 10,
+        "failed": 2,
+        "total": 12,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "报告包含 SQL 注入漏洞发现", "passed": true, "evidence": "Finding #1"},
+        {"text": "报告包含 SSTI 模板注入漏洞发现", "passed": true, "evidence": "Finding #4"},
+        {"text": "报告包含命令注入漏洞发现", "passed": true, "evidence": "Finding #3"},
+        {"text": "报告包含代码注入漏洞发现", "passed": true, "evidence": "Finding #2"},
+        {"text": "报告包含硬编码密钥发现", "passed": true, "evidence": "Finding #7"},
+        {"text": "报告包含 debug 模式发现", "passed": true, "evidence": "Finding #8"},
+        {"text": "报告包含开放重定向漏洞发现", "passed": true, "evidence": "Finding #6"},
+        {"text": "报告包含 XSS 漏洞发现", "passed": true, "evidence": "Finding #5"},
+        {"text": "每个漏洞发现都包含文件名和行号", "passed": true, "evidence": "All findings have line numbers"},
+        {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "All findings have remediation"},
+        {"text": "报告包含安全评分或安全评级", "passed": false, "evidence": "No formal numerical score or A-F grade"},
+        {"text": "报告按严重程度排序", "passed": false, "evidence": "High after Medium, Critical after High - inconsistent ordering"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "data-processor",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "报告包含 yaml.load() 反序列化漏洞", "passed": true, "evidence": "Lines 59-78"},
+        {"text": "报告包含 pickle.load() 反序列化漏洞", "passed": true, "evidence": "Lines 33-56"},
+        {"text": "报告包含硬编码 API_TOKEN", "passed": true, "evidence": "Lines 13-30"},
+        {"text": "报告包含 MD5 密码哈希弱点", "passed": true, "evidence": "Lines 147-174"},
+        {"text": "报告包含不安全随机数生成", "passed": true, "evidence": "Lines 207-226"},
+        {"text": "报告包含路径遍历漏洞", "passed": true, "evidence": "Lines 115-142"},
+        {"text": "报告包含 tarfile Zip Slip", "passed": true, "evidence": "Lines 82-112"},
+        {"text": "报告包含 chmod 0o777", "passed": true, "evidence": "Lines 177-203"},
+        {"text": "每个漏洞发现都包含代码位置和行号", "passed": true, "evidence": "All findings include line numbers"},
+        {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "All findings include fix code"},
+        {"text": "报告包含安全评分或安全评级", "passed": true, "evidence": "Score 0/100, Rating F"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "data-processor",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.909,
+        "passed": 10,
+        "failed": 1,
+        "total": 11,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "报告包含 yaml.load() 反序列化漏洞", "passed": true, "evidence": "Finding #2"},
+        {"text": "报告包含 pickle.load() 反序列化漏洞", "passed": true, "evidence": "Finding #3"},
+        {"text": "报告包含硬编码 API_TOKEN", "passed": true, "evidence": "Finding #1"},
+        {"text": "报告包含 MD5 密码哈希弱点", "passed": true, "evidence": "Finding #7"},
+        {"text": "报告包含不安全随机数生成", "passed": true, "evidence": "Finding #9"},
+        {"text": "报告包含路径遍历漏洞", "passed": true, "evidence": "Finding #4"},
+        {"text": "报告包含 tarfile Zip Slip", "passed": true, "evidence": "Finding #5"},
+        {"text": "报告包含 chmod 0o777", "passed": true, "evidence": "Finding #6"},
+        {"text": "每个漏洞发现都包含代码位置和行号", "passed": true, "evidence": "All findings include line numbers"},
+        {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "All findings include remediation"},
+        {"text": "报告包含安全评分或安全评级", "passed": false, "evidence": "No numerical score or A-F grade"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "api-client",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 8,
+        "failed": 2,
+        "total": 10,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "报告包含 SSRF 漏洞发现", "passed": true, "evidence": "Lines 93-177: two SSRF findings"},
+        {"text": "报告包含硬编码认证 Token", "passed": true, "evidence": "Lines 63-89"},
+        {"text": "报告包含 XXE/XML 外部实体注入", "passed": false, "evidence": "No XXE finding for parse_xml_payload() at line 34"},
+        {"text": "报告包含敏感信息泄露（print token）", "passed": true, "evidence": "Lines 181-214"},
+        {"text": "报告包含代码注入 exec()", "passed": true, "evidence": "Lines 12-59"},
+        {"text": "报告包含不安全文件写入", "passed": false, "evidence": "upload_file() not flagged as file write issue"},
+        {"text": "每个漏洞发现都包含文件名和行号", "passed": true, "evidence": "All findings include line numbers"},
+        {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "All findings include fix code"},
+        {"text": "报告包含安全评分或安全评级", "passed": true, "evidence": "Score 12/100, Rating F"},
+        {"text": "报告按严重程度排序", "passed": true, "evidence": "Critical→High→Low order"}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "api-client",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 8,
+        "failed": 2,
+        "total": 10,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "报告包含 SSRF 漏洞发现", "passed": true, "evidence": "Finding #3: SSRF across 4 methods"},
+        {"text": "报告包含硬编码认证 Token", "passed": true, "evidence": "Finding #2"},
+        {"text": "报告包含 XXE/XML 外部实体注入", "passed": true, "evidence": "Finding #5: XXE/Billion Laughs"},
+        {"text": "报告包含敏感信息泄露（print token）", "passed": true, "evidence": "Finding #4"},
+        {"text": "报告包含代码注入 exec()", "passed": true, "evidence": "Finding #1"},
+        {"text": "报告包含不安全文件写入", "passed": false, "evidence": "upload_file() only mentioned under SSRF, not standalone"},
+        {"text": "每个漏洞发现都包含文件名和行号", "passed": true, "evidence": "All findings include line numbers"},
+        {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "All findings include remediation"},
+        {"text": "报告包含安全评分或安全评级", "passed": false, "evidence": "No numerical score or A-F grade"},
+        {"text": "报告按严重程度排序", "passed": true, "evidence": "Critical→High→Medium→Low order"}
+      ],
+      "notes": []
+    }
+  ],
+
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 0.939, "stddev": 0.094, "min": 0.80, "max": 1.0},
+      "time_seconds": {"mean": 46.1, "stddev": 0, "min": 46.1, "max": 46.1},
+      "tokens": {"mean": 24855, "stddev": 0, "min": 24855, "max": 24855}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.848, "stddev": 0.044, "min": 0.80, "max": 0.909},
+      "time_seconds": {"mean": 0, "stddev": 0, "min": 0, "max": 0},
+      "tokens": {"mean": 0, "stddev": 0, "min": 0, "max": 0}
+    },
+    "delta": {
+      "pass_rate": "+0.09",
+      "time_seconds": "+46.1",
+      "tokens": "+24855"
+    }
+  },
+
+  "notes": [
+    "webapp-flask: with_skill 产生结构化报告含评分，命中率 100%；without_skill 缺少安全评分和严格排序 → +16.7%",
+    "data-processor: with_skill 100% 命中，包含安全评分；without_skill 90.9% 缺少评分 → +9.1%",
+    "api-client: 双方 80% 持平。with_skill 遗漏 XXE 漏洞但给出结构化评分；without_skill 发现 XXE 但缺少安全评分",
+    "Skill 核心价值：强制结构化报告模板（评分、排序、CWE引用），确保输出一致性和完整性",
+    "Skill 改进方向：需加强 XXE 和文件写入相关漏洞的检查提示",
+    "安全评分断言是最具区分度的指标 — without_skill 在 3 个测试中均未给出评分"
+  ]
+}

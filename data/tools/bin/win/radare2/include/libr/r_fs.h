@@ -1,0 +1,264 @@
+#ifndef R2_FS_H
+#define R2_FS_H
+
+#include <r_types.h>
+#include <r_list.h>
+#include <r_bind.h> // RCoreBind
+#include <r_io.h> // RIOBind
+#include <r_util.h>
+#include <r_cons.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+R_LIB_VERSION_HEADER (r_fs);
+
+struct r_fs_plugin_t;
+struct r_fs_root_t;
+struct r_fs_t;
+
+typedef struct r_fs_t {
+	RIOBind iob;
+	RCoreBind cob;
+	RConsBind csb;
+	RList /*<RFSRoot>*/ *roots;
+	int view;
+	void *ptr;
+	RLibStore *libstore;
+} RFS;
+
+typedef struct r_fs_partition_plugin_t {
+	const char *name;
+} RFSPartitionPlugin;
+
+typedef struct r_fs_file_t {
+	char *name;
+	char *path;
+	ut64 off;
+	ut32 size;
+	ut8 *data;
+	void *ctx;
+	char type;
+	ut32 uid; // owner
+	ut32 gid; // group
+	ut32 perm; // rwx
+	ut64 time;
+	struct r_fs_plugin_t *p;
+	struct r_fs_root_t *root;
+	void *ptr; // internal pointer
+	// Populated only when the file is a loadable bin inside a container.
+	// r_fs_file_free takes ownership and frees all of these.
+	RBuffer *buf;      // zero-copy slice of the container, or decompressed bytes
+	char *arch;        // "arm", "x86", ...; NULL when unknown
+	int bits;
+	char *machine;     // cpu subtype / abi string
+	char *btype;       // bin type (exec, dyn, ...)
+	const char *container; // name of the producing fs plugin; do not free
+} RFSFile;
+
+typedef struct r_fs_root_t {
+	char *path;
+	ut64 delta;
+	char *options;
+	struct r_fs_plugin_t *p;
+	void *ptr;
+	// Backing IO fd for container filesystems (fatmacho, etc). -1 when not
+	// applicable. Closing this fd while the mount is active breaks slice
+	// reads, so o- refuses to close fds held by a mount.
+	int fd;
+	// TODO: deprecate
+	RIOBind iob;
+	RCoreBind cob;
+} RFSRoot;
+
+typedef struct r_fs_plugin_t {
+	RPluginMeta meta;
+	RFSFile* (*slurp)(RFSRoot *root, const char *path);
+	RFSFile* (*open)(RFSRoot *root, const char *path, bool create);
+	bool (*unlink)(RFSRoot *root, const char *path);
+	int (*write)(RFSFile *fs, ut64 addr, const ut8 *data, int len);
+	int (*read)(RFSFile *fs, ut64 addr, int len);
+	void (*close)(RFSFile *fs);
+	RList *(*dir)(RFSRoot *root, const char *path, int view);
+	bool (*mkdir)(RFSRoot *root, const char *path);
+	bool (*init)(void);
+	void (*fini)(void);
+	bool (*mount)(RFSRoot *root);
+	void (*umount)(RFSRoot *root);
+	/* callback to run plugin-specific commands (e.g. m:cmd) */
+	bool (*cmd)(RFS *fs, const char *cmd);
+	/* callback to print filesystem-specific details */
+	void (*details)(RFSRoot *root, RStrBuf *sb);
+	/* optional: enumerate loadable bins inside a container buffer. Returns
+	 * NULL when the plugin is not a bin container or the buffer doesn't
+	 * match. Each entry must have ->buf populated (zero-copy slice or
+	 * fresh buffer) plus arch/bits/machine/btype when known. */
+	RList/*<RFSFile>*/ *(*bins)(RBuffer *buf);
+} RFSPlugin;
+
+typedef struct r_fs_partition_t {
+	int number;
+	ut64 start;
+	ut64 length;
+	int index;
+	int type;
+} RFSPartition;
+
+typedef struct r_fs_shell_t {
+	RCons *cons;
+	char *cwd;
+	void (*set_prompt)(RLine *line, const char *prompt);
+	const char* (*readline)(RCons *cons);
+	bool (*hist_add)(RLine *line, const char *text);
+} RFSShell;
+
+typedef struct r_fs_type_t {
+	const char * const name;
+	int bufoff;
+	const char * const buf;
+	int buflen;
+	int byteoff;
+	ut8 byte;
+	int bytelen;
+} RFSType;
+
+static inline RFSShell *r_fs_shell_new(void) {
+	return R_NEW0 (RFSShell);
+}
+
+static inline void r_fs_shell_free(RFSShell *s) {
+	free (s->cwd);
+	free (s);
+}
+
+#define R_FS_FILE_TYPE_MOUNTPOINT 'm'
+#define R_FS_FILE_TYPE_DIRECTORY 'd'
+#define R_FS_FILE_TYPE_REGULAR 'r'
+#define R_FS_FILE_TYPE_DELETED 'x'
+#define R_FS_FILE_TYPE_SPECIAL 's'
+#define R_FS_FILE_TYPE_BLOCK 'b'
+#define R_FS_FILE_TYPE_CHAR 'c'
+#define R_FS_FILE_TYPE_MOUNT 'm'
+
+// symlinked types
+#define R_FS_FILE_TYPE_S_MOUNTPOINT 'M'
+#define R_FS_FILE_TYPE_S_DIRECTORY 'D'
+#define R_FS_FILE_TYPE_S_REGULAR 'R'
+#define R_FS_FILE_TYPE_S_DELETED 'X'
+#define R_FS_FILE_TYPE_S_SPECIAL 'S'
+#define R_FS_FILE_TYPE_S_BLOCK 'B'
+#define R_FS_FILE_TYPE_S_CHAR 'C'
+#define R_FS_FILE_TYPE_S_MOUNT 'M'
+
+typedef int (*RFSPartitionIterator)(void *disk, void *ptr, void *user);
+typedef struct r_fs_partition_type_t {
+	const char *name;
+	void *ptr; // grub_msdos_partition_map
+	RFSPartitionIterator iterate;
+	//RFSPartitionIterator parhook;
+} RFSPartitionType;
+#define R_FS_PARTITIONS_LENGTH (int)(sizeof (partitions)/sizeof (RFSPartitionType)-1)
+
+enum {
+	R_FS_VIEW_NORMAL = 0,
+	R_FS_VIEW_DELETED = 1,
+	R_FS_VIEW_SPECIAL = 2,
+	R_FS_VIEW_ALL = 0xff,
+};
+
+#ifdef R_API
+R_API RFS *r_fs_new(void);
+R_API void r_fs_free(RFS* fs);
+
+R_API void r_fs_view(RFS* fs, int view);
+R_API bool r_fs_plugin_add(RFS *fs, RFSPlugin *p);
+R_API bool r_fs_plugin_remove(RFS *fs, RFSPlugin *p);
+R_API void r_fs_del(RFS *fs, RFSPlugin *p);
+
+R_API RFSRoot *r_fs_mount(RFS* fs, const char *fstype, const char *path, ut64 delta);
+R_API RFSRoot *r_fs_mount_with_options(RFS* fs, const char *fstype, const char *path, ut64 delta, const char *options);
+R_API bool r_fs_umount(RFS* fs, const char *path);
+R_API RFSRoot *r_fs_root_by_fd(RFS *fs, int fd);
+
+R_API RFSFile *r_fs_open(RFS* fs, const char *path, bool create);
+R_API void r_fs_close(RFS* fs, RFSFile *file);
+R_API int r_fs_read(RFS* fs, RFSFile *file, ut64 addr, int len);
+R_API int r_fs_write(RFS* fs, RFSFile* file, ut64 addr, const ut8 *data, int len);
+R_API RFSFile *r_fs_slurp(RFS* fs, const char *path);
+R_API RList *r_fs_dir(RFS* fs, const char *path);
+R_API bool r_fs_dir_dump(RFS* fs, const char *path, const char *name);
+R_API bool r_fs_mkdir(RFS *fs, const char *path);
+
+/* Probe `buf` against container-capable fs plugins and return RFSFile entries from the first match. */
+R_API RList/*<RFSFile>*/ *r_fs_dir_bins(RFS *fs, RBuffer *buf);
+
+R_API RList *r_fs_find_name(RFS* fs, const char *name, const char *glob);
+R_API RList *r_fs_find_off(RFS* fs, const char *name, ut64 off);
+R_API RList *r_fs_partitions(RFS* fs, const char *ptype, ut64 delta);
+
+R_API R_MUSTUSE const RFSType *r_fs_type_index(int i);
+
+R_API char *r_fs_name(RFS *fs, ut64 offset);
+R_API bool r_fs_check(RFS *fs, const char *p);
+R_API bool r_fs_shell(RFSShell *shell, RFS *fs, const char *root);
+
+/* file.c */
+R_API RFSFile *r_fs_file_new(RFSRoot *root, const char *path);
+R_API void r_fs_file_free(RFSFile *file);
+R_API char* r_fs_file_copy_abs_path(RFSFile* file);
+
+/* run a command against registered fs plugins. Returns true if handled */
+R_API bool r_fs_cmd(RFS *fs, const char *cmd);
+
+// root
+R_API RList *r_fs_root(RFS *fs, const char *path);
+R_API RFSRoot *r_fs_root_new(const char *path, ut64 delta);
+R_API void r_fs_root_free(RFSRoot *root);
+R_API RFSPartition *r_fs_partition_new(int num, ut64 start, ut64 length);
+R_API void r_fs_partition_free(RFSPartition *p);
+R_API const char *r_fs_partition_type(const char *part, int type);
+R_API const char *r_fs_partition_type_get(int n);
+
+/* plugins */
+extern RFSPlugin r_fs_plugin_affs;
+extern RFSPlugin r_fs_plugin_afs;
+extern RFSPlugin r_fs_plugin_bfs;
+extern RFSPlugin r_fs_plugin_btrfs;
+extern RFSPlugin r_fs_plugin_cpio;
+extern RFSPlugin r_fs_plugin_ext2;
+extern RFSPlugin r_fs_plugin_fat;
+extern RFSPlugin r_fs_plugin_fb;
+extern RFSPlugin r_fs_plugin_fossil;
+extern RFSPlugin r_fs_plugin_hfs;
+extern RFSPlugin r_fs_plugin_hfsplus;
+extern RFSPlugin r_fs_plugin_io;
+extern RFSPlugin r_fs_plugin_iso9660;
+extern RFSPlugin r_fs_plugin_jfs;
+extern RFSPlugin r_fs_plugin_minix;
+extern RFSPlugin r_fs_plugin_ntfs;
+extern RFSPlugin r_fs_plugin_p9;
+extern RFSPlugin r_fs_plugin_posix;
+extern RFSPlugin r_fs_plugin_r2;
+extern RFSPlugin r_fs_plugin_tmp;
+extern RFSPlugin r_fs_plugin_reiserfs;
+extern RFSPlugin r_fs_plugin_sfs;
+extern RFSPlugin r_fs_plugin_squashfs;
+extern RFSPlugin r_fs_plugin_tar;
+extern RFSPlugin r_fs_plugin_tar;
+extern RFSPlugin r_fs_plugin_udf;
+extern RFSPlugin r_fs_plugin_ufs2;
+extern RFSPlugin r_fs_plugin_ufs;
+extern RFSPlugin r_fs_plugin_xfs;
+extern RFSPlugin r_fs_plugin_zip;
+extern RFSPlugin r_fs_plugin_apfs;
+extern RFSPlugin r_fs_plugin_ubifs;
+extern RFSPlugin r_fs_plugin_fatmacho;
+extern RFSPlugin r_fs_plugin_sep64;
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

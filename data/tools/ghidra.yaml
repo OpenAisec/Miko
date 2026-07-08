@@ -1,0 +1,16 @@
+id: ghidra
+category: binary
+name: Ghidra
+short_description: NSA 开源逆向套件（反汇编/反编译/headless 脚本分析）
+description: |
+  Ghidra 是 NSA 开发的免费逆向工程框架，反汇编、反编译、脚本化批处理分析。
+  适用：二进制分析、恶意样本逆向、漏洞挖掘、CTF re。
+
+  它是 Java 应用（几百 MB 整目录、需 JDK 17+/自带 JRE），不随 kimo 内置。
+  用户从 ghidra-sre.org 下载解压后，在工具面板配置本机 analyzeHeadless 路径即可（无需安装）。
+invoke: cli
+requiresUserPath: true
+pathHint: '配置 ghidra 解压目录下的 support/analyzeHeadless.bat（Windows）或 support/analyzeHeadless（Linux/macOS）'
+usage: 'analyzeHeadless <项目目录> <项目名> -import <二进制> -postScript <脚本.py>'
+installHint: '从 ghidra-sre.org 下载发行版解压（需 JDK 17+；官方版可自带 JRE），无需安装，配置解压后的 analyzeHeadless 路径'
+builtin: true

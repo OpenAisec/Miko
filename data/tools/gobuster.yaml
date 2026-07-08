@@ -1,0 +1,23 @@
+id: gobuster
+category: web
+name: 'gobuster'
+short_description: 'Web内容扫描工具，用于发现目录、文件和子域名'
+description: |
+  Gobuster是一个快速的内容发现工具，用于Web应用程序的目录、文件和子域名枚举。
+  
+  **主要功能：**
+  - 目录和文件发现
+  - DNS子域名枚举
+  - 虚拟主机发现
+  - 支持多种模式（dir, dns, fuzz, vhost）
+  
+  **使用场景：**
+  - Web应用安全测试
+  - 目录枚举和文件发现
+  - 子域名发现
+  - 渗透测试信息收集
+invoke: cli
+bin: 'gobuster'
+usage: 'gobuster [<mode>] -u <url> [-w <wordlist>] [<additional_args>]'
+builtin: true
+bundled: true

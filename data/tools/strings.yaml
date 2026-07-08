@@ -1,0 +1,22 @@
+id: strings
+category: binary
+name: 'strings'
+short_description: '从二进制文件中提取字符串'
+description: |
+  Strings工具用于从二进制文件中提取可打印字符串。
+  
+  **主要功能：**
+  - 字符串提取
+  - 可配置最小长度
+  - 支持多种文件格式
+  
+  **使用场景：**
+  - 二进制分析
+  - 恶意软件分析
+  - 取证分析
+  - 逆向工程
+invoke: cli
+bin: 'strings'
+usage: 'strings <file_path> [-n <min_len>] [<additional_args>]'
+builtin: true
+bundled: true

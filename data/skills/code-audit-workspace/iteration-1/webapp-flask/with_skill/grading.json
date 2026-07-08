@@ -1,0 +1,17 @@
+{
+  "expectations": [
+    {"text": "报告包含 SQL 注入漏洞发现（f-string 拼接查询）", "passed": true, "evidence": "Lines 131-167: detailed SQL injection finding with f-string at line 30-31"},
+    {"text": "报告包含 SSTI 模板注入漏洞发现（render_template_string 接收用户输入）", "passed": true, "evidence": "Lines 171-201: SSTI finding with render_template_string at line 41-43"},
+    {"text": "报告包含命令注入漏洞发现（os.system 拼接用户输入）", "passed": true, "evidence": "Lines 51-97: Command injection finding with os.system at line 49-50"},
+    {"text": "报告包含代码注入漏洞发现（exec() 执行用户输入）", "passed": true, "evidence": "Lines 13-48: Code injection finding with exec() at line 56-58"},
+    {"text": "报告包含硬编码密钥发现（SECRET_KEY 明文写死）", "passed": true, "evidence": "Lines 99-127: Hardcoded secret finding with SECRET_KEY at line 9"},
+    {"text": "报告包含 debug 模式在生产环境开启的发现", "passed": true, "evidence": "Lines 235-259: Debug mode finding at line 68"},
+    {"text": "报告包含开放重定向漏洞发现", "passed": true, "evidence": "Lines 266-301: Open redirect finding at line 62-64"},
+    {"text": "报告包含 XSS 漏洞发现（未转义用户输入写入 HTML）", "passed": true, "evidence": "Lines 205-231: XSS finding with unescaped output at line 36"},
+    {"text": "每个漏洞发现都包含具体的文件名和行号", "passed": true, "evidence": "Every finding includes case1_webapp.py with specific line numbers"},
+    {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "Every finding includes concrete fix code examples"},
+    {"text": "报告包含安全评分或安全评级", "passed": true, "evidence": "Lines 325-326: Score 0/100, Rating F with detailed calculation"},
+    {"text": "报告按严重程度排序（Critical/High 排前面）", "passed": true, "evidence": "Order: Critical→Critical→Critical→High→High→High→Low→Low"}
+  ],
+  "summary": {"passed": 12, "failed": 0, "total": 12, "pass_rate": 1.0}
+}

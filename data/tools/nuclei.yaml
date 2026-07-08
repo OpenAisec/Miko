@@ -1,0 +1,28 @@
+id: nuclei
+category: web
+name: 'nuclei'
+short_description: '快速漏洞扫描器，使用 YAML 模板进行漏洞检测'
+description: |
+  Nuclei 是一个基于模板的快速漏洞扫描器，使用社区维护的 YAML 模板进行漏洞检测。
+
+  **主要功能：**
+  - 快速漏洞扫描
+  - 基于模板的检测
+  - 支持多种协议（HTTP, TCP, DNS 等）
+  - 实时结果输出
+  - 支持自定义模板
+
+  **使用场景：**
+  - 漏洞扫描和发现
+  - 安全评估
+  - 渗透测试
+  - 漏洞验证
+
+  单文件二进制体积较大（137MB+），不随 kimo 内置。
+  从 projectdiscovery 下载对应平台的二进制后，在工具面板配置本机 nuclei 路径即可（无需安装）。
+invoke: cli
+requiresUserPath: true
+pathHint: '配置本机 nuclei 可执行文件路径（Windows 为 nuclei.exe，Linux/macOS 为 nuclei）'
+usage: 'nuclei -u <target> [-s <severity>] [-tags <tags>] [-t <template>] [<additional_args>]'
+installHint: '从 https://github.com/projectdiscovery/nuclei/releases 下载对应平台的二进制，解压后配置 nuclei 可执行文件路径'
+builtin: true

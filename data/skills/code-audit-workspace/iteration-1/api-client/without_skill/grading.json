@@ -1,0 +1,15 @@
+{
+  "expectations": [
+    {"text": "报告包含 SSRF 漏洞发现（用户可控 URL 被直接请求）", "passed": true, "evidence": "Finding #3: SSRF across 4 methods at lines 17-55"},
+    {"text": "报告包含硬编码认证 Token 发现", "passed": true, "evidence": "Finding #2: Hardcoded JWT Bearer Token at line 8"},
+    {"text": "报告包含 XXE/XML 外部实体注入漏洞发现", "passed": true, "evidence": "Finding #5: XXE / Billion Laughs at lines 34-40"},
+    {"text": "报告包含敏感信息泄露发现（print 输出 token）", "passed": true, "evidence": "Finding #4: Sensitive Token in Logs at line 30"},
+    {"text": "报告包含代码注入漏洞发现（exec() 执行远程下载代码）", "passed": true, "evidence": "Finding #1: RCE via exec() at lines 49-55"},
+    {"text": "报告包含不安全的文件写入发现（upload_file 路径由 URL 决定）", "passed": false, "evidence": "upload_file() is mentioned under SSRF but not flagged as a distinct insecure file write vulnerability"},
+    {"text": "每个漏洞发现都包含具体的文件名和行号", "passed": true, "evidence": "Every finding includes specific line numbers in summary table"},
+    {"text": "每个漏洞发现都包含修复建议", "passed": true, "evidence": "Every finding includes detailed remediation code"},
+    {"text": "报告包含安全评分或安全评级", "passed": false, "evidence": "No numerical score/100 or A-F grade. Has 'Critical' risk level but no formal scoring system"},
+    {"text": "报告按严重程度排序", "passed": true, "evidence": "Order: Critical→Critical→High→High→Medium→Low"}
+  ],
+  "summary": {"passed": 8, "failed": 2, "total": 10, "pass_rate": 0.8}
+}

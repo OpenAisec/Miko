@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "activeId": "069de2da-2c94-40c2-8575-12c6894df815",
+  "providers": [
+    {
+      "id": "069de2da-2c94-40c2-8575-12c6894df815",
+      "presetId": "deepseek",
+      "name": "DeepSeek",
+      "apiKey": "",
+      "authStrategy": "auth_token",
+      "baseUrl": "https://api.deepseek.com/anthropic",
+      "apiFormat": "anthropic",
+      "runtimeKind": "anthropic_compatible",
+      "models": {
+        "main": "deepseek-v4-pro",
+        "haiku": "deepseek-v4-flash",
+        "sonnet": "deepseek-v4-pro",
+        "opus": "deepseek-v4-pro"
+      },
+      "modelContextWindows": {
+        "deepseek-v4-pro": 1000000,
+        "deepseek-v4-flash": 1000000
+      }
+    }
+  ]
+}
