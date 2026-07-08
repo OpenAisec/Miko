@@ -1,8 +1,30 @@
 # Miko
 
+<p align="center">
+  <img src="docs/images/logo.png" alt="Miko Logo" width="180">
+</p>
+
 专注信息收集和探测的安全测试 Agent，为渗透测试和安全审计而生。
 
 基于**黑板机制**实现多轮探测记忆，通过**探索模式**持续深挖目标，以**专注力系统**确保每个发现都被充分覆盖分析。**探索覆盖面清晰可见**，你可以随时指挥 Agent 横向扩展攻击面或纵向深度挖掘单点突破。支持**一键会话转项目**，让临时测试无缝演进为完整渗透项目。
+
+<p align="center">
+  <a href="https://github.com/OpenAisec/Miko/releases"><img src="https://img.shields.io/badge/⬇_下载便携版-Windows-FF7A00?style=for-the-badge" alt="下载便携版"></a>
+  &nbsp;
+  <a href="BUILD.md"><img src="https://img.shields.io/badge/📖_编译指南-Guide-gray?style=for-the-badge" alt="编译指南"></a>
+</p>
+
+## 📸 界面预览
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="docs/images/1.png" alt="界面1"><br><b>主界面</b></td>
+    <td align="center" width="33%"><img src="docs/images/2.png" alt="界面2"><br><b>探索模式</b></td>
+    <td align="center" width="33%"><img src="docs/images/3.png" alt="界面3"><br><b>专注力系统</b></td>
+  </tr>
+</table>
+
+---
 
 ## ✨ 特性
 

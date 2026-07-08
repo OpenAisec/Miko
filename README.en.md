@@ -1,8 +1,30 @@
 # Miko
 
+<p align="center">
+  <img src="docs/images/logo.png" alt="Miko Logo" width="180">
+</p>
+
 A security testing agent focused on information gathering and reconnaissance, designed for penetration testing and security auditing.
 
 Built on a **blackboard mechanism** for multi-round reconnaissance memory, with **exploration mode** for continuous deep-dive analysis, and a **focus system** ensuring complete coverage of every finding. **Exploration coverage is clearly visible** — you can direct the agent to expand attack surfaces horizontally or dive deep into specific breaches at any time. Supports **one-click session-to-project conversion** for seamless evolution from ad-hoc testing to full penetration projects.
+
+<p align="center">
+  <a href="https://github.com/OpenAisec/Miko/releases"><img src="https://img.shields.io/badge/⬇_Download_Portable-Windows-FF7A00?style=for-the-badge" alt="Download Portable"></a>
+  &nbsp;
+  <a href="BUILD.md"><img src="https://img.shields.io/badge/📖_Build_Guide-Guide-gray?style=for-the-badge" alt="Build Guide"></a>
+</p>
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="docs/images/1.png" alt="Screenshot 1"><br><b>Main Interface</b></td>
+    <td align="center" width="33%"><img src="docs/images/2.png" alt="Screenshot 2"><br><b>Exploration Mode</b></td>
+    <td align="center" width="33%"><img src="docs/images/3.png" alt="Screenshot 3"><br><b>Focus System</b></td>
+  </tr>
+</table>
+
+---
 
 ## ✨ Features
 
