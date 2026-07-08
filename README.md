@@ -18,9 +18,15 @@
 
 <table>
   <tr>
-    <td align="center" width="33%"><img src="docs/images/1.png" alt="界面1"><br><b>主界面</b></td>
-    <td align="center" width="33%"><img src="docs/images/2.png" alt="界面2"><br><b>探索模式</b></td>
-    <td align="center" width="33%"><img src="docs/images/3.png" alt="界面3"><br><b>专注力系统</b></td>
+    <td align="center" width="50%"><img src="docs/images/探索链路.png" alt="探索链路"><br><b>探索链路 & 黑板机制</b></td>
+    <td align="center" width="50%"><img src="docs/images/会话项目.png" alt="会话项目"><br><b>会话转项目</b></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="docs/images/移动端.png" alt="移动端" style="max-width:80%"><br><b>移动端适配</b></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/images/工具、skills等.png" alt="工具集成"><br><b>工具 & Skills 集成</b></td>
+    <td align="center" width="50%"><img src="docs/images/项目管理.png" alt="项目管理"><br><b>项目管理</b></td>
   </tr>
 </table>
 
