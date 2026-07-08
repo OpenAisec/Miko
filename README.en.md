@@ -18,15 +18,13 @@ Built on a **blackboard mechanism** for multi-round reconnaissance memory, with 
 
 <table>
   <tr>
-    <td align="center" width="50%"><img src="docs/images/探索链路.png" alt="Exploration Chain"><br><b>Exploration Chain & Blackboard</b></td>
-    <td align="center" width="50%"><img src="docs/images/会话项目.png" alt="Session to Project"><br><b>Session to Project</b></td>
+    <td align="center" width="33%"><img src="docs/images/探索链路.png" alt="Exploration Chain"><br><b>Exploration Chain & Blackboard</b></td>
+    <td align="center" width="33%"><img src="docs/images/会话项目.png" alt="Session to Project"><br><b>Session to Project</b></td>
+    <td align="center" width="33%" rowspan="2"><img src="docs/images/移动端.png" alt="Mobile" style="max-width:90%"><br><b>Mobile Adaptation</b></td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><img src="docs/images/移动端.png" alt="Mobile" style="max-width:80%"><br><b>Mobile Adaptation</b></td>
-  </tr>
-  <tr>
-    <td align="center" width="50%"><img src="docs/images/工具、skills等.png" alt="Tools Integration"><br><b>Tools & Skills Integration</b></td>
-    <td align="center" width="50%"><img src="docs/images/项目管理.png" alt="Project Management"><br><b>Project Management</b></td>
+    <td align="center" width="33%"><img src="docs/images/工具、skills等.png" alt="Tools Integration"><br><b>Tools & Skills Integration</b></td>
+    <td align="center" width="33%"><img src="docs/images/项目管理.png" alt="Project Management"><br><b>Project Management</b></td>
   </tr>
 </table>
 
