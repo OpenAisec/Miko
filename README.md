@@ -26,27 +26,37 @@
 
 ## 🔧 从源码构建
 
-### 前提条件
+**完整编译指南请查看 [BUILD.md](BUILD.md)**（含常见问题解决）
+
+### 快速开始
+
+#### 前提条件
 
 - [Bun](https://bun.sh/) >= 1.0
-- [Rust](https://www.rust-lang.org/) (cargo >= 1.70)
+- [Rust](https://www.rust-lang.org/) (cargo >= 1.80)
 - Windows: Visual Studio 2022 含 C++ 桌面开发工作负载
 
-### 编译步骤
+#### 编译步骤
 
 ```powershell
 # 克隆仓库
 git clone https://github.com/OpenAisec/Miko.git
 cd Miko
 
-# 安装依赖
+# 安装依赖（三处都需要安装）
+# 1. 根目录
 bun install
-cd desktop
-bun install
-cd ..
 
-# 构建便携版（推荐）
+# 2. Desktop
 cd desktop
+bun install
+
+# 3. Adapters
+cd ..\adapters
+bun install
+
+# 返回 desktop 打包
+cd ..\desktop
 .\scripts\build-portable-win.ps1
 
 # 产物位置
@@ -60,12 +70,13 @@ cd desktop
 
 ## 📚 内置技能（Skills）
 
-Miko 预装 23 个安全测试技能，专注信息收集和探测阶段：
+Miko 预装 23 个安全测试技能，覆盖渗透测试全流程：
 
-- **信息收集**: 子域发现、端口扫描、目录爆破、敏感路径探测
-- **代码审计**: PHP 深度审计、敏感信息扫描、配置文件分析
-- **漏洞探测**: XSS 检测、SQL 注入探测、参数污染分析
-- **逆向分析**: 基于 radare2 的二进制分析工作流
+- **信息收集**: 子域发现、端口扫描、目录爆破、敏感路径探测、指纹识别
+- **代码审计**: PHP 深度审计、敏感信息扫描、配置文件分析、依赖漏洞检测
+- **漏洞探测**: XSS 检测、SQL 注入探测、参数污染分析、SSRF 测试
+- **逆向分析**: 基于 radare2 的二进制分析工作流、反编译、动态调试
+- **移动安全**: Android APK 逆向分析、权限检测、组件安全审计
 
 完整列表见 [`data/skills/`](data/skills/)
 

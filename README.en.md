@@ -26,27 +26,37 @@ A security testing agent focused on information gathering and reconnaissance, de
 
 ## 🔧 Building from Source
 
-### Prerequisites
+**For complete build guide with troubleshooting, see [BUILD.md](BUILD.md)**
+
+### Quick Start
+
+#### Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.0
-- [Rust](https://www.rust-lang.org/) (cargo >= 1.70)
+- [Rust](https://www.rust-lang.org/) (cargo >= 1.80)
 - Windows: Visual Studio 2022 with C++ Desktop Development workload
 
-### Build Steps
+#### Build Steps
 
 ```powershell
 # Clone repository
 git clone https://github.com/OpenAisec/Miko.git
 cd Miko
 
-# Install dependencies
+# Install dependencies (all three locations required)
+# 1. Root directory
 bun install
-cd desktop
-bun install
-cd ..
 
-# Build portable version (recommended)
+# 2. Desktop
 cd desktop
+bun install
+
+# 3. Adapters
+cd ..\adapters
+bun install
+
+# Return to desktop and build
+cd ..\desktop
 .\scripts\build-portable-win.ps1
 
 # Output location
@@ -60,12 +70,13 @@ cd desktop
 
 ## 📚 Built-in Skills
 
-Miko comes with 23 security testing skills focused on reconnaissance and information gathering:
+Miko comes with 23 security testing skills covering the full penetration testing lifecycle:
 
-- **Information Gathering**: Subdomain discovery, port scanning, directory brute-forcing, sensitive path detection
-- **Code Auditing**: PHP deep audit, sensitive information scanning, configuration analysis
-- **Vulnerability Detection**: XSS detection, SQL injection probing, parameter pollution analysis
-- **Reverse Engineering**: Binary analysis workflows powered by radare2
+- **Information Gathering**: Subdomain discovery, port scanning, directory brute-forcing, sensitive path detection, fingerprinting
+- **Code Auditing**: PHP deep audit, sensitive information scanning, configuration analysis, dependency vulnerability detection
+- **Vulnerability Detection**: XSS detection, SQL injection probing, parameter pollution analysis, SSRF testing
+- **Reverse Engineering**: Binary analysis workflows powered by radare2, decompilation, dynamic debugging
+- **Mobile Security**: Android APK reverse engineering, permission analysis, component security auditing
 
 Full list available in [`data/skills/`](data/skills/)
 
