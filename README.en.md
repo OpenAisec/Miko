@@ -2,13 +2,19 @@
 
 A security testing agent focused on information gathering and reconnaissance, designed for penetration testing and security auditing.
 
+Built on a **blackboard mechanism** for multi-round reconnaissance memory, with **exploration mode** for continuous deep-dive analysis, and a **focus system** ensuring complete coverage of every finding. **Exploration coverage is clearly visible** — you can direct the agent to expand attack surfaces horizontally or dive deep into specific breaches at any time. Supports **one-click session-to-project conversion** for seamless evolution from ad-hoc testing to full penetration projects.
+
 ## ✨ Features
 
-- 🔍 **Reconnaissance Specialized** - 23+ built-in security skills covering subdomain discovery, port scanning, vulnerability detection, and sensitive information mining
-- 🛠️ **Pre-installed Tools** - Integrated with 8 professional tools: subfinder, katana, fscan, gobuster, radare2, and more
+- 🎯 **Focus System** - Lock onto targets for deep investigation, auto-track incomplete leads, ensure complete test coverage with visualized exploration progress
+- 🗺️ **Coverage Control** - Switch between horizontal expansion (breadth-first) or vertical deep-dive (depth-first) anytime, with clear exploration paths
+- 🧠 **Blackboard Mechanism** - Multi-turn dialogue preserves reconnaissance context, full memory of discoveries, reasoning, and actions to avoid redundant work
+- 🔍 **Exploration Mode** - Auto-expand thinking from single breaches to complete attack surfaces, intelligently recommend next reconnaissance steps
+- 📋 **Session to Project** - One-click conversion of temporary test dialogues into persistent projects, preserving all findings and workflows
+- 🛠️ **Pre-installed Toolchain** - Integrated with subfinder, katana, fscan, gobuster, radare2, and 8 other tools
+- 📚 **23+ Skill Library** - Covering information gathering, code auditing, vulnerability detection, and reverse engineering
 - 🤖 **Multi-Model Support** - Compatible with DeepSeek, Qwen, Azure OpenAI, and other mainstream AI models
 - 🖥️ **Desktop Application** - Cross-platform client built with Tauri 2 + React
-- 📦 **Ready to Use** - Portable version requires no installation, just extract and run
 
 ## 🚀 Quick Start
 
