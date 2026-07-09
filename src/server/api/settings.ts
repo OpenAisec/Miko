@@ -4,8 +4,10 @@
  * GET  /api/settings            — 获取合并后的设置
  * GET  /api/settings/user       — 获取用户设置
  * GET  /api/settings/project    — 获取项目设置
+ * GET  /api/settings/global-prompt — 获取 Miko 全局提示词
  * PUT  /api/settings/user       — 更新用户设置
  * PUT  /api/settings/project    — 更新项目设置
+ * PUT  /api/settings/global-prompt — 更新 Miko 全局提示词
  * GET  /api/permissions/mode    — 获取权限模式
  * PUT  /api/permissions/mode    — 设置权限模式
  */
@@ -14,6 +16,9 @@ import { SettingsService } from '../services/settingsService.js'
 import { ApiError, errorResponse } from '../middleware/errorHandler.js'
 import { ensureDesktopCliLauncherInstalled } from '../services/desktopCliLauncherService.js'
 import { conversationService } from '../services/conversationService.js'
+import { getUserContext } from '../../context.js'
+import { setCachedClaudeMdContent } from '../../bootstrap/state.js'
+import { clearMemoryFileCaches } from '../../utils/claudemd.js'
 
 const settingsService = new SettingsService()
 
@@ -48,6 +53,9 @@ export async function handleSettingsApi(
 
       case 'project':
         return await handleProjectSettings(req, url)
+
+      case 'global-prompt':
+        return await handleGlobalPrompt(req)
 
       case 'cli-launcher':
         if (method !== 'GET') throw methodNotAllowed(method)
@@ -88,6 +96,24 @@ async function handleProjectSettings(req: Request, url: URL): Promise<Response> 
   if (req.method === 'PUT') {
     const body = await parseJsonBody(req)
     await settingsService.updateProjectSettings(body, projectRoot)
+    return Response.json({ ok: true })
+  }
+
+  throw methodNotAllowed(req.method)
+}
+
+async function handleGlobalPrompt(req: Request): Promise<Response> {
+  if (req.method === 'GET') {
+    return Response.json(await settingsService.getGlobalPrompt())
+  }
+
+  if (req.method === 'PUT') {
+    const body = await parseJsonBody(req)
+    if (typeof body.content !== 'string') {
+      throw ApiError.badRequest('Missing or invalid "content" in request body')
+    }
+    await settingsService.updateGlobalPrompt(body.content)
+    clearGlobalPromptCaches()
     return Response.json({ ok: true })
   }
 
@@ -138,4 +164,10 @@ function syncThinkingSettingToActiveSessions(settings: Record<string, unknown>):
   conversationService.setMaxThinkingTokensForActiveSessions(
     settings.alwaysThinkingEnabled ? null : 0,
   )
+}
+
+function clearGlobalPromptCaches(): void {
+  clearMemoryFileCaches()
+  getUserContext.cache.clear?.()
+  setCachedClaudeMdContent(null)
 }

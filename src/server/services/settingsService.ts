@@ -2,8 +2,8 @@
  * Settings Service — 读写用户级和项目级设置文件
  *
  * 设置文件为 JSON 格式：
- *   - 用户级: ~/.claude/settings.json
- *   - 项目级: {projectRoot}/.claude/settings.json
+ *   - 用户级: data/settings.json
+ *   - 项目级: {projectRoot}/data/settings.json
  *
  * 合并策略：Object.assign({}, userSettings, projectSettings)
  */
@@ -11,13 +11,12 @@
 import * as fs from 'fs/promises'
 import { randomBytes } from 'node:crypto'
 import * as path from 'path'
-import * as os from 'os'
 import { ApiError } from '../middleware/errorHandler.js'
 import { normalizeJsonObject, readRecoverableJsonFile } from './recoverableJsonFile.js'
 import { ensurePersistentStorageUpgraded } from './persistentStorageMigrations.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 
-import { getDataDir } from '../../utils/kimoPaths.js';
+import { getDataDir } from '../../utils/kimoPaths.js'
 const VALID_PERMISSION_MODES = [
   'default',
   'acceptEdits',
@@ -44,6 +43,14 @@ export class SettingsService {
   /** 用户级设置文件路径 */
   private getUserSettingsPath(): string {
     return path.join(this.getConfigDir(), 'settings.json')
+  }
+
+  private getGlobalPromptPath(): string {
+    return path.join(this.getConfigDir(), 'MIKO.md')
+  }
+
+  private getLegacyGlobalPromptPath(): string {
+    return path.join(this.getConfigDir(), 'CLAUDE.md')
   }
 
   /** 项目级设置文件路径 */
@@ -85,6 +92,40 @@ export class SettingsService {
   /** 获取用户级设置 */
   async getUserSettings(): Promise<Record<string, unknown>> {
     return this.readJsonFile(this.getUserSettingsPath())
+  }
+
+  async getGlobalPrompt(): Promise<{ content: string; path: string; source: 'miko' | 'legacy' | 'none' }> {
+    const mikoPath = this.getGlobalPromptPath()
+    try {
+      return {
+        content: await fs.readFile(mikoPath, 'utf-8'),
+        path: mikoPath,
+        source: 'miko',
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw ApiError.internal(`Failed to read Miko global prompt: ${error}`)
+      }
+    }
+
+    const legacyPath = this.getLegacyGlobalPromptPath()
+    try {
+      return {
+        content: await fs.readFile(legacyPath, 'utf-8'),
+        path: legacyPath,
+        source: 'legacy',
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw ApiError.internal(`Failed to read legacy global prompt: ${error}`)
+      }
+    }
+
+    return {
+      content: '',
+      path: mikoPath,
+      source: 'none',
+    }
   }
 
   /** 获取项目级设置 */
@@ -151,6 +192,35 @@ export class SettingsService {
     )
   }
 
+  private async writeTextFile(filePath: string, content: string): Promise<void> {
+    const dir = path.dirname(filePath)
+    let lastError: unknown
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const tmpFile = `${filePath}.tmp.${process.pid}.${Date.now()}.${randomBytes(6).toString('hex')}`
+      try {
+        await fs.mkdir(dir, { recursive: true })
+        await fs.writeFile(tmpFile, content, 'utf-8')
+        await fs.rename(tmpFile, filePath)
+        return
+      } catch (err) {
+        lastError = err
+        await fs.unlink(tmpFile).catch(() => {})
+
+        if (
+          (err as NodeJS.ErrnoException).code !== 'ENOENT' ||
+          attempt === 1
+        ) {
+          break
+        }
+      }
+    }
+
+    throw ApiError.internal(
+      `Failed to write text file to ${filePath}: ${lastError}`,
+    )
+  }
+
   /** 更新用户级设置（浅合并） */
   async updateUserSettings(settings: Record<string, unknown>): Promise<void> {
     const filePath = this.getUserSettingsPath()
@@ -158,6 +228,13 @@ export class SettingsService {
       const current = await this.readJsonFile(filePath)
       const merged = Object.assign({}, current, settings)
       await this.writeJsonFile(filePath, merged)
+    })
+  }
+
+  async updateGlobalPrompt(content: string): Promise<void> {
+    const filePath = this.getGlobalPromptPath()
+    await this.withWriteLock(filePath, async () => {
+      await this.writeTextFile(filePath, content)
     })
   }
 

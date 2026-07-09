@@ -188,7 +188,7 @@ export function MemorySettings() {
           <Breadcrumb
             project={selectedProject}
             filePath={selectedFile?.path}
-            fallbackProject={activeCwd ? projectDisplayName(activeCwd) : '~/.claude/projects'}
+            fallbackProject={activeCwd ? projectDisplayName(activeCwd) : 'Miko projects'}
             fallbackFile={t('settings.memory.noFileSelected')}
           />
           <div className="flex shrink-0 flex-wrap gap-2">

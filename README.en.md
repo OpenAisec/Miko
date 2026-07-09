@@ -56,6 +56,26 @@ Built on a **blackboard mechanism** for multi-round reconnaissance memory, with 
 2. Add your API key (DeepSeek / Qwen / Others)
 3. Start using
 
+### Permission Mode Recommendations
+
+`Accept edits` mainly auto-approves file edits. It does not skip all permission checks. Bash, MCP, network requests, sensitive path access, and similar operations may still go through the permission flow.
+
+Exploration mode delegates real probing work to the `security-explore` sub-agent, which frequently uses Bash, Web tools, and MCP blackboard writes. For that reason, `Accept edits + Exploration mode` is not recommended; this combination may cause sub-agents to wait on permissions, time out, or appear unresponsive.
+
+Recommended combination: in trusted projects and controlled testing environments, prefer `Allow all / Bypass permissions + Exploration mode`. For unknown environments or regular coding tasks, use `Ask permissions` or `Accept edits` instead.
+
+### Miko Global Prompt
+
+After initial setup, consider filling in **Miko Global Prompt** in Settings. This prompt is injected into the context of every conversation and is useful for long-term rules and safety boundaries.
+
+Example:
+
+```text
+During testing, if you encounter sensitive operations such as create, update, delete, or modify, stop immediately and ask the user.
+```
+
+Even when using `Allow all / Bypass permissions + Exploration mode`, configuring a global prompt is recommended to constrain Miko's behavior. Note: the global prompt is a behavioral instruction, not the permission system itself; actual tool blocking still depends on the current permission mode.
+
 ## 🔧 Building from Source
 
 **For complete build guide with troubleshooting, see [BUILD.md](BUILD.md)**

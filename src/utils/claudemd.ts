@@ -1,10 +1,10 @@
 /**
  * Files are loaded in the following order:
  *
- * 1. Managed memory (eg. /etc/claude-code/CLAUDE.md) - Global instructions for all users
- * 2. User memory (~/.claude/CLAUDE.md) - Private global instructions for all projects
- * 3. Project memory (CLAUDE.md, .claude/CLAUDE.md, and .claude/rules/*.md in project roots) - Instructions checked into the codebase
- * 4. Local memory (CLAUDE.local.md in project roots) - Private project-specific instructions
+ * 1. Managed memory (eg. managed/MIKO.md) - Global instructions for all users
+ * 2. User memory (data/MIKO.md) - Private global instructions for all projects
+ * 3. Project memory (MIKO.md, data/MIKO.md, and data/rules/*.md in project roots) - Instructions checked into the codebase
+ * 4. Local memory (MIKO.local.md in project roots) - Private project-specific instructions
  *
  * Files are loaded in reverse order of priority, i.e. the latest files are highest priority
  * with the model paying more attention to them.
@@ -13,7 +13,7 @@
  * - User memory is loaded from the user's home directory
  * - Project and Local files are discovered by traversing from the current directory up to root
  * - Files closer to the current directory have higher priority (loaded later)
- * - CLAUDE.md, .claude/CLAUDE.md, and all .md files in .claude/rules/ are checked in each directory for Project memory
+ * - MIKO.md, data/MIKO.md, and all .md files in data/rules/ are checked in each directory for Project memory, with legacy CLAUDE.md fallback
  *
  * Memory @include directive:
  * - Memory files can include other files using @ notation
@@ -50,6 +50,7 @@ import { getAutoMemEntrypoint, isAutoMemoryEnabled } from '../memdir/paths.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
   getCurrentProjectConfig,
+  getLegacyMemoryPath,
   getManagedClaudeRulesDir,
   getMemoryPath,
   getUserClaudeRulesDir,
@@ -537,7 +538,7 @@ function extractIncludePathsFromTokens(
 const MAX_INCLUDE_DEPTH = 5
 
 /**
- * Checks whether a CLAUDE.md file path is excluded by the claudeMdExcludes setting.
+ * Checks whether a Miko memory file path is excluded by the claudeMdExcludes setting.
  * Only applies to User, Project, and Local memory types.
  * Managed, AutoMem, and TeamMem types are never excluded.
  *
@@ -559,7 +560,7 @@ function isClaudeMdExcluded(filePath: string, type: MemoryType): boolean {
 
   // Build an expanded pattern list that includes realpath-resolved versions of
   // absolute patterns. This handles symlinks like /tmp -> /private/tmp on macOS:
-  // the user writes "/tmp/project/CLAUDE.md" in their exclude, but the system
+  // the user writes "/tmp/project/MIKO.md" in their exclude, but the system
   // resolves the CWD to "/private/tmp/project/...", so the file path uses the
   // real path. By resolving the patterns too, both sides match.
   const expandedPatterns = resolveExcludePatterns(patterns).filter(
@@ -684,6 +685,34 @@ export async function processMemoryFile(
   return result
 }
 
+async function memoryFileExists(filePath: string): Promise<boolean> {
+  try {
+    return (await getFsImplementation().stat(filePath)).isFile()
+  } catch {
+    return false
+  }
+}
+
+async function processPreferredMemoryFile({
+  primaryPath,
+  legacyPath,
+  type,
+  processedPaths,
+  includeExternal,
+}: {
+  primaryPath: string
+  legacyPath: string
+  type: MemoryType
+  processedPaths: Set<string>
+  includeExternal: boolean
+}): Promise<MemoryFileInfo[]> {
+  if (await memoryFileExists(primaryPath)) {
+    return processMemoryFile(primaryPath, type, processedPaths, includeExternal)
+  }
+
+  return processMemoryFile(legacyPath, type, processedPaths, includeExternal)
+}
+
 /**
  * Processes all .md files in the .claude/rules/ directory and its subdirectories
  * @param rulesDir The path to the rules directory
@@ -801,14 +830,16 @@ export const getMemoryFiles = memoize(
       false
 
     // Process Managed file first (always loaded - policy settings)
-    const managedClaudeMd = getMemoryPath('Managed')
+    const managedMikoMd = getMemoryPath('Managed')
+    const legacyManagedClaudeMd = getLegacyMemoryPath('Managed')
     result.push(
-      ...(await processMemoryFile(
-        managedClaudeMd,
-        'Managed',
+      ...(await processPreferredMemoryFile({
+        primaryPath: managedMikoMd,
+        legacyPath: legacyManagedClaudeMd,
+        type: 'Managed',
         processedPaths,
         includeExternal,
-      )),
+      })),
     )
     // Process Managed .claude/rules/*.md files
     const managedClaudeRulesDir = getManagedClaudeRulesDir()
@@ -824,14 +855,16 @@ export const getMemoryFiles = memoize(
 
     // Process User file (only if userSettings is enabled)
     if (isSettingSourceEnabled('userSettings')) {
-      const userClaudeMd = getMemoryPath('User')
+      const userMikoMd = getMemoryPath('User')
+      const legacyUserClaudeMd = getLegacyMemoryPath('User')
       result.push(
-        ...(await processMemoryFile(
-          userClaudeMd,
-          'User',
+        ...(await processPreferredMemoryFile({
+          primaryPath: userMikoMd,
+          legacyPath: legacyUserClaudeMd,
+          type: 'User',
           processedPaths,
-          true, // User memory can always include external files
-        )),
+          includeExternal: true, // User memory can always include external files
+        })),
       )
       // Process User ~/.claude/rules/*.md files
       const userClaudeRulesDir = getUserClaudeRulesDir()
@@ -859,10 +892,10 @@ export const getMemoryFiles = memoize(
     // When running from a git worktree nested inside its main repo (e.g.,
     // .claude/worktrees/<name>/ from `claude -w`), the upward walk passes
     // through both the worktree root and the main repo root. Both contain
-    // checked-in files like CLAUDE.md and .claude/rules/*.md, so the same
+    // checked-in files like MIKO.md and data/rules/*.md, so the same
     // content gets loaded twice. Skip Project-type (checked-in) files from
     // directories above the worktree but within the main repo — the worktree
-    // already has its own checkout. CLAUDE.local.md is gitignored so it only
+    // already has its own checkout. MIKO.local.md is gitignored so it only
     // exists in the main repo and is still loaded.
     // See: https://github.com/anthropics/claude-code/issues/29599
     const gitRoot = findGitRoot(originalCwd)
@@ -883,27 +916,31 @@ export const getMemoryFiles = memoize(
         pathInWorkingPath(dir, canonicalRoot) &&
         !pathInWorkingPath(dir, gitRoot)
 
-      // Try reading CLAUDE.md (Project) - only if projectSettings is enabled
+      // Try reading MIKO.md (Project) with CLAUDE.md legacy fallback.
       if (isSettingSourceEnabled('projectSettings') && !skipProject) {
-        const projectPath = join(dir, 'CLAUDE.md')
+        const projectPath = join(dir, 'MIKO.md')
+        const legacyProjectPath = join(dir, 'CLAUDE.md')
         result.push(
-          ...(await processMemoryFile(
-            projectPath,
-            'Project',
+          ...(await processPreferredMemoryFile({
+            primaryPath: projectPath,
+            legacyPath: legacyProjectPath,
+            type: 'Project',
             processedPaths,
             includeExternal,
-          )),
+          })),
         )
 
-        // Try reading .claude/CLAUDE.md (Project)
-        const dotClaudePath = join(dir, 'data', 'CLAUDE.md')
+        // Try reading data/MIKO.md (Project) with data/CLAUDE.md legacy fallback.
+        const dataMikoPath = join(dir, 'data', 'MIKO.md')
+        const legacyDataClaudePath = join(dir, 'data', 'CLAUDE.md')
         result.push(
-          ...(await processMemoryFile(
-            dotClaudePath,
-            'Project',
+          ...(await processPreferredMemoryFile({
+            primaryPath: dataMikoPath,
+            legacyPath: legacyDataClaudePath,
+            type: 'Project',
             processedPaths,
             includeExternal,
-          )),
+          })),
         )
 
         // Try reading data/rules/*.md files (Project)
@@ -919,47 +956,53 @@ export const getMemoryFiles = memoize(
         )
       }
 
-      // Try reading CLAUDE.local.md (Local) - only if localSettings is enabled
+      // Try reading MIKO.local.md (Local) with CLAUDE.local.md legacy fallback.
       if (isSettingSourceEnabled('localSettings')) {
-        const localPath = join(dir, 'CLAUDE.local.md')
+        const localPath = join(dir, 'MIKO.local.md')
+        const legacyLocalPath = join(dir, 'CLAUDE.local.md')
         result.push(
-          ...(await processMemoryFile(
-            localPath,
-            'Local',
+          ...(await processPreferredMemoryFile({
+            primaryPath: localPath,
+            legacyPath: legacyLocalPath,
+            type: 'Local',
             processedPaths,
             includeExternal,
-          )),
+          })),
         )
       }
     }
 
-    // Process CLAUDE.md from additional directories (--add-dir) if env var is enabled
+    // Process MIKO.md from additional directories (--add-dir) if env var is enabled
     // This is controlled by CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD and defaults to off
     // Note: we don't check isSettingSourceEnabled('projectSettings') here because --add-dir
     // is an explicit user action and the SDK defaults settingSources to [] when not specified
     if (isEnvTruthy(process.env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD)) {
       const additionalDirs = getAdditionalDirectoriesForClaudeMd()
       for (const dir of additionalDirs) {
-        // Try reading CLAUDE.md from the additional directory
-        const projectPath = join(dir, 'CLAUDE.md')
+        // Try reading MIKO.md from the additional directory, then legacy CLAUDE.md.
+        const projectPath = join(dir, 'MIKO.md')
+        const legacyProjectPath = join(dir, 'CLAUDE.md')
         result.push(
-          ...(await processMemoryFile(
-            projectPath,
-            'Project',
+          ...(await processPreferredMemoryFile({
+            primaryPath: projectPath,
+            legacyPath: legacyProjectPath,
+            type: 'Project',
             processedPaths,
             includeExternal,
-          )),
+          })),
         )
 
-        // Try reading .claude/CLAUDE.md from the additional directory
-        const dotClaudePath = join(dir, 'data', 'CLAUDE.md')
+        // Try reading data/MIKO.md from the additional directory, then legacy data/CLAUDE.md.
+        const dataMikoPath = join(dir, 'data', 'MIKO.md')
+        const legacyDataClaudePath = join(dir, 'data', 'CLAUDE.md')
         result.push(
-          ...(await processMemoryFile(
-            dotClaudePath,
-            'Project',
+          ...(await processPreferredMemoryFile({
+            primaryPath: dataMikoPath,
+            legacyPath: legacyDataClaudePath,
+            type: 'Project',
             processedPaths,
             includeExternal,
-          )),
+          })),
         )
 
         // Try reading data/rules/*.md files from the additional directory
@@ -1239,7 +1282,7 @@ export async function getManagedAndUserConditionalRules(
 
 /**
  * Gets memory files for a single nested directory (between CWD and target).
- * Loads CLAUDE.md, unconditional rules, and conditional rules for that directory.
+ * Loads MIKO.md, unconditional rules, and conditional rules for that directory.
  *
  * @param dir The directory to process
  * @param targetPath The target file path (for conditional rule matching)
@@ -1253,33 +1296,44 @@ export async function getMemoryFilesForNestedDirectory(
 ): Promise<MemoryFileInfo[]> {
   const result: MemoryFileInfo[] = []
 
-  // Process project memory files (CLAUDE.md and .claude/CLAUDE.md)
+  // Process project memory files (MIKO.md and data/MIKO.md, with CLAUDE legacy fallback)
   if (isSettingSourceEnabled('projectSettings')) {
-    const projectPath = join(dir, 'CLAUDE.md')
+    const projectPath = join(dir, 'MIKO.md')
+    const legacyProjectPath = join(dir, 'CLAUDE.md')
     result.push(
-      ...(await processMemoryFile(
-        projectPath,
-        'Project',
+      ...(await processPreferredMemoryFile({
+        primaryPath: projectPath,
+        legacyPath: legacyProjectPath,
+        type: 'Project',
         processedPaths,
-        false,
-      )),
+        includeExternal: false,
+      })),
     )
-    const dotClaudePath = join(dir, 'data', 'CLAUDE.md')
+    const dataMikoPath = join(dir, 'data', 'MIKO.md')
+    const legacyDataClaudePath = join(dir, 'data', 'CLAUDE.md')
     result.push(
-      ...(await processMemoryFile(
-        dotClaudePath,
-        'Project',
+      ...(await processPreferredMemoryFile({
+        primaryPath: dataMikoPath,
+        legacyPath: legacyDataClaudePath,
+        type: 'Project',
         processedPaths,
-        false,
-      )),
+        includeExternal: false,
+      })),
     )
   }
 
-  // Process local memory file (CLAUDE.local.md)
+  // Process local memory file (MIKO.local.md with CLAUDE.local.md legacy fallback)
   if (isSettingSourceEnabled('localSettings')) {
-    const localPath = join(dir, 'CLAUDE.local.md')
+    const localPath = join(dir, 'MIKO.local.md')
+    const legacyLocalPath = join(dir, 'CLAUDE.local.md')
     result.push(
-      ...(await processMemoryFile(localPath, 'Local', processedPaths, false)),
+      ...(await processPreferredMemoryFile({
+        primaryPath: localPath,
+        legacyPath: legacyLocalPath,
+        type: 'Local',
+        processedPaths,
+        includeExternal: false,
+      })),
     )
   }
 
@@ -1430,13 +1484,18 @@ export async function shouldShowClaudeMdExternalIncludesWarning(): Promise<boole
 }
 
 /**
- * Check if a file path is a memory file (CLAUDE.md, CLAUDE.local.md, or .claude/rules/*.md)
+ * Check if a file path is a memory file (MIKO.md, MIKO.local.md, legacy CLAUDE files, or rules/*.md)
  */
 export function isMemoryFilePath(filePath: string): boolean {
   const name = basename(filePath)
 
-  // CLAUDE.md or CLAUDE.local.md anywhere
-  if (name === 'CLAUDE.md' || name === 'CLAUDE.local.md') {
+  // MIKO.md / MIKO.local.md, with legacy CLAUDE names for compatibility.
+  if (
+    name === 'MIKO.md' ||
+    name === 'MIKO.local.md' ||
+    name === 'CLAUDE.md' ||
+    name === 'CLAUDE.local.md'
+  ) {
     return true
   }
 

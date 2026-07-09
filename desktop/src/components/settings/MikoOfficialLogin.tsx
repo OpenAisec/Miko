@@ -1,6 +1,6 @@
-// desktop/src/components/settings/ClaudeOfficialLogin.tsx
+// desktop/src/components/settings/MikoOfficialLogin.tsx
 //
-// 显示当前 Claude Official OAuth 登录状态,提供 Login / Logout 按钮。
+// 显示当前 Miko Official OAuth 登录状态,提供 Login / Logout 按钮。
 // 点击 Login 调 Tauri shell.open 打开浏览器走 OAuth flow;浏览器回 callback
 // 到 kimo server 后,store 的 polling 自动刷新 UI 展示"已登录"。
 
@@ -9,7 +9,7 @@ import { open as shellOpen } from '@tauri-apps/plugin-shell'
 import { useKimoOAuthStore } from '../../stores/kimoOAuthStore'
 import { useTranslation } from '../../i18n'
 
-export function ClaudeOfficialLogin() {
+export function MikoOfficialLogin() {
   const t = useTranslation()
   const {
     status,
@@ -34,9 +34,9 @@ export function ClaudeOfficialLogin() {
         await shellOpen(authorizeUrl)
         startPolling()
       } catch (err) {
-        console.error('[ClaudeOfficialLogin] shellOpen failed:', err)
+        console.error('[MikoOfficialLogin] shellOpen failed:', err)
         useKimoOAuthStore.setState({
-          error: t('settings.claudeOfficialLogin.openBrowserFailed'),
+          error: t('settings.mikoOfficialLogin.openBrowserFailed'),
         })
       }
     } catch {
@@ -48,7 +48,7 @@ export function ClaudeOfficialLogin() {
     if (error) {
       return (
         <div className="text-xs text-[var(--color-error)]">
-          {t('settings.claudeOfficialLogin.errorPrefix')}{error}
+          {t('settings.mikoOfficialLogin.errorPrefix')}{error}
         </div>
       )
     }
@@ -62,11 +62,11 @@ export function ClaudeOfficialLogin() {
   if (status.loggedIn) {
     const subTypeLabel = status.subscriptionType
       ? status.subscriptionType.toUpperCase()
-      : t('settings.claudeOfficialLogin.subTypeUnknown')
+      : t('settings.mikoOfficialLogin.subTypeUnknown')
     return (
       <div className="flex items-center gap-3 text-sm">
         <span className="text-[var(--color-success)]">
-          ✓ {t('settings.claudeOfficialLogin.loggedInPrefix')} {subTypeLabel})
+          ✓ {t('settings.mikoOfficialLogin.loggedInPrefix')} {subTypeLabel})
         </span>
         <button
           type="button"
@@ -75,8 +75,8 @@ export function ClaudeOfficialLogin() {
           className="px-3 py-1 text-xs rounded-md border border-[var(--color-border-separator)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] disabled:opacity-50 transition-colors"
         >
           {isLoading
-            ? t('settings.claudeOfficialLogin.logoutProcessing')
-            : t('settings.claudeOfficialLogin.logoutButton')}
+            ? t('settings.mikoOfficialLogin.logoutProcessing')
+            : t('settings.mikoOfficialLogin.logoutButton')}
         </button>
       </div>
     )
@@ -85,7 +85,7 @@ export function ClaudeOfficialLogin() {
   return (
     <div className="flex flex-col gap-2">
       <div className="text-sm text-[var(--color-text-secondary)]">
-        {t('settings.claudeOfficialLogin.intro')}
+        {t('settings.mikoOfficialLogin.intro')}
       </div>
       <button
         type="button"
@@ -94,12 +94,12 @@ export function ClaudeOfficialLogin() {
         className="self-start rounded-md bg-[image:var(--gradient-btn-primary)] px-4 py-2 text-sm text-[var(--color-btn-primary-fg)] shadow-[var(--shadow-button-primary)] hover:brightness-105 disabled:opacity-50 transition-opacity"
       >
         {isLoading
-          ? t('settings.claudeOfficialLogin.loginStarting')
-          : t('settings.claudeOfficialLogin.loginButton')}
+          ? t('settings.mikoOfficialLogin.loginStarting')
+          : t('settings.mikoOfficialLogin.loginButton')}
       </button>
       {error && (
         <div className="text-xs text-[var(--color-error)]">
-          {t('settings.claudeOfficialLogin.errorPrefix')}{error}
+          {t('settings.mikoOfficialLogin.errorPrefix')}{error}
         </div>
       )}
     </div>

@@ -8,8 +8,10 @@ import { useTranslation } from '../i18n'
 import { Modal } from '../components/shared/Modal'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog'
 import { Input } from '../components/shared/Input'
+import { Textarea } from '../components/shared/Textarea'
 import { Button } from '../components/shared/Button'
 import { Dropdown } from '../components/shared/Dropdown'
+import { settingsApi } from '../api/settings'
 import type { ThemeMode, UpdateProxyMode, NetworkProxyMode, WebSearchMode, AppMode, ChatSendBehavior } from '../types/settings'
 import type { Locale } from '../i18n'
 import type { SavedProvider, UpdateProviderInput, ProviderTestResult, ModelMapping, ApiFormat, ProviderAuthStrategy } from '../types/provider'
@@ -37,7 +39,7 @@ import { DiagnosticsSettings } from './DiagnosticsSettings'
 import { ActivitySettings } from './ActivitySettings'
 import { MemorySettings } from './MemorySettings'
 import { useUIStore, type SettingsTab } from '../stores/uiStore'
-import { ClaudeOfficialLogin } from '../components/settings/ClaudeOfficialLogin'
+import { MikoOfficialLogin } from '../components/settings/MikoOfficialLogin'
 import { ChatGPTOfficialLogin } from '../components/settings/ChatGPTOfficialLogin'
 import { OPENAI_OFFICIAL_PROVIDER_ID } from '../constants/openaiOfficialProvider'
 import { useUpdateStore } from '../stores/updateStore'
@@ -141,7 +143,7 @@ function buildH5PublicBaseUrlFromHostDraft(draft: string, currentBaseUrl: string
 }
 
 export function Settings() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('providers')
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general')
   const pendingSettingsTab = useUIStore((s) => s.pendingSettingsTab)
   const t = useTranslation()
 
@@ -289,7 +291,7 @@ function ProviderSettings() {
     await fetchSettings()
   }
 
-  const isClaudeOfficialActive = hasLoadedProviders && activeId === null
+  const isMikoOfficialActive = hasLoadedProviders && activeId === null
   const isOpenAIOfficialActive = hasLoadedProviders && activeId === OPENAI_OFFICIAL_PROVIDER_ID
 
   return (
@@ -307,22 +309,22 @@ function ProviderSettings() {
 
       {/* Official provider ⌘always visible at top */}
       <div
-        data-testid="claude-official-provider"
+        data-testid="miko-official-provider"
         className={`relative flex flex-col rounded-xl border transition-all mb-2 ${
-          isClaudeOfficialActive
+          isMikoOfficialActive
             ? 'border-[var(--color-brand)] bg-[var(--color-surface-container)] shadow-[var(--shadow-focus-ring)]'
             : 'border-[var(--color-border)] hover:border-[var(--color-border-focus)] cursor-pointer'
         }`}
       >
         <div
           className="flex items-center gap-4 px-4 py-3.5"
-          onClick={() => !isClaudeOfficialActive && handleActivateOfficial()}
+          onClick={() => !isMikoOfficialActive && handleActivateOfficial()}
         >
-          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isClaudeOfficialActive ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-tertiary)]'}`} />
+          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isMikoOfficialActive ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-tertiary)]'}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-[var(--color-text-primary)]">{t('settings.providers.officialName')}</span>
-              {isClaudeOfficialActive && (
+              {isMikoOfficialActive && (
                 <span className="px-1.5 py-0.5 text-[10px] font-bold rounded border border-[var(--color-brand)]/18 bg-[var(--color-brand)]/14 text-[var(--color-brand)] leading-none">{t('settings.providers.default')}</span>
               )}
             </div>
@@ -330,9 +332,9 @@ function ProviderSettings() {
           </div>
         </div>
 
-        {isClaudeOfficialActive && (
+        {isMikoOfficialActive && (
           <div className="px-4 pb-4 pt-3 border-t border-[var(--color-border-separator)]">
-            <ClaudeOfficialLogin />
+            <MikoOfficialLogin />
           </div>
         )}
       </div>
@@ -1469,6 +1471,13 @@ function GeneralSettings() {
   const [networkTimeoutInput, setNetworkTimeoutInput] = useState(String(Math.round(network.aiRequestTimeoutMs / 1000)))
   const [networkSaveError, setNetworkSaveError] = useState<string | null>(null)
   const [isSavingNetwork, setIsSavingNetwork] = useState(false)
+  const [globalPromptDraft, setGlobalPromptDraft] = useState('')
+  const [globalPromptSaved, setGlobalPromptSaved] = useState('')
+  const [globalPromptPath, setGlobalPromptPath] = useState('')
+  const [globalPromptSource, setGlobalPromptSource] = useState<'miko' | 'legacy' | 'none'>('none')
+  const [isGlobalPromptLoading, setIsGlobalPromptLoading] = useState(true)
+  const [isGlobalPromptSaving, setIsGlobalPromptSaving] = useState(false)
+  const [globalPromptError, setGlobalPromptError] = useState<string | null>(null)
   const [notificationPermission, setNotificationPermission] = useState<DesktopNotificationPermission>('default')
   const [notificationActionRunning, setNotificationActionRunning] = useState(false)
   const [modeSwitchConfirmOpen, setModeSwitchConfirmOpen] = useState(false)
@@ -1520,6 +1529,31 @@ function GeneralSettings() {
   }, [fetchAppMode])
 
   useEffect(() => {
+    let cancelled = false
+    setIsGlobalPromptLoading(true)
+    setGlobalPromptError(null)
+    settingsApi.getGlobalPrompt()
+      .then((result) => {
+        if (cancelled) return
+        setGlobalPromptDraft(result.content)
+        setGlobalPromptSaved(result.content)
+        setGlobalPromptPath(result.path)
+        setGlobalPromptSource(result.source)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        setGlobalPromptError(error instanceof Error ? error.message : t('settings.general.globalPromptLoadFailed'))
+      })
+      .finally(() => {
+        if (!cancelled) setIsGlobalPromptLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [t])
+
+  useEffect(() => {
     setPortableDirDraft(appMode.portableDir ?? appMode.defaultPortableDir ?? '')
   }, [appMode.defaultPortableDir, appMode.portableDir])
 
@@ -1554,6 +1588,7 @@ function GeneralSettings() {
   ]
   const selectedResponseLanguageLabel =
     RESPONSE_LANGUAGES.find(({ value }) => value === responseLanguage)?.label ?? RESPONSE_LANGUAGES[0]!.label
+  const globalPromptDirty = globalPromptDraft !== globalPromptSaved
 
   const THEMES: Array<{ value: ThemeMode; label: string }> = [
     { value: 'white', label: t('settings.general.appearance.white') },
@@ -1717,6 +1752,26 @@ function GeneralSettings() {
       setNetworkSaveError(error instanceof Error ? error.message : String(error))
     } finally {
       setIsSavingNetwork(false)
+    }
+  }
+
+  const saveGlobalPrompt = async () => {
+    setIsGlobalPromptSaving(true)
+    setGlobalPromptError(null)
+    try {
+      await settingsApi.updateGlobalPrompt(globalPromptDraft)
+      setGlobalPromptSaved(globalPromptDraft)
+      setGlobalPromptSource('miko')
+      addToast({
+        type: 'success',
+        message: t('settings.general.globalPromptSaved'),
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('settings.general.globalPromptSaveFailed')
+      setGlobalPromptError(message)
+      addToast({ type: 'error', message })
+    } finally {
+      setIsGlobalPromptSaving(false)
     }
   }
 
@@ -1901,6 +1956,56 @@ function GeneralSettings() {
 
   return (
     <div className="max-w-xl">
+      <div className="mb-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-container-low)] p-4">
+        <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">{t('settings.general.globalPromptTitle')}</h2>
+        <p className="text-sm text-[var(--color-text-tertiary)] mb-3">{t('settings.general.globalPromptDescription')}</p>
+        <Textarea
+          value={globalPromptDraft}
+          onChange={(event) => {
+            setGlobalPromptDraft(event.target.value)
+            setGlobalPromptError(null)
+          }}
+          disabled={isGlobalPromptLoading}
+          rows={8}
+          placeholder={t('settings.general.globalPromptPlaceholder')}
+          aria-label={t('settings.general.globalPromptTitle')}
+          className="min-h-[180px] font-[JetBrains_Mono,monospace] leading-5"
+          error={globalPromptError ?? undefined}
+        />
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 text-xs text-[var(--color-text-tertiary)]">
+            {globalPromptSource === 'legacy'
+              ? t('settings.general.globalPromptLegacySource')
+              : globalPromptPath
+                ? t('settings.general.globalPromptPath', { path: globalPromptPath })
+                : t('settings.general.globalPromptNoFile')}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setGlobalPromptDraft(t('settings.general.globalPromptTemplate'))
+                setGlobalPromptError(null)
+              }}
+              disabled={isGlobalPromptLoading || isGlobalPromptSaving}
+            >
+              {t('settings.general.globalPromptUseTemplate')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void saveGlobalPrompt()}
+              loading={isGlobalPromptSaving}
+              disabled={isGlobalPromptLoading || !globalPromptDirty}
+            >
+              {t('settings.general.globalPromptSave')}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Appearance selector */}
       <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">{t('settings.general.appearanceTitle')}</h2>
       <p className="text-sm text-[var(--color-text-tertiary)] mb-3">{t('settings.general.appearanceDescription')}</p>

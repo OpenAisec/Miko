@@ -15,7 +15,7 @@ export function TitleBar() {
 
       {/* Logo */}
       <div className="flex items-center gap-2 mr-4" data-tauri-drag-region>
-        <span className="text-xs font-bold tracking-wider text-[var(--color-brand)] uppercase">Claude Code Companion</span>
+        <span className="text-xs font-bold tracking-wider text-[var(--color-brand)] uppercase">Miko</span>
       </div>
 
       {/* Navigation arrows */}

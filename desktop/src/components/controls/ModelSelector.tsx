@@ -104,10 +104,10 @@ function buildProviderChoices(
   officialName: string,
   openAIOfficialName: string,
   labels: Record<'main' | 'haiku' | 'sonnet' | 'opus', string>,
-  claudeOfficialLoggedIn: boolean,
+  mikoOfficialLoggedIn: boolean,
   openAIOfficialLoggedIn: boolean,
 ): ProviderChoice[] {
-  const claudeOfficialModels = activeId === null && availableModels.length > 0
+  const mikoOfficialModels = activeId === null && availableModels.length > 0
     ? availableModels
     : OFFICIAL_MODELS
   const openAIOfficialModels = activeId === OPENAI_OFFICIAL_PROVIDER_ID && availableModels.length > 0
@@ -116,8 +116,8 @@ function buildProviderChoices(
 
   const choices: ProviderChoice[] = []
 
-  if (claudeOfficialLoggedIn) {
-    choices.push(officialChoices(null, claudeOfficialModels, activeId === null, officialName))
+  if (mikoOfficialLoggedIn) {
+    choices.push(officialChoices(null, mikoOfficialModels, activeId === null, officialName))
   }
   if (openAIOfficialLoggedIn) {
     choices.push(officialChoices(
@@ -186,8 +186,8 @@ export function ModelSelector({
     isLoading: providersLoading,
     fetchProviders,
   } = useProviderStore()
-  const claudeOAuthStatus = useKimoOAuthStore((s) => s.status)
-  const fetchClaudeOAuthStatus = useKimoOAuthStore((s) => s.fetchStatus)
+  const mikoOAuthStatus = useKimoOAuthStore((s) => s.status)
+  const fetchMikoOAuthStatus = useKimoOAuthStore((s) => s.fetchStatus)
   const openAIOAuthStatus = useKimoOpenAIOAuthStore((s) => s.status)
   const fetchOpenAIOAuthStatus = useKimoOpenAIOAuthStore((s) => s.fetchStatus)
   const runtimeSelection = useSessionRuntimeStore((state) =>
@@ -219,9 +219,9 @@ export function ModelSelector({
   }, [fetchProviders, isRuntimeScoped, providersLoading])
 
   useEffect(() => {
-    void fetchClaudeOAuthStatus()
+    void fetchMikoOAuthStatus()
     void fetchOpenAIOAuthStatus()
-  }, [fetchClaudeOAuthStatus, fetchOpenAIOAuthStatus])
+  }, [fetchMikoOAuthStatus, fetchOpenAIOAuthStatus])
 
   useEffect(() => {
     if (!open) return
@@ -312,10 +312,10 @@ export function ModelSelector({
       t('settings.providers.officialName'),
       t('settings.providers.openaiOfficialName'),
       roleLabels,
-      claudeOAuthStatus?.loggedIn === true,
+      mikoOAuthStatus?.loggedIn === true,
       openAIOAuthStatus?.loggedIn === true,
     ),
-    [activeId, availableModels, providers, roleLabels, t, claudeOAuthStatus, openAIOAuthStatus],
+    [activeId, availableModels, providers, roleLabels, t, mikoOAuthStatus, openAIOAuthStatus],
   )
 
   const selectedModel = isControlled

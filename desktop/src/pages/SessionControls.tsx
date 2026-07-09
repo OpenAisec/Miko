@@ -42,7 +42,7 @@ export default function SessionControls() {
       <header className="bg-[var(--color-background)] font-headline font-semibold tracking-wide text-sm fixed top-0 left-0 right-0 flex justify-between items-center px-6 h-12 z-40">
         <div className="flex items-center gap-6">
           <span className="text-sm font-bold text-[var(--color-text-primary)] uppercase tracking-tighter">
-            Claude Code Companion
+            Miko
           </span>
           <nav className="hidden md:flex gap-4">
             <a className="text-[var(--color-text-primary)] border-b-2 border-[var(--color-brand)] pb-1 cursor-pointer active:opacity-70">
@@ -138,7 +138,7 @@ export default function SessionControls() {
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs">
                     AI
                   </div>
-                  <span className="font-semibold text-sm">Claude 4.6 Sonnet</span>
+                  <span className="font-semibold text-sm">Miko Sonnet</span>
                 </div>
                 <p className="text-on-surface-variant leading-relaxed">
                   I've analyzed the{' '}
@@ -383,7 +383,7 @@ export default function SessionControls() {
         >
           <textarea
             className="w-full bg-transparent border-none focus:ring-0 focus:outline-none resize-none font-body text-on-surface placeholder:text-outline"
-            placeholder="Reply to Claude..."
+            placeholder="Reply to Miko..."
             rows={2}
           />
           <div className="flex justify-between items-center">

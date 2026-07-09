@@ -77,7 +77,7 @@ export function ScheduledTasksList() {
         {/* TopAppBar */}
         <header className="bg-[var(--color-background)] h-12 w-full flex justify-between items-center px-6 z-30">
           <div className="flex items-center gap-8">
-            <div className="font-[Manrope,sans-serif] font-bold text-[var(--color-text-primary)] uppercase tracking-tighter text-sm">Claude Code Companion</div>
+            <div className="font-[Manrope,sans-serif] font-bold text-[var(--color-text-primary)] uppercase tracking-tighter text-sm">Miko</div>
             <nav className="flex items-center gap-6 font-[Manrope,sans-serif] font-semibold tracking-wide text-sm">
               <a className="text-[var(--color-text-tertiary)] hover:text-[var(--color-brand)] transition-colors" href="#">{t('titlebar.code')}</a>
               <a className="text-[var(--color-text-tertiary)] hover:text-[var(--color-brand)] transition-colors" href="#">{t('titlebar.terminal')}</a>

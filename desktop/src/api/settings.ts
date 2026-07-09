@@ -15,6 +15,12 @@ export type CliLauncherStatus = {
   lastError: string | null
 }
 
+export type GlobalPromptSettings = {
+  content: string
+  path: string
+  source: 'miko' | 'legacy' | 'none'
+}
+
 export const settingsApi = {
   getUser() {
     return api.get<UserSettings>('/api/settings/user')
@@ -22,6 +28,14 @@ export const settingsApi = {
 
   updateUser(settings: Partial<UserSettings>) {
     return api.put<{ ok: true }>('/api/settings/user', settings)
+  },
+
+  getGlobalPrompt() {
+    return api.get<GlobalPromptSettings>('/api/settings/global-prompt')
+  },
+
+  updateGlobalPrompt(content: string) {
+    return api.put<{ ok: true }>('/api/settings/global-prompt', { content })
   },
 
   getPermissionMode() {

@@ -68,7 +68,7 @@ export const FALLBACK_SLASH_COMMANDS: SlashCommandOption[] = [
   { name: 'review', description: 'Review code changes' },
   { name: 'commit', description: 'Create a git commit' },
   { name: 'pr', description: 'Create a pull request' },
-  { name: 'init', description: 'Initialize project CLAUDE.md' },
+  { name: 'init', description: 'Initialize project MIKO.md' },
   { name: 'bug', description: 'Report a bug' },
   { name: 'config', description: 'Open configuration' },
   { name: 'login', description: 'Switch Anthropic accounts' },

@@ -1791,6 +1791,28 @@ export function getMemoryPath(memoryType: MemoryType): string {
 
   switch (memoryType) {
     case 'User':
+      return join(getDataDir(), 'MIKO.md')
+    case 'Local':
+      return join(cwd, 'MIKO.local.md')
+    case 'Project':
+      return join(cwd, 'MIKO.md')
+    case 'Managed':
+      return join(getManagedFilePath(), 'MIKO.md')
+    case 'AutoMem':
+      return getAutoMemEntrypoint()
+  }
+  // TeamMem is only a valid MemoryType when feature('TEAMMEM') is true
+  if (feature('TEAMMEM')) {
+    return teamMemPaths!.getTeamMemEntrypoint()
+  }
+  return '' // unreachable in external builds where TeamMem is not in MemoryType
+}
+
+export function getLegacyMemoryPath(memoryType: MemoryType): string {
+  const cwd = getOriginalCwd()
+
+  switch (memoryType) {
+    case 'User':
       return join(getDataDir(), 'CLAUDE.md')
     case 'Local':
       return join(cwd, 'CLAUDE.local.md')
@@ -1801,11 +1823,10 @@ export function getMemoryPath(memoryType: MemoryType): string {
     case 'AutoMem':
       return getAutoMemEntrypoint()
   }
-  // TeamMem is only a valid MemoryType when feature('TEAMMEM') is true
   if (feature('TEAMMEM')) {
     return teamMemPaths!.getTeamMemEntrypoint()
   }
-  return '' // unreachable in external builds where TeamMem is not in MemoryType
+  return ''
 }
 
 export function getManagedClaudeRulesDir(): string {
