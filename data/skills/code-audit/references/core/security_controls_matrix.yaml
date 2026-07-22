@@ -1,0 +1,587 @@
+# Security Controls Matrix
+# 安全控制矩阵 - 与语言/框架无关的通用定义
+#
+# 核心理念:
+#   - 定义"应该存在什么"，而非"搜索什么危险代码"
+#   - 所有敏感操作都必须有对应的安全控制
+#   - 检测时验证控制是否存在，而非搜索漏洞
+#
+# 版本: 1.0.0
+# 更新: 2026-01-26
+
+# ============================================================================
+# 第一部分: 安全控制定义 (Security Controls Definition)
+# ============================================================================
+
+security_controls:
+  # 身份认证 - 验证"你是谁"
+  authentication:
+    id: AUTH
+    name: Authentication
+    name_zh: 身份认证
+    description: Verify the identity of the user
+    description_zh: 验证用户身份，确认"你是谁"
+    severity: CRITICAL
+    cwe: CWE-306  # Missing Authentication
+
+  # 授权检查 - 验证"你能做什么"
+  authorization:
+    id: AUTHZ
+    name: Authorization
+    name_zh: 授权检查
+    description: Verify the user has permission to perform the action
+    description_zh: 验证用户权限，确认"你能做什么"
+    severity: CRITICAL
+    cwe: CWE-862  # Missing Authorization
+
+  # 资源所有权 - 验证"这是你的吗"
+  ownership_check:
+    id: OWNER
+    name: Ownership Check
+    name_zh: 资源所有权验证
+    description: Verify the user owns or has access to the specific resource
+    description_zh: 验证资源所有权，防止水平越权
+    severity: HIGH
+    cwe: CWE-639  # Authorization Bypass Through User-Controlled Key
+
+  # CSRF保护 - 防止跨站请求伪造
+  csrf_protection:
+    id: CSRF
+    name: CSRF Protection
+    name_zh: CSRF保护
+    description: Protect against Cross-Site Request Forgery attacks
+    description_zh: 防止跨站请求伪造攻击
+    severity: HIGH
+    cwe: CWE-352  # Cross-Site Request Forgery
+
+  # 输入验证 - 验证用户输入
+  input_validation:
+    id: INPUT
+    name: Input Validation
+    name_zh: 输入验证
+    description: Validate and sanitize user input
+    description_zh: 验证和清理用户输入
+    severity: HIGH
+    cwe: CWE-20  # Improper Input Validation
+
+  # 输出编码 - 防止注入攻击
+  output_encoding:
+    id: OUTPUT
+    name: Output Encoding
+    name_zh: 输出编码
+    description: Encode output to prevent injection attacks
+    description_zh: 对输出进行编码，防止XSS等注入攻击
+    severity: HIGH
+    cwe: CWE-79  # Cross-site Scripting
+
+  # 审计日志 - 记录敏感操作
+  audit_log:
+    id: AUDIT
+    name: Audit Logging
+    name_zh: 审计日志
+    description: Log sensitive operations for audit trail
+    description_zh: 记录敏感操作，便于审计追踪
+    severity: MEDIUM
+    cwe: CWE-778  # Insufficient Logging
+
+  # 速率限制 - 防止暴力攻击
+  rate_limit:
+    id: RATE
+    name: Rate Limiting
+    name_zh: 速率限制
+    description: Limit request rate to prevent brute force attacks
+    description_zh: 限制请求频率，防止暴力攻击
+    severity: MEDIUM
+    cwe: CWE-307  # Improper Restriction of Excessive Authentication Attempts
+
+  # 安全传输 - 使用HTTPS
+  secure_transport:
+    id: TLS
+    name: Secure Transport
+    name_zh: 安全传输
+    description: Use HTTPS/TLS for data in transit
+    description_zh: 使用HTTPS保护传输中的数据
+    severity: HIGH
+    cwe: CWE-319  # Cleartext Transmission of Sensitive Information
+
+  # 安全存储 - 加密敏感数据
+  secure_storage:
+    id: STORE
+    name: Secure Storage
+    name_zh: 安全存储
+    description: Encrypt sensitive data at rest
+    description_zh: 加密存储敏感数据
+    severity: HIGH
+    cwe: CWE-312  # Cleartext Storage of Sensitive Information
+
+  # 会话管理 - 安全的会话处理
+  session_management:
+    id: SESSION
+    name: Session Management
+    name_zh: 会话管理
+    description: Secure session handling (timeout, binding, regeneration)
+    description_zh: 安全的会话处理（超时、绑定、重生成）
+    severity: HIGH
+    cwe: CWE-384  # Session Fixation
+
+  # 错误处理 - 安全的错误响应
+  error_handling:
+    id: ERROR
+    name: Error Handling
+    name_zh: 错误处理
+    description: Handle errors without exposing sensitive information
+    description_zh: 安全地处理错误，不泄露敏感信息
+    severity: MEDIUM
+    cwe: CWE-209  # Information Exposure Through an Error Message
+
+  # 安全配置 - 安全的默认配置
+  secure_config:
+    id: CONFIG
+    name: Secure Configuration
+    name_zh: 安全配置
+    description: Secure default configuration (disable debug, etc.)
+    description_zh: 安全的默认配置（禁用调试等）
+    severity: MEDIUM
+    cwe: CWE-16  # Configuration
+
+  # 安全头 - HTTP安全响应头
+  security_headers:
+    id: HEADERS
+    name: Security Headers
+    name_zh: 安全响应头
+    description: Set security headers (CSP, HSTS, X-Frame-Options, etc.)
+    description_zh: 设置安全响应头
+    severity: MEDIUM
+    cwe: CWE-693  # Protection Mechanism Failure
+
+  # 文件验证 - 上传文件安全检查
+  file_validation:
+    id: FILE
+    name: File Validation
+    name_zh: 文件验证
+    description: Validate uploaded files (type, size, content)
+    description_zh: 验证上传文件的类型、大小和内容
+    severity: HIGH
+    cwe: CWE-434  # Unrestricted Upload of File with Dangerous Type
+
+  # 参数化查询 - 防止SQL注入
+  parameterized_query:
+    id: PARAM
+    name: Parameterized Query
+    name_zh: 参数化查询
+    description: Use parameterized queries to prevent SQL injection
+    description_zh: 使用参数化查询防止SQL注入
+    severity: CRITICAL
+    cwe: CWE-89  # SQL Injection
+
+# ============================================================================
+# 第二部分: 敏感操作定义 (Sensitive Operations Definition)
+# ============================================================================
+
+sensitive_operations:
+  # -------------------------------------------------------------------------
+  # 数据修改操作 (Data Modification)
+  # -------------------------------------------------------------------------
+
+  delete:
+    name: Delete Operation
+    name_zh: 删除操作
+    patterns:
+      - "delete"
+      - "remove"
+      - "destroy"
+      - "drop"
+      - "erase"
+      - "purge"
+    required_controls:
+      - authentication      # 必须登录
+      - authorization       # 必须有权限
+      - ownership_check     # 必须验证所有权（防止IDOR）
+      - csrf_protection     # 必须有CSRF保护
+      - audit_log           # 必须记录日志
+    risk_level: CRITICAL
+    description: "删除操作影响数据完整性，必须严格控制"
+
+  update:
+    name: Update Operation
+    name_zh: 更新操作
+    patterns:
+      - "update"
+      - "edit"
+      - "modify"
+      - "change"
+      - "set"
+      - "save"
+    required_controls:
+      - authentication
+      - authorization
+      - ownership_check
+      - csrf_protection
+      - input_validation    # 验证更新的数据
+      - audit_log
+    risk_level: HIGH
+    description: "更新操作可能修改敏感数据"
+
+  create:
+    name: Create Operation
+    name_zh: 创建操作
+    patterns:
+      - "create"
+      - "add"
+      - "insert"
+      - "new"
+      - "register"
+      - "signup"
+    required_controls:
+      - authentication      # 大多数创建需要登录
+      - authorization
+      - input_validation
+      - rate_limit          # 防止批量创建
+      - csrf_protection
+    risk_level: MEDIUM
+    description: "创建操作需要验证输入和防止滥用"
+
+  # -------------------------------------------------------------------------
+  # 数据访问操作 (Data Access)
+  # -------------------------------------------------------------------------
+
+  read_sensitive:
+    name: Read Sensitive Data
+    name_zh: 读取敏感数据
+    patterns:
+      - "download"
+      - "export"
+      - "view.*password"
+      - "view.*secret"
+      - "get.*config"
+      - "read.*private"
+    required_controls:
+      - authentication
+      - authorization
+      - ownership_check
+      - audit_log
+      - secure_transport
+    risk_level: HIGH
+    description: "访问敏感数据需要严格的权限控制和审计"
+
+  bulk_read:
+    name: Bulk Data Read
+    name_zh: 批量数据读取
+    patterns:
+      - "list.*all"
+      - "export.*all"
+      - "dump"
+      - "backup"
+      - "getAll"
+    required_controls:
+      - authentication
+      - authorization
+      - rate_limit
+      - audit_log
+    risk_level: HIGH
+    description: "批量数据操作需要限流和审计"
+
+  # -------------------------------------------------------------------------
+  # 认证相关操作 (Authentication Related)
+  # -------------------------------------------------------------------------
+
+  login:
+    name: Login Operation
+    name_zh: 登录操作
+    patterns:
+      - "login"
+      - "signin"
+      - "authenticate"
+      - "auth"
+    required_controls:
+      - rate_limit          # 防止暴力破解
+      - secure_transport    # 必须HTTPS
+      - audit_log           # 记录登录尝试
+      - session_management  # 安全会话处理
+      - error_handling      # 不泄露用户是否存在
+    risk_level: CRITICAL
+    description: "登录是最重要的安全入口"
+
+  logout:
+    name: Logout Operation
+    name_zh: 登出操作
+    patterns:
+      - "logout"
+      - "signout"
+      - "exit"
+    required_controls:
+      - authentication
+      - session_management  # 正确销毁会话
+      - csrf_protection     # 防止CSRF登出攻击
+    risk_level: MEDIUM
+    description: "登出必须正确清理会话"
+
+  password_reset:
+    name: Password Reset
+    name_zh: 密码重置
+    patterns:
+      - "reset.*password"
+      - "forgot.*password"
+      - "recover"
+    required_controls:
+      - rate_limit
+      - secure_transport
+      - audit_log
+      - error_handling      # 不泄露邮箱是否注册
+    risk_level: CRITICAL
+    description: "密码重置是常见攻击目标"
+
+  password_change:
+    name: Password Change
+    name_zh: 密码修改
+    patterns:
+      - "change.*password"
+      - "update.*password"
+      - "set.*password"
+    required_controls:
+      - authentication
+      - csrf_protection
+      - secure_transport
+      - audit_log
+      - input_validation    # 密码强度验证
+    risk_level: CRITICAL
+    description: "密码修改需要验证当前密码"
+
+  # -------------------------------------------------------------------------
+  # 权限管理操作 (Permission Management)
+  # -------------------------------------------------------------------------
+
+  grant_permission:
+    name: Grant Permission
+    name_zh: 授予权限
+    patterns:
+      - "grant"
+      - "assign.*role"
+      - "add.*permission"
+      - "promote"
+      - "setAdmin"
+    required_controls:
+      - authentication
+      - authorization       # 必须是管理员
+      - audit_log
+      - csrf_protection
+    risk_level: CRITICAL
+    description: "权限提升是高危操作"
+
+  revoke_permission:
+    name: Revoke Permission
+    name_zh: 撤销权限
+    patterns:
+      - "revoke"
+      - "remove.*role"
+      - "remove.*permission"
+      - "demote"
+    required_controls:
+      - authentication
+      - authorization
+      - audit_log
+      - csrf_protection
+    risk_level: CRITICAL
+    description: "权限撤销也需要严格控制"
+
+  # -------------------------------------------------------------------------
+  # 文件操作 (File Operations)
+  # -------------------------------------------------------------------------
+
+  file_upload:
+    name: File Upload
+    name_zh: 文件上传
+    patterns:
+      - "upload"
+      - "import"
+      - "attach"
+    required_controls:
+      - authentication
+      - authorization
+      - file_validation     # 文件类型、大小、内容验证
+      - rate_limit
+      - audit_log
+    risk_level: HIGH
+    description: "文件上传是RCE的常见入口"
+
+  file_download:
+    name: File Download
+    name_zh: 文件下载
+    patterns:
+      - "download"
+      - "export"
+      - "fetch.*file"
+    required_controls:
+      - authentication
+      - authorization
+      - ownership_check     # 防止任意文件下载
+      - audit_log
+    risk_level: HIGH
+    description: "文件下载可能泄露敏感信息"
+
+  # -------------------------------------------------------------------------
+  # 系统管理操作 (System Administration)
+  # -------------------------------------------------------------------------
+
+  admin_action:
+    name: Admin Action
+    name_zh: 管理员操作
+    patterns:
+      - "admin"
+      - "manage"
+      - "config"
+      - "setting"
+      - "system"
+    required_controls:
+      - authentication
+      - authorization       # 必须是管理员角色
+      - audit_log
+      - csrf_protection
+      - secure_transport
+    risk_level: CRITICAL
+    description: "管理操作影响整个系统"
+
+  execute_code:
+    name: Code Execution
+    name_zh: 代码执行
+    patterns:
+      - "exec"
+      - "eval"
+      - "run"
+      - "execute"
+      - "shell"
+      - "command"
+    required_controls:
+      - authentication
+      - authorization       # 最高权限
+      - input_validation    # 严格过滤
+      - audit_log
+    risk_level: CRITICAL
+    description: "代码执行是最高风险操作"
+
+  # -------------------------------------------------------------------------
+  # 外部交互操作 (External Interaction)
+  # -------------------------------------------------------------------------
+
+  external_request:
+    name: External Request
+    name_zh: 外部请求
+    patterns:
+      - "fetch"
+      - "request"
+      - "call.*api"
+      - "http.*get"
+      - "curl"
+      - "webhook"
+    required_controls:
+      - authentication
+      - input_validation    # URL白名单验证
+      - rate_limit
+      - audit_log
+    risk_level: HIGH
+    description: "外部请求可能导致SSRF"
+
+  payment:
+    name: Payment Operation
+    name_zh: 支付操作
+    patterns:
+      - "pay"
+      - "charge"
+      - "refund"
+      - "transfer"
+      - "withdraw"
+    required_controls:
+      - authentication
+      - authorization
+      - csrf_protection
+      - secure_transport
+      - audit_log
+      - rate_limit
+      - input_validation
+    risk_level: CRITICAL
+    description: "支付操作涉及资金安全"
+
+# ============================================================================
+# 第三部分: 检测规则 (Detection Rules)
+# ============================================================================
+
+detection_rules:
+  # 控制缺失检测逻辑
+  missing_control_detection:
+    description: |
+      对于每个敏感操作，检测其是否具有所有必需的安全控制。
+
+      算法:
+      1. 识别敏感操作（通过patterns匹配方法名/路由）
+      2. 确定该操作需要的安全控制（required_controls）
+      3. 在操作上下文中搜索每个控制的语言特定模式
+      4. 如果某控制未找到，报告缺失
+
+    context_scope:
+      method: 30      # 方法体内向上/下搜索30行
+      class: 100      # 类级别搜索100行
+      file: true      # 是否搜索整个文件的全局配置
+
+  # 一致性检测逻辑
+  consistency_detection:
+    description: |
+      检测同一模块中类似操作的安全控制一致性。
+
+      算法:
+      1. 找到同一类/文件中的所有CRUD操作
+      2. 提取每个操作的安全控制集合
+      3. 比较控制集合，检测不一致
+      4. 如create有认证但delete没有，报告不一致
+
+# ============================================================================
+# 第四部分: 报告模板 (Report Template)
+# ============================================================================
+
+report_template:
+  finding:
+    format: |
+      ## {severity} - {control_name_zh}缺失
+
+      **位置**: {file_path}:{line_number}
+      **操作**: {operation_name} ({operation_pattern})
+      **CWE**: {cwe_id}
+
+      ### 问题描述
+      敏感操作 `{method_name}` 缺少必需的安全控制: {control_name_zh}
+
+      ### 代码片段
+      ```{language}
+      {code_snippet}
+      ```
+
+      ### 风险说明
+      {risk_description}
+
+      ### 修复建议
+      {fix_suggestion}
+
+      ### 参考
+      - CWE: https://cwe.mitre.org/data/definitions/{cwe_number}.html
+
+  summary:
+    format: |
+      # 安全控制审计报告
+
+      ## 概览
+      - 扫描文件数: {total_files}
+      - 敏感操作数: {total_operations}
+      - 发现问题数: {total_findings}
+
+      ## 按严重程度统计
+      | 级别 | 数量 |
+      |------|------|
+      | CRITICAL | {critical_count} |
+      | HIGH | {high_count} |
+      | MEDIUM | {medium_count} |
+      | LOW | {low_count} |
+
+      ## 按控制类型统计
+      {control_type_stats}
+
+      ## 详细发现
+      {detailed_findings}

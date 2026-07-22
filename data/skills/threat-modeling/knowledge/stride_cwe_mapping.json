@@ -1,0 +1,1593 @@
+{
+  "Spoofing": {
+    "description": [
+      "authentication",
+      "identity",
+      "credential",
+      "impersonat",
+      "spoof"
+    ],
+    "primary_cwes": [
+      {
+        "id": "CWE-287",
+        "name": "Improper Authentication",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-306",
+        "name": "Missing Authentication for Critical Function",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-295",
+        "name": "Improper Certificate Validation",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-290",
+        "name": "Authentication Bypass by Spoofing",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-798",
+        "name": "Use of Hard-coded Credentials",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-522",
+        "name": "Insufficiently Protected Credentials",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-640",
+        "name": "Weak Password Recovery Mechanism for Forgotten Password",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1390",
+        "name": "Weak Authentication",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-294",
+        "name": "Authentication Bypass by Capture-replay",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-307",
+        "name": "Improper Restriction of Excessive Authentication Attempts",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-521",
+        "name": "Weak Password Requirements",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-520",
+        "name": ".NET Misconfiguration: Use of Impersonation",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-556",
+        "name": "ASP.NET Misconfiguration: Use of Identity Impersonation",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-645",
+        "name": "Overly Restrictive Account Lockout Mechanism",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-836",
+        "name": "Use of Password Hash Instead of Password for Authentication",
+        "abstraction": "Base"
+      }
+    ],
+    "related_cwes": [
+      {
+        "id": "CWE-1037",
+        "name": "Processor Optimization Removal or Modification of Security-critical Code"
+      },
+      {
+        "id": "CWE-1244",
+        "name": "Internal Asset Exposed to Unsafe Debug Access Level or State"
+      },
+      {
+        "id": "CWE-1273",
+        "name": "Device Unlock Credential Sharing"
+      },
+      {
+        "id": "CWE-257",
+        "name": "Storing Passwords in a Recoverable Format"
+      },
+      {
+        "id": "CWE-370",
+        "name": "Missing Check for Certificate Revocation after Initial Check"
+      },
+      {
+        "id": "CWE-488",
+        "name": "Exposure of Data Element to Wrong Session"
+      },
+      {
+        "id": "CWE-614",
+        "name": "Sensitive Cookie in HTTPS Session Without 'Secure' Attribute"
+      }
+    ],
+    "capec_patterns": [
+      {
+        "id": "CAPEC-112",
+        "name": "Brute Force",
+        "severity": "High",
+        "attack_techniques": [
+          {
+            "technique_id": "1110",
+            "technique_name": "Brute Force"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-114",
+        "name": "Authentication Abuse",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1548",
+            "technique_name": "Abuse Elevation Control Mechanism"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-115",
+        "name": "Authentication Bypass",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1548",
+            "technique_name": "Abuse Elevation Control Mechanism"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-12",
+        "name": "Choosing Message Identifier",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-151",
+        "name": "Identity Spoofing",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-166",
+        "name": "Force the System to Reset Values",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-194",
+        "name": "Fake the Source of Data",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-196",
+        "name": "Session Credential Falsification through Forging",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1134.002",
+            "technique_name": "Access Token Manipulation: Create Process with Token"
+          },
+          {
+            "technique_id": "1134.003",
+            "technique_name": "Access Token Manipulation: Make and Impersonate Token"
+          },
+          {
+            "technique_id": "1606",
+            "technique_name": "Forge Web Credentials"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-2",
+        "name": "Inducing Account Lockout",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1531",
+            "technique_name": "Account Access Removal"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-21",
+        "name": "Exploitation of Trusted Identifiers",
+        "severity": "High",
+        "attack_techniques": [
+          {
+            "technique_id": "1134",
+            "technique_name": "Access Token Manipulation"
+          },
+          {
+            "technique_id": "1528",
+            "technique_name": "Steal Application Access Token"
+          },
+          {
+            "technique_id": "1539",
+            "technique_name": "Steal Web Session Cookie"
+          }
+        ]
+      }
+    ],
+    "common_mitigations": [
+      {
+        "source_cwe": "CWE-287",
+        "phase": "Architecture and Design",
+        "description": "Use an authentication framework or library such as the OWASP ESAPI Authentication feature."
+      },
+      {
+        "source_cwe": "CWE-306",
+        "phase": "Architecture and Design",
+        "description": "Divide the software into anonymous, normal, privileged, and administrative areas. Identify which of these areas require a proven user identity, and use a centralized authentication capability.\n       "
+      },
+      {
+        "source_cwe": "CWE-306",
+        "phase": "Architecture and Design",
+        "description": "For any security checks that are performed on the client side, ensure that these checks are duplicated on the server side, in order to avoid CWE-602. Attackers can bypass the client-side checks by mod"
+      },
+      {
+        "source_cwe": "CWE-295",
+        "phase": "Architecture and Design",
+        "description": "Certificates should be carefully managed and checked to assure that data are encrypted with the intended owner's public key."
+      },
+      {
+        "source_cwe": "CWE-295",
+        "phase": "Implementation",
+        "description": "If certificate pinning is being used, ensure that all relevant properties of the certificate are fully validated before the certificate is pinned, including the hostname."
+      },
+      {
+        "source_cwe": "CWE-798",
+        "phase": "Architecture and Design",
+        "description": "For outbound authentication: store passwords, keys, and other credentials outside of the code in a strongly-protected, encrypted configuration file or database that is protected from access by all out"
+      },
+      {
+        "source_cwe": "CWE-798",
+        "phase": "Architecture and Design",
+        "description": "For inbound authentication: Rather than hard-code a default username and password, key, or other authentication credentials for first time logins, utilize a \"first login\" mode that requires the user t"
+      },
+      {
+        "source_cwe": "CWE-522",
+        "phase": "Architecture and Design",
+        "description": "Use an appropriate security mechanism to protect the credentials."
+      },
+      {
+        "source_cwe": "CWE-522",
+        "phase": "Architecture and Design",
+        "description": "Make appropriate use of cryptography to protect the credentials."
+      },
+      {
+        "source_cwe": "CWE-640",
+        "phase": "Architecture and Design",
+        "description": "Make sure that all input supplied by the user to the password recovery mechanism is thoroughly filtered and validated."
+      }
+    ]
+  },
+  "Tampering": {
+    "description": [
+      "integrity",
+      "tamper",
+      "modif",
+      "inject",
+      "manipulat"
+    ],
+    "primary_cwes": [
+      {
+        "id": "CWE-354",
+        "name": "Improper Validation of Integrity Check Value",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-924",
+        "name": "Improper Enforcement of Message Integrity During Transmission in a Communication Channel",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-352",
+        "name": "Cross-Site Request Forgery (CSRF)",
+        "abstraction": "Compound"
+      },
+      {
+        "id": "CWE-345",
+        "name": "Insufficient Verification of Data Authenticity",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-494",
+        "name": "Download of Code Without Integrity Check",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-346",
+        "name": "Origin Validation Error",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-347",
+        "name": "Improper Verification of Cryptographic Signature",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-353",
+        "name": "Missing Support for Integrity Check",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-649",
+        "name": "Reliance on Obfuscation or Encryption of Security-Relevant Inputs without Integrity Checking",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-89",
+        "name": "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-94",
+        "name": "Improper Control of Generation of Code ('Code Injection')",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-129",
+        "name": "Improper Validation of Array Index",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-360",
+        "name": "Trust of System Event Data",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-77",
+        "name": "Improper Neutralization of Special Elements used in a Command ('Command Injection')",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-915",
+        "name": "Improperly Controlled Modification of Dynamically-Determined Object Attributes",
+        "abstraction": "Base"
+      }
+    ],
+    "related_cwes": [
+      {
+        "id": "CWE-1191",
+        "name": "On-Chip Debug and Test Interface With Improper Access Control"
+      },
+      {
+        "id": "CWE-319",
+        "name": "Cleartext Transmission of Sensitive Information"
+      },
+      {
+        "id": "CWE-1004",
+        "name": "Sensitive Cookie Without 'HttpOnly' Flag"
+      },
+      {
+        "id": "CWE-5",
+        "name": "J2EE Misconfiguration: Data Transmission Without Encryption"
+      },
+      {
+        "id": "CWE-590",
+        "name": "Free of Memory not on the Heap"
+      },
+      {
+        "id": "CWE-593",
+        "name": "Authentication Bypass: OpenSSL CTX Object Modified after SSL Objects are Created"
+      },
+      {
+        "id": "CWE-732",
+        "name": "Incorrect Permission Assignment for Critical Resource"
+      },
+      {
+        "id": "CWE-798",
+        "name": "Use of Hard-coded Credentials"
+      },
+      {
+        "id": "CWE-822",
+        "name": "Untrusted Pointer Dereference"
+      },
+      {
+        "id": "CWE-825",
+        "name": "Expired Pointer Dereference"
+      }
+    ],
+    "capec_patterns": [
+      {
+        "id": "CAPEC-100",
+        "name": "Overflow Buffers",
+        "severity": "Very High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-111",
+        "name": "JSON Hijacking (aka JavaScript Hijacking)",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-126",
+        "name": "Path Traversal",
+        "severity": "Very High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-135",
+        "name": "Format String Injection",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-136",
+        "name": "LDAP Injection",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-141",
+        "name": "Cache Poisoning",
+        "severity": "High",
+        "attack_techniques": [
+          {
+            "technique_id": "1557.002",
+            "technique_name": "Adversary-in-the-Middle: ARP Cache Poisoning"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-148",
+        "name": "Content Spoofing",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1491",
+            "technique_name": "Defacement"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-15",
+        "name": "Command Delimiters",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-160",
+        "name": "Exploit Script-Based APIs",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-183",
+        "name": "IMAP/SMTP Command Injection",
+        "severity": "Medium",
+        "attack_techniques": []
+      }
+    ],
+    "common_mitigations": [
+      {
+        "source_cwe": "CWE-354",
+        "phase": "Implementation",
+        "description": "Ensure that the checksums present in messages are properly checked in accordance with the protocol specification before they are parsed and used."
+      },
+      {
+        "source_cwe": "CWE-352",
+        "phase": "Architecture and Design",
+        "description": "Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid [REF-1482].\n                  For example, use anti-CSRF pac"
+      },
+      {
+        "source_cwe": "CWE-352",
+        "phase": "Implementation",
+        "description": "Ensure that the application is free of cross-site scripting issues (CWE-79), because most CSRF defenses can be bypassed using attacker-controlled script."
+      },
+      {
+        "source_cwe": "CWE-494",
+        "phase": "Implementation",
+        "description": "Perform proper forward and reverse DNS lookups to detect DNS spoofing."
+      },
+      {
+        "source_cwe": "CWE-494",
+        "phase": "Architecture and Design",
+        "description": "Encrypt the code with a reliable encryption scheme before transmitting.\n                  This will only be a partial solution, since it will not detect DNS spoofing and it will not prevent your code "
+      },
+      {
+        "source_cwe": "CWE-353",
+        "phase": "Architecture and Design",
+        "description": "Add an appropriately sized checksum to the protocol, ensuring that data received may be simply validated before it is parsed and used."
+      },
+      {
+        "source_cwe": "CWE-353",
+        "phase": "Implementation",
+        "description": "Ensure that the checksums present in the protocol design are properly implemented and added to each message before it is sent."
+      },
+      {
+        "source_cwe": "CWE-649",
+        "phase": "Architecture and Design",
+        "description": "Protect important client controllable tokens/parameters for integrity using PKI methods (i.e. digital signatures) or other means, and checks for integrity on the server side."
+      },
+      {
+        "source_cwe": "CWE-649",
+        "phase": "Architecture and Design",
+        "description": "Repeated requests from a particular user that include invalid values of tokens/parameters (those that should not be changed manually by users) should result in the user account lockout."
+      },
+      {
+        "source_cwe": "CWE-89",
+        "phase": "Architecture and Design",
+        "description": "Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid [REF-1482].\n                  For example, consider using pe"
+      }
+    ]
+  },
+  "Repudiation": {
+    "description": [
+      "log",
+      "audit",
+      "trace",
+      "repudiat",
+      "accountability"
+    ],
+    "primary_cwes": [
+      {
+        "id": "CWE-778",
+        "name": "Insufficient Logging",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-943",
+        "name": "Improper Neutralization of Special Elements in Data Query Logic",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-1115",
+        "name": "Source Code Element without Standard Prologue",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-117",
+        "name": "Improper Output Neutralization for Logs",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1245",
+        "name": "Improper Finite State Machines (FSMs) in Hardware Logic",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1248",
+        "name": "Semiconductor Defects in Hardware Logic with Security-Sensitive Implications",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1254",
+        "name": "Incorrect Comparison Logic Granularity",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1255",
+        "name": "Comparison Logic is Vulnerable to Power Side-Channel Attacks",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-1264",
+        "name": "Hardware Logic with Insecure De-Synchronization between Control and Data Channels",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-511",
+        "name": "Logic/Time Bomb",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-558",
+        "name": "Use of getlogin() in Multithreaded Application",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-655",
+        "name": "Insufficient Psychological Acceptability",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-783",
+        "name": "Operator Precedence Logic Error",
+        "abstraction": "Base"
+      }
+    ],
+    "related_cwes": [
+      {
+        "id": "CWE-779",
+        "name": "Logging of Excessive Data"
+      },
+      {
+        "id": "CWE-1298",
+        "name": "Hardware Logic Contains Race Conditions"
+      },
+      {
+        "id": "CWE-1313",
+        "name": "Hardware Allows Activation of Test or Debug Logic at Runtime"
+      },
+      {
+        "id": "CWE-1323",
+        "name": "Improper Management of Sensitive Trace Data"
+      },
+      {
+        "id": "CWE-143",
+        "name": "Improper Neutralization of Record Delimiters"
+      },
+      {
+        "id": "CWE-532",
+        "name": "Insertion of Sensitive Information into Log File"
+      },
+      {
+        "id": "CWE-533",
+        "name": "DEPRECATED: Information Exposure Through Server Log Files"
+      },
+      {
+        "id": "CWE-534",
+        "name": "DEPRECATED: Information Exposure Through Debug Log Files"
+      },
+      {
+        "id": "CWE-542",
+        "name": "DEPRECATED: Information Exposure Through Cleanup Log Files"
+      }
+    ],
+    "capec_patterns": [
+      {
+        "id": "CAPEC-189",
+        "name": "Black Box Reverse Engineering",
+        "severity": "Low",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-233",
+        "name": "Privilege Escalation",
+        "severity": "",
+        "attack_techniques": [
+          {
+            "technique_id": "1548",
+            "technique_name": "Abuse Elevation Control Mechanism"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-26",
+        "name": "Leveraging Race Conditions",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-268",
+        "name": "Audit Log Manipulation",
+        "severity": "",
+        "attack_techniques": [
+          {
+            "technique_id": "1070",
+            "technique_name": "Indicator Removal on Host"
+          },
+          {
+            "technique_id": "1562.002",
+            "technique_name": "Impair Defenses: Disable Windows Event Logging"
+          },
+          {
+            "technique_id": "1562.003",
+            "technique_name": "Impair Defenses: Impair Command History Logging"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-624",
+        "name": "Hardware Fault Injection",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-625",
+        "name": "Mobile Device Fault Injection",
+        "severity": "",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-663",
+        "name": "Exploitation of Transient Instruction Execution",
+        "severity": "Very High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-676",
+        "name": "NoSQL Injection",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-74",
+        "name": "Manipulating State",
+        "severity": "High",
+        "attack_techniques": []
+      }
+    ],
+    "common_mitigations": [
+      {
+        "source_cwe": "CWE-778",
+        "phase": "Architecture and Design",
+        "description": "Use a centralized logging mechanism that supports multiple levels of detail."
+      },
+      {
+        "source_cwe": "CWE-778",
+        "phase": "Implementation",
+        "description": "Ensure that all security-related successes and failures can be logged. When storing data in the cloud (e.g., AWS S3 buckets, Azure blobs, Google Cloud Storage, etc.), use the provider's controls to en"
+      },
+      {
+        "source_cwe": "CWE-117",
+        "phase": "Implementation",
+        "description": "Assume all input is malicious. Use an \"accept known good\" input validation strategy, i.e., use a list of acceptable inputs that strictly conform to specifications. Reject any input that does not stric"
+      },
+      {
+        "source_cwe": "CWE-117",
+        "phase": "Implementation",
+        "description": "Use and specify an output encoding that can be handled by the downstream component that is reading the output. Common encodings include ISO-8859-1, UTF-7, and UTF-8. When an encoding is not specified,"
+      },
+      {
+        "source_cwe": "CWE-1245",
+        "phase": "Architecture and Design",
+        "description": "Define all possible states and handle all unused states through default statements. Ensure that system defaults to a secure state."
+      },
+      {
+        "source_cwe": "CWE-1248",
+        "phase": "Testing",
+        "description": "While semiconductor-manufacturing companies implement several mechanisms to continuously improve the semiconductor manufacturing process to ensure reduction of defects, some defects can only be fixed "
+      },
+      {
+        "source_cwe": "CWE-1248",
+        "phase": "Operation",
+        "description": "Operating the hardware outside device specification, such as at extremely high temperatures, voltage, etc., accelerates semiconductor degradation and results in defects.  When these defects manifest a"
+      },
+      {
+        "source_cwe": "CWE-1254",
+        "phase": "Implementation",
+        "description": "The hardware designer should ensure that comparison logic is implemented so as to compare in one operation instead in smaller chunks."
+      },
+      {
+        "source_cwe": "CWE-1255",
+        "phase": "Architecture and Design",
+        "description": "The design phase must consider each check of a security token against a standard and the amount of power consumed during the check of a good token versus a bad token. The alternative is an all at once"
+      },
+      {
+        "source_cwe": "CWE-1255",
+        "phase": "Architecture and Design",
+        "description": "Another potential mitigation is to parallelize shifting of secret data (see example 2 below). Note that the wider the bus the more effective the result."
+      }
+    ]
+  },
+  "Information Disclosure": {
+    "description": [
+      "disclosure",
+      "exposure",
+      "leak",
+      "sensitive",
+      "privacy"
+    ],
+    "primary_cwes": [
+      {
+        "id": "CWE-200",
+        "name": "Exposure of Sensitive Information to an Unauthorized Actor",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-209",
+        "name": "Generation of Error Message Containing Sensitive Information",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-203",
+        "name": "Observable Discrepancy",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-497",
+        "name": "Exposure of Sensitive System Information to an Unauthorized Control Sphere",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-213",
+        "name": "Exposure of Sensitive Information Due to Incompatible Policies",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-215",
+        "name": "Insertion of Sensitive Information Into Debugging Code",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1258",
+        "name": "Exposure of Sensitive System Information Due to Uncleared Debug Information",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1295",
+        "name": "Debug Messages Revealing Unnecessary Information",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-201",
+        "name": "Insertion of Sensitive Information Into Sent Data",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-311",
+        "name": "Missing Encryption of Sensitive Data",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-359",
+        "name": "Exposure of Private Personal Information to an Unauthorized Actor",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-532",
+        "name": "Insertion of Sensitive Information into Log File",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-538",
+        "name": "Insertion of Sensitive Information into Externally-Accessible File or Directory",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1243",
+        "name": "Sensitive Non-Volatile Information Not Protected During Debug",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1273",
+        "name": "Device Unlock Credential Sharing",
+        "abstraction": "Base"
+      }
+    ],
+    "related_cwes": [
+      {
+        "id": "CWE-170",
+        "name": "Improper Null Termination"
+      },
+      {
+        "id": "CWE-257",
+        "name": "Storing Passwords in a Recoverable Format"
+      },
+      {
+        "id": "CWE-732",
+        "name": "Incorrect Permission Assignment for Critical Resource"
+      },
+      {
+        "id": "CWE-825",
+        "name": "Expired Pointer Dereference"
+      },
+      {
+        "id": "CWE-863",
+        "name": "Incorrect Authorization"
+      },
+      {
+        "id": "CWE-89",
+        "name": "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      },
+      {
+        "id": "CWE-1248",
+        "name": "Semiconductor Defects in Hardware Logic with Security-Sensitive Implications"
+      },
+      {
+        "id": "CWE-1264",
+        "name": "Hardware Logic with Insecure De-Synchronization between Control and Data Channels"
+      },
+      {
+        "id": "CWE-1268",
+        "name": "Policy Privileges are not Assigned Consistently Between Control and Data Agents"
+      },
+      {
+        "id": "CWE-256",
+        "name": "Plaintext Storage of a Password"
+      }
+    ],
+    "capec_patterns": [
+      {
+        "id": "CAPEC-116",
+        "name": "Excavation",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-12",
+        "name": "Choosing Message Identifier",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-121",
+        "name": "Exploit Non-Production Interfaces",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-150",
+        "name": "Collect Data from Common Resource Locations",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1003",
+            "technique_name": "OS Credential Dumping"
+          },
+          {
+            "technique_id": "1119",
+            "technique_name": "Automated Collection"
+          },
+          {
+            "technique_id": "1213",
+            "technique_name": "Data from Information Repositories"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-157",
+        "name": "Sniffing Attacks",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-169",
+        "name": "Footprinting",
+        "severity": "Very Low",
+        "attack_techniques": [
+          {
+            "technique_id": "1217",
+            "technique_name": "Browser Bookmark Discovery"
+          },
+          {
+            "technique_id": "1592",
+            "technique_name": "Gather Victim Host Information"
+          },
+          {
+            "technique_id": "1595",
+            "technique_name": "Active Scanning"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-189",
+        "name": "Black Box Reverse Engineering",
+        "severity": "Low",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-217",
+        "name": "Exploiting Incorrectly Configured SSL/TLS",
+        "severity": "",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-22",
+        "name": "Exploiting Trust in Client",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-224",
+        "name": "Fingerprinting",
+        "severity": "Very Low",
+        "attack_techniques": []
+      }
+    ],
+    "common_mitigations": [
+      {
+        "source_cwe": "CWE-200",
+        "phase": "Architecture and Design",
+        "description": "Compartmentalize the system to have \"safe\" areas where trust boundaries can be unambiguously drawn. Do not allow sensitive data to go outside of the trust boundary and always be careful when interfaci"
+      },
+      {
+        "source_cwe": "CWE-209",
+        "phase": "Implementation",
+        "description": "Ensure that error messages only contain minimal details that are useful to the intended audience and no one else. The messages need to strike the balance between being too cryptic (which can confuse u"
+      },
+      {
+        "source_cwe": "CWE-209",
+        "phase": "Implementation",
+        "description": "Handle exceptions internally and do not display errors containing potentially sensitive information to a user."
+      },
+      {
+        "source_cwe": "CWE-203",
+        "phase": "Architecture and Design",
+        "description": "Compartmentalize the system to have \"safe\" areas where trust boundaries can be unambiguously drawn. Do not allow sensitive data to go outside of the trust boundary and always be careful when interfaci"
+      },
+      {
+        "source_cwe": "CWE-203",
+        "phase": "Implementation",
+        "description": "Ensure that error messages only contain minimal details that are useful to the intended audience and no one else. The messages need to strike the balance between being too cryptic (which can confuse u"
+      },
+      {
+        "source_cwe": "CWE-497",
+        "phase": "Architecture and Design",
+        "description": "Production applications should never use methods that generate internal details such as stack traces and error messages unless that information is directly committed to a log that is not viewable by t"
+      },
+      {
+        "source_cwe": "CWE-215",
+        "phase": "Implementation",
+        "description": "Do not leave debug statements that could be executed in the source code. Ensure that all debug information is eradicated before releasing the software."
+      },
+      {
+        "source_cwe": "CWE-215",
+        "phase": "Architecture and Design",
+        "description": "Compartmentalize the system to have \"safe\" areas where trust boundaries can be unambiguously drawn. Do not allow sensitive data to go outside of the trust boundary and always be careful when interfaci"
+      },
+      {
+        "source_cwe": "CWE-1258",
+        "phase": "Architecture and Design",
+        "description": "Whenever debug mode is enabled, all registers containing sensitive assets must be cleared."
+      },
+      {
+        "source_cwe": "CWE-1295",
+        "phase": "Implementation",
+        "description": "Ensure that a debug message does not reveal any unnecessary information during the debug process for the intended response."
+      }
+    ]
+  },
+  "Denial of Service": {
+    "description": [
+      "denial",
+      "dos",
+      "resource",
+      "exhaust",
+      "allocat"
+    ],
+    "primary_cwes": [
+      {
+        "id": "CWE-770",
+        "name": "Allocation of Resources Without Limits or Throttling",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-400",
+        "name": "Uncontrolled Resource Consumption",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-405",
+        "name": "Asymmetric Resource Consumption (Amplification)",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-771",
+        "name": "Missing Reference to Active Allocated Resource",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-920",
+        "name": "Improper Restriction of Power Consumption",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1325",
+        "name": "Improperly Controlled Sequential Memory Allocation",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1246",
+        "name": "Improper Write Handling in Limited-write Non-Volatile Memories",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-789",
+        "name": "Memory Allocation with Excessive Size Value",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-1235",
+        "name": "Incorrect Use of Autoboxing and Unboxing for Performance Critical Operations",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-362",
+        "name": "Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-406",
+        "name": "Insufficient Control of Network Message Volume (Network Amplification)",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-779",
+        "name": "Logging of Excessive Data",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-908",
+        "name": "Use of Uninitialized Resource",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-911",
+        "name": "Improper Update of Reference Count",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-1341",
+        "name": "Multiple Releases of Same Resource or Handle",
+        "abstraction": "Base"
+      }
+    ],
+    "related_cwes": [
+      {
+        "id": "CWE-226",
+        "name": "Sensitive Information in Resource Not Removed Before Reuse"
+      },
+      {
+        "id": "CWE-122",
+        "name": "Heap-based Buffer Overflow"
+      },
+      {
+        "id": "CWE-244",
+        "name": "Improper Clearing of Heap Memory Before Release ('Heap Inspection')"
+      },
+      {
+        "id": "CWE-316",
+        "name": "Cleartext Storage of Sensitive Information in Memory"
+      },
+      {
+        "id": "CWE-416",
+        "name": "Use After Free"
+      },
+      {
+        "id": "CWE-646",
+        "name": "Reliance on File Name or Extension of Externally-Supplied File"
+      },
+      {
+        "id": "CWE-121",
+        "name": "Stack-based Buffer Overflow"
+      },
+      {
+        "id": "CWE-126",
+        "name": "Buffer Over-read"
+      },
+      {
+        "id": "CWE-1274",
+        "name": "Improper Access Control for Volatile Memory Containing Boot Code"
+      },
+      {
+        "id": "CWE-1282",
+        "name": "Assumed-Immutable Data is Stored in Writable Memory"
+      }
+    ],
+    "capec_patterns": [
+      {
+        "id": "CAPEC-100",
+        "name": "Overflow Buffers",
+        "severity": "Very High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-123",
+        "name": "Buffer Manipulation",
+        "severity": "Very High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-125",
+        "name": "Flooding",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1498.001",
+            "technique_name": "Network Denial of Service: Direct Network Flood"
+          },
+          {
+            "technique_id": "1499",
+            "technique_name": "Endpoint Denial of Service"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-130",
+        "name": "Excessive Allocation",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1499.003",
+            "technique_name": "Endpoint Denial of Service:Application Exhaustion Flood"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-131",
+        "name": "Resource Leak Exposure",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1499",
+            "technique_name": "Endpoint Denial of Service"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-212",
+        "name": "Functionality Misuse",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-227",
+        "name": "Sustained Client Engagement",
+        "severity": "",
+        "attack_techniques": [
+          {
+            "technique_id": "1499",
+            "technique_name": "Endpoint Denial of Service"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-230",
+        "name": "Serialized Data with Nested Payloads",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-231",
+        "name": "Oversized Serialized Data Payloads",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-26",
+        "name": "Leveraging Race Conditions",
+        "severity": "High",
+        "attack_techniques": []
+      }
+    ],
+    "common_mitigations": [
+      {
+        "source_cwe": "CWE-770",
+        "phase": "Requirements",
+        "description": "Clearly specify the minimum and maximum expectations for capabilities, and dictate which behaviors are acceptable when resource allocation reaches limits."
+      },
+      {
+        "source_cwe": "CWE-770",
+        "phase": "Architecture and Design",
+        "description": "Limit the amount of resources that are accessible to unprivileged users. Set per-user limits for resources. Allow the system administrator to define these limits. Be careful to avoid CWE-410."
+      },
+      {
+        "source_cwe": "CWE-400",
+        "phase": "Architecture and Design",
+        "description": "Design throttling mechanisms into the system architecture. The best protection is to limit the amount of resources that an unauthorized user can cause to be expended. A strong authentication and acces"
+      },
+      {
+        "source_cwe": "CWE-400",
+        "phase": "Architecture and Design",
+        "description": "Mitigation of resource exhaustion attacks requires that the target system either:\n                     \n                        recognizes the attack and denies that user further access for a given am"
+      },
+      {
+        "source_cwe": "CWE-405",
+        "phase": "Architecture and Design",
+        "description": "An application must make resources available to a client commensurate with the client's access level."
+      },
+      {
+        "source_cwe": "CWE-405",
+        "phase": "Architecture and Design",
+        "description": "An application must, at all times, keep track of allocated resources and meter their usage appropriately."
+      },
+      {
+        "source_cwe": "CWE-771",
+        "phase": "Operation",
+        "description": "Use resource-limiting settings provided by the operating system or environment. For example, when managing system resources in POSIX, setrlimit() can be used to set limits for certain types of resourc"
+      },
+      {
+        "source_cwe": "CWE-1325",
+        "phase": "Implementation",
+        "description": "Ensure multiple allocations of the same kind of object are properly tracked - possibly across multiple sessions, requests, or messages. Define an appropriate strategy for handling requests that exceed"
+      },
+      {
+        "source_cwe": "CWE-1325",
+        "phase": "Operation",
+        "description": "Run the program using system-provided resource limits for memory. This might still cause the program to crash or exit, but the impact to the rest of the system will be minimized."
+      },
+      {
+        "source_cwe": "CWE-1246",
+        "phase": "Architecture and Design",
+        "description": "Include secure wear leveling algorithms and ensure they may not be bypassed."
+      }
+    ]
+  },
+  "Elevation of Privilege": {
+    "description": [
+      "privilege",
+      "authorization",
+      "permission",
+      "access control",
+      "escalat"
+    ],
+    "primary_cwes": [
+      {
+        "id": "CWE-269",
+        "name": "Improper Privilege Management",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-271",
+        "name": "Privilege Dropping / Lowering Errors",
+        "abstraction": "Class"
+      },
+      {
+        "id": "CWE-267",
+        "name": "Privilege Defined With Unsafe Actions",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-250",
+        "name": "Execution with Unnecessary Privileges",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-266",
+        "name": "Incorrect Privilege Assignment",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-268",
+        "name": "Privilege Chaining",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-270",
+        "name": "Privilege Context Switching Error",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-639",
+        "name": "Authorization Bypass Through User-Controlled Key",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-648",
+        "name": "Incorrect Use of Privileged APIs",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-274",
+        "name": "Improper Handling of Insufficient Privileges",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-566",
+        "name": "Authorization Bypass Through User-Controlled SQL Primary Key",
+        "abstraction": "Variant"
+      },
+      {
+        "id": "CWE-273",
+        "name": "Improper Check for Dropped Privileges",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-689",
+        "name": "Permission Race Condition During Resource Copy",
+        "abstraction": "Compound"
+      },
+      {
+        "id": "CWE-272",
+        "name": "Least Privilege Violation",
+        "abstraction": "Base"
+      },
+      {
+        "id": "CWE-280",
+        "name": "Improper Handling of Insufficient Permissions or Privileges ",
+        "abstraction": "Base"
+      }
+    ],
+    "related_cwes": [
+      {
+        "id": "CWE-367",
+        "name": "Time-of-check Time-of-use (TOCTOU) Race Condition"
+      },
+      {
+        "id": "CWE-294",
+        "name": "Authentication Bypass by Capture-replay"
+      },
+      {
+        "id": "CWE-1191",
+        "name": "On-Chip Debug and Test Interface With Improper Access Control"
+      },
+      {
+        "id": "CWE-1257",
+        "name": "Improper Access Control Applied to Mirrored or Aliased Memory Regions"
+      },
+      {
+        "id": "CWE-1392",
+        "name": "Use of Default Credentials"
+      },
+      {
+        "id": "CWE-1393",
+        "name": "Use of Default Password"
+      },
+      {
+        "id": "CWE-220",
+        "name": "Storage of File With Sensitive Data Under FTP Root"
+      },
+      {
+        "id": "CWE-259",
+        "name": "Use of Hard-coded Password"
+      },
+      {
+        "id": "CWE-520",
+        "name": ".NET Misconfiguration: Use of Impersonation"
+      },
+      {
+        "id": "CWE-529",
+        "name": "Exposure of Access Control List Files to an Unauthorized Control Sphere"
+      }
+    ],
+    "capec_patterns": [
+      {
+        "id": "CAPEC-1",
+        "name": "Accessing Functionality Not Properly Constrained by ACLs",
+        "severity": "High",
+        "attack_techniques": [
+          {
+            "technique_id": "1574.010",
+            "technique_name": "Hijack Execution Flow: ServicesFile Permissions Weakness"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-104",
+        "name": "Cross Zone Scripting",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-122",
+        "name": "Privilege Abuse",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1548",
+            "technique_name": "Abuse Elevation Control Mechanism"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-17",
+        "name": "Using Malicious Files",
+        "severity": "Very High",
+        "attack_techniques": [
+          {
+            "technique_id": "1574.005",
+            "technique_name": "Hijack Execution Flow: Executable Installer File Permissions Weakness"
+          },
+          {
+            "technique_id": "1574.010",
+            "technique_name": "Hijack Execution Flow: Services File Permissions Weakness"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-180",
+        "name": "Exploiting Incorrectly Configured Access Control Security Levels",
+        "severity": "Medium",
+        "attack_techniques": [
+          {
+            "technique_id": "1574.010",
+            "technique_name": "Hijack Execution Flow: Services File Permissions Weaknesses"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-19",
+        "name": "Embedding Scripts within Scripts",
+        "severity": "High",
+        "attack_techniques": [
+          {
+            "technique_id": "1027.009",
+            "technique_name": "Obfuscated Files or Information: Embedded Payloads"
+          },
+          {
+            "technique_id": "1546.004",
+            "technique_name": "Event Triggered Execution:.bash_profile and .bashrc"
+          },
+          {
+            "technique_id": "1546.016",
+            "technique_name": "Event Triggered Execution: Installer Packages"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-233",
+        "name": "Privilege Escalation",
+        "severity": "",
+        "attack_techniques": [
+          {
+            "technique_id": "1548",
+            "technique_name": "Abuse Elevation Control Mechanism"
+          }
+        ]
+      },
+      {
+        "id": "CAPEC-234",
+        "name": "Hijacking a privileged process",
+        "severity": "Medium",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-26",
+        "name": "Leveraging Race Conditions",
+        "severity": "High",
+        "attack_techniques": []
+      },
+      {
+        "id": "CAPEC-30",
+        "name": "Hijacking a Privileged Thread of Execution",
+        "severity": "Very High",
+        "attack_techniques": [
+          {
+            "technique_id": "1055.003",
+            "technique_name": "Process Injection: Thread Execution Hijacking"
+          }
+        ]
+      }
+    ],
+    "common_mitigations": [
+      {
+        "source_cwe": "CWE-269",
+        "phase": "Architecture and Design",
+        "description": "Very carefully manage the setting, management, and handling of privileges. Explicitly manage trust zones in the software."
+      },
+      {
+        "source_cwe": "CWE-269",
+        "phase": "Architecture and Design",
+        "description": "Follow the principle of least privilege when assigning access rights to entities in a software system."
+      },
+      {
+        "source_cwe": "CWE-271",
+        "phase": "Architecture and Design",
+        "description": "Compartmentalize the system to have \"safe\" areas where trust boundaries can be unambiguously drawn. Do not allow sensitive data to go outside of the trust boundary and always be careful when interfaci"
+      },
+      {
+        "source_cwe": "CWE-271",
+        "phase": "Architecture and Design",
+        "description": "Very carefully manage the setting, management, and handling of privileges. Explicitly manage trust zones in the software."
+      },
+      {
+        "source_cwe": "CWE-267",
+        "phase": "Architecture and Design",
+        "description": "Very carefully manage the setting, management, and handling of privileges. Explicitly manage trust zones in the software."
+      },
+      {
+        "source_cwe": "CWE-267",
+        "phase": "Architecture and Design",
+        "description": "Run your code using the lowest privileges that are required to accomplish the necessary tasks [REF-76]. If possible, create isolated accounts with limited privileges that are only used for a single ta"
+      },
+      {
+        "source_cwe": "CWE-250",
+        "phase": "Architecture and Design",
+        "description": "Run your code using the lowest privileges that are required to accomplish the necessary tasks [REF-76]. If possible, create isolated accounts with limited privileges that are only used for a single ta"
+      },
+      {
+        "source_cwe": "CWE-250",
+        "phase": "Architecture and Design",
+        "description": "Identify the functionality that requires additional privileges, such as access to privileged operating system resources. Wrap and centralize this functionality if possible, and isolate the privileged "
+      },
+      {
+        "source_cwe": "CWE-266",
+        "phase": "Architecture and Design",
+        "description": "Very carefully manage the setting, management, and handling of privileges. Explicitly manage trust zones in the software."
+      },
+      {
+        "source_cwe": "CWE-266",
+        "phase": "Architecture and Design",
+        "description": "Run your code using the lowest privileges that are required to accomplish the necessary tasks [REF-76]. If possible, create isolated accounts with limited privileges that are only used for a single ta"
+      }
+    ]
+  }
+}

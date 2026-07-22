@@ -1,0 +1,820 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Compliance Framework Knowledge Layer (Layer 4)
+# Maps STRIDE and CWE to compliance frameworks and controls
+# Version: 1.0.0
+# Created: 2024-12-26
+
+# ============================================================================
+# Compliance Framework Registry
+# ============================================================================
+
+frameworks:
+  # SDLC Security Frameworks
+  nist_ssdf:
+    id: "NIST-SSDF"
+    name: "NIST Secure Software Development Framework"
+    version: "1.1"
+    document: "NIST SP 800-218"
+    category: sdlc_security
+    url: "https://csrc.nist.gov/publications/detail/sp/800-218/final"
+
+  owasp_samm:
+    id: "OWASP-SAMM"
+    name: "OWASP Software Assurance Maturity Model"
+    version: "2.0"
+    category: sdlc_security
+    url: "https://owaspsamm.org/"
+
+  # Application Security Frameworks
+  owasp_asvs:
+    id: "OWASP-ASVS"
+    name: "OWASP Application Security Verification Standard"
+    version: "5.0"
+    category: application_security
+    url: "https://owasp.org/www-project-application-security-verification-standard/"
+    chapters:
+      V1: "Architecture, Design and Threat Modeling"
+      V2: "Authentication"
+      V3: "Session Management"
+      V4: "Access Control"
+      V5: "Validation, Sanitization and Encoding"
+      V6: "Stored Cryptography"
+      V7: "Error Handling and Logging"
+      V8: "Data Protection"
+      V9: "Communications"
+      V10: "Malicious Code"
+      V11: "Business Logic"
+      V12: "Files and Resources"
+      V13: "API and Web Service"
+      V14: "Configuration"
+
+  cwe_top25:
+    id: "CWE-TOP25"
+    name: "CWE Top 25 Most Dangerous Software Weaknesses"
+    version: "2024"
+    category: application_security
+    url: "https://cwe.mitre.org/top25/"
+
+  # Information Security Frameworks
+  nist_csf:
+    id: "NIST-CSF"
+    name: "NIST Cybersecurity Framework"
+    version: "2.0"
+    category: information_security
+    url: "https://www.nist.gov/cyberframework"
+    functions:
+      GV: "Govern"
+      ID: "Identify"
+      PR: "Protect"
+      DE: "Detect"
+      RS: "Respond"
+      RC: "Recover"
+
+  nist_800_53:
+    id: "NIST-800-53"
+    name: "NIST Security and Privacy Controls"
+    version: "Rev. 5"
+    document: "NIST SP 800-53"
+    category: information_security
+    url: "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final"
+    families:
+      AC: "Access Control"
+      AT: "Awareness and Training"
+      AU: "Audit and Accountability"
+      CA: "Assessment, Authorization, and Monitoring"
+      CM: "Configuration Management"
+      CP: "Contingency Planning"
+      IA: "Identification and Authentication"
+      IR: "Incident Response"
+      MA: "Maintenance"
+      MP: "Media Protection"
+      PE: "Physical and Environmental Protection"
+      PL: "Planning"
+      PM: "Program Management"
+      PS: "Personnel Security"
+      PT: "PII Processing and Transparency"
+      RA: "Risk Assessment"
+      SA: "System and Services Acquisition"
+      SC: "System and Communications Protection"
+      SI: "System and Information Integrity"
+      SR: "Supply Chain Risk Management"
+
+  cis_controls:
+    id: "CIS-V8"
+    name: "CIS Critical Security Controls"
+    version: "8.0"
+    category: information_security
+    url: "https://www.cisecurity.org/controls"
+    control_count: 18
+
+  # Cloud Security Frameworks
+  csa_ccm:
+    id: "CSA-CCM"
+    name: "Cloud Security Alliance Cloud Controls Matrix"
+    version: "4.0"
+    category: cloud_security
+    url: "https://cloudsecurityalliance.org/research/cloud-controls-matrix/"
+    domains:
+      AIS: "Application & Interface Security"
+      BCR: "Business Continuity Management & Operational Resilience"
+      CCC: "Change Control & Configuration Management"
+      CEK: "Cryptography, Encryption & Key Management"
+      DCS: "Datacenter Security"
+      DSP: "Data Security & Privacy Lifecycle Management"
+      GRC: "Governance, Risk and Compliance"
+      HRS: "Human Resources Security"
+      IAM: "Identity & Access Management"
+      IPY: "Interoperability & Portability"
+      IVS: "Infrastructure & Virtualization Security"
+      LOG: "Logging and Monitoring"
+      SEF: "Security Incident Management, E-Discovery & Cloud Forensics"
+      STA: "Supply Chain Management, Transparency, and Accountability"
+      TVM: "Threat & Vulnerability Management"
+      UEM: "Universal Endpoint Management"
+
+  # AI Governance Frameworks
+  eu_ai_act:
+    id: "EU-AI-ACT"
+    name: "EU Artificial Intelligence Act"
+    version: "2024"
+    category: ai_governance
+    url: "https://artificialintelligenceact.eu/"
+
+  iso_42001:
+    id: "ISO-42001"
+    name: "ISO/IEC 42001 AI Management System"
+    version: "2023"
+    category: ai_governance
+    url: "https://www.iso.org/standard/81230.html"
+
+  nist_ai_rmf:
+    id: "NIST-AI-RMF"
+    name: "NIST AI Risk Management Framework"
+    version: "1.0"
+    category: ai_governance
+    url: "https://www.nist.gov/itl/ai-risk-management-framework"
+
+  # AI Security Technical Frameworks
+  owasp_llm:
+    id: "OWASP-LLM"
+    name: "OWASP Top 10 for LLM Applications"
+    version: "2025"
+    category: ai_security_technical
+    url: "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+
+  mitre_atlas:
+    id: "MITRE-ATLAS"
+    name: "MITRE ATLAS - Adversarial Threat Landscape for AI Systems"
+    version: "2024"
+    category: ai_security_technical
+    url: "https://atlas.mitre.org/"
+
+  owasp_agentic_ai:
+    id: "OWASP-AGENTIC-AI"
+    name: "OWASP Top 10 Threats for Agentic AI Applications"
+    version: "2026"
+    category: ai_security_technical
+    url: "https://owasp.org/"
+
+# ============================================================================
+# STRIDE to Compliance Control Mappings
+# ============================================================================
+
+stride_compliance_mappings:
+  spoofing:
+    code: S
+    security_property: Authentication
+    description: "Controls preventing identity falsification"
+
+    nist_800_53:
+      primary:
+        - id: IA-2
+          name: "Identification and Authentication (Organizational Users)"
+          description: "Uniquely identify and authenticate organizational users"
+        - id: IA-5
+          name: "Authenticator Management"
+          description: "Manage system authenticators"
+        - id: IA-8
+          name: "Identification and Authentication (Non-Organizational Users)"
+          description: "Identify and authenticate non-organizational users"
+        - id: IA-11
+          name: "Re-authentication"
+          description: "Require re-authentication for defined conditions"
+      secondary:
+        - id: AC-2
+          name: "Account Management"
+          description: "Manage system accounts"
+        - id: AC-3
+          name: "Access Enforcement"
+          description: "Enforce approved authorizations"
+
+    cis_controls:
+      primary:
+        - control: 5
+          name: "Account Management"
+          description: "Use processes and tools to assign and manage authorization to credentials"
+        - control: 6
+          name: "Access Control Management"
+          description: "Use processes and tools to create, assign, manage, and revoke access"
+      secondary:
+        - control: 3
+          name: "Data Protection"
+          description: "Protect credentials and sensitive data"
+
+    owasp_asvs:
+      - chapter: V2
+        requirements:
+          - V2.1.1: "Password hashing"
+          - V2.1.2: "Password length"
+          - V2.2.1: "Anti-automation"
+          - V2.5.1: "Credential recovery"
+          - V2.8.1: "OTP implementation"
+      - chapter: V3
+        requirements:
+          - V3.2.1: "Session binding"
+          - V3.4.1: "Cookie security"
+
+    csa_ccm:
+      primary:
+        - domain: IAM
+          controls:
+            - IAM-01: "Identity Inventory"
+            - IAM-02: "Strong Authentication"
+            - IAM-03: "Identity Federation"
+            - IAM-08: "User Access Authorization"
+
+    ai_specific:
+      owasp_llm:
+        - LLM01: "Prompt Injection (identity spoofing)"
+        - LLM03: "Supply Chain (model spoofing)"
+      owasp_agentic_ai:
+        - A01: "Uncontrolled Access (agent spoofing)"
+        - A02: "Tool Misuse (capability spoofing)"
+
+  tampering:
+    code: T
+    security_property: Integrity
+    description: "Controls preventing unauthorized modification"
+
+    nist_800_53:
+      primary:
+        - id: SI-7
+          name: "Software, Firmware, and Information Integrity"
+          description: "Employ integrity verification tools"
+        - id: SI-10
+          name: "Information Input Validation"
+          description: "Check validity of information inputs"
+        - id: SC-8
+          name: "Transmission Confidentiality and Integrity"
+          description: "Protect confidentiality and integrity of transmitted info"
+        - id: SC-13
+          name: "Cryptographic Protection"
+          description: "Implement cryptographic mechanisms"
+      secondary:
+        - id: SA-11
+          name: "Developer Security and Privacy Testing"
+          description: "Require developers to test for flaws"
+
+    cis_controls:
+      primary:
+        - control: 7
+          name: "Continuous Vulnerability Management"
+          description: "Continuously acquire, assess, and take action on vulnerabilities"
+        - control: 10
+          name: "Malware Defenses"
+          description: "Control installation, spread, and execution of malicious code"
+      secondary:
+        - control: 11
+          name: "Data Recovery"
+          description: "Establish and maintain data recovery practices"
+
+    owasp_asvs:
+      - chapter: V5
+        requirements:
+          - V5.1.1: "Input validation architecture"
+          - V5.2.1: "HTML sanitization"
+          - V5.3.1: "Output encoding"
+          - V5.3.4: "Parameterized queries"
+          - V5.5.1: "Deserialization controls"
+      - chapter: V6
+        requirements:
+          - V6.2.1: "Approved algorithms"
+          - V6.2.5: "Key management"
+
+    csa_ccm:
+      primary:
+        - domain: AIS
+          controls:
+            - AIS-01: "Application Security Baseline Requirements"
+            - AIS-02: "Secure Application Design and Development"
+            - AIS-04: "Secure Application Testing"
+        - domain: CEK
+          controls:
+            - CEK-01: "Encryption and Key Management Policy"
+            - CEK-03: "Data Encryption"
+
+    ai_specific:
+      owasp_llm:
+        - LLM04: "Data Poisoning"
+        - LLM05: "Improper Output Handling"
+        - LLM08: "Embedding Inversion"
+      mitre_atlas:
+        - AML.T0010: "Poisoning Attack"
+        - AML.T0011: "Backdoor Attack"
+        - AML.T0042: "Tainted Model"
+
+  repudiation:
+    code: R
+    security_property: Non-repudiation
+    description: "Controls ensuring accountability for actions"
+
+    nist_800_53:
+      primary:
+        - id: AU-2
+          name: "Event Logging"
+          description: "Identify events to be logged"
+        - id: AU-3
+          name: "Content of Audit Records"
+          description: "Include sufficient information in audit records"
+        - id: AU-6
+          name: "Audit Record Review, Analysis, and Reporting"
+          description: "Review and analyze audit records"
+        - id: AU-9
+          name: "Protection of Audit Information"
+          description: "Protect audit information from unauthorized access"
+        - id: AU-12
+          name: "Audit Record Generation"
+          description: "Generate audit records containing established content"
+      secondary:
+        - id: SI-4
+          name: "System Monitoring"
+          description: "Monitor system for attacks and anomalies"
+
+    cis_controls:
+      primary:
+        - control: 8
+          name: "Audit Log Management"
+          description: "Collect, alert, review, and retain audit logs"
+
+    owasp_asvs:
+      - chapter: V7
+        requirements:
+          - V7.1.1: "Log content"
+          - V7.1.2: "Sensitive data exclusion"
+          - V7.2.1: "Log format"
+          - V7.3.1: "Log protection"
+          - V7.4.1: "Time synchronization"
+
+    csa_ccm:
+      primary:
+        - domain: LOG
+          controls:
+            - LOG-01: "Logging and Monitoring Policy"
+            - LOG-03: "Security Monitoring and Alerting"
+            - LOG-05: "Audit Logs Protection"
+            - LOG-09: "Audit Logs Access and Accountability"
+
+    ai_specific:
+      owasp_llm:
+        - LLM09: "Misinformation"
+      iso_42001:
+        - "A.8.8: Logs and audit trails for AI decisions"
+
+  information_disclosure:
+    code: I
+    security_property: Confidentiality
+    description: "Controls preventing unauthorized data access"
+
+    nist_800_53:
+      primary:
+        - id: SC-8
+          name: "Transmission Confidentiality and Integrity"
+          description: "Protect transmitted information"
+        - id: SC-28
+          name: "Protection of Information at Rest"
+          description: "Protect data at rest"
+        - id: AC-4
+          name: "Information Flow Enforcement"
+          description: "Enforce information flow control"
+        - id: SC-7
+          name: "Boundary Protection"
+          description: "Monitor and control communications at boundaries"
+      secondary:
+        - id: MP-6
+          name: "Media Sanitization"
+          description: "Sanitize or destroy media"
+        - id: PT-2
+          name: "Authority to Process PII"
+          description: "Determine authority for processing PII"
+
+    cis_controls:
+      primary:
+        - control: 3
+          name: "Data Protection"
+          description: "Develop processes and controls to identify, classify, secure, retain data"
+      secondary:
+        - control: 4
+          name: "Secure Configuration"
+          description: "Establish and maintain secure configuration"
+
+    owasp_asvs:
+      - chapter: V6
+        requirements:
+          - V6.1.1: "Regulated data encryption"
+          - V6.2.1: "Approved cryptographic algorithms"
+          - V6.2.5: "Key management"
+      - chapter: V8
+        requirements:
+          - V8.1.1: "Sensitive data identification"
+          - V8.2.1: "Caching controls"
+          - V8.3.1: "Sensitive data in URLs"
+
+    csa_ccm:
+      primary:
+        - domain: DSP
+          controls:
+            - DSP-01: "Data Security and Privacy Policy"
+            - DSP-02: "Secure Disposal"
+            - DSP-04: "Data Classification"
+            - DSP-05: "Personal Data Processing"
+        - domain: CEK
+          controls:
+            - CEK-03: "Data Encryption"
+
+    ai_specific:
+      owasp_llm:
+        - LLM02: "Sensitive Information Disclosure"
+        - LLM07: "Prompt Leakage"
+        - LLM08: "Embedding Inversion"
+      mitre_atlas:
+        - AML.T0014: "Model Inversion"
+        - AML.T0024: "Exfiltration"
+      owasp_agentic_ai:
+        - A05: "Inadequate Sandboxing"
+
+  denial_of_service:
+    code: D
+    security_property: Availability
+    description: "Controls ensuring system availability"
+
+    nist_800_53:
+      primary:
+        - id: SC-5
+          name: "Denial of Service Protection"
+          description: "Protect against or limit effects of DoS"
+        - id: CP-2
+          name: "Contingency Plan"
+          description: "Develop, disseminate, and implement contingency plan"
+        - id: CP-7
+          name: "Alternate Processing Site"
+          description: "Maintain alternate processing site"
+        - id: CP-10
+          name: "System Recovery and Reconstitution"
+          description: "Provide for recovery and reconstitution"
+      secondary:
+        - id: SI-4
+          name: "System Monitoring"
+          description: "Monitor for abnormal activity"
+
+    cis_controls:
+      primary:
+        - control: 11
+          name: "Data Recovery"
+          description: "Establish data recovery capabilities"
+        - control: 17
+          name: "Incident Response Management"
+          description: "Establish incident response program"
+
+    owasp_asvs:
+      - chapter: V11
+        requirements:
+          - V11.1.2: "Rate limiting"
+          - V11.1.5: "API rate controls"
+      - chapter: V12
+        requirements:
+          - V12.1.1: "File size limits"
+          - V12.5.1: "Resource consumption limits"
+
+    csa_ccm:
+      primary:
+        - domain: BCR
+          controls:
+            - BCR-01: "Business Continuity Management Policy"
+            - BCR-03: "Business Continuity Testing"
+            - BCR-07: "Equipment Redundancy"
+        - domain: IVS
+          controls:
+            - IVS-06: "Network Security"
+            - IVS-08: "Segmentation"
+
+    ai_specific:
+      owasp_llm:
+        - LLM10: "Unbounded Consumption"
+      owasp_agentic_ai:
+        - A06: "Excessive Agency"
+
+  elevation_of_privilege:
+    code: E
+    security_property: Authorization
+    description: "Controls enforcing proper access control"
+
+    nist_800_53:
+      primary:
+        - id: AC-2
+          name: "Account Management"
+          description: "Manage system accounts"
+        - id: AC-3
+          name: "Access Enforcement"
+          description: "Enforce approved authorizations"
+        - id: AC-5
+          name: "Separation of Duties"
+          description: "Separate duties of individuals"
+        - id: AC-6
+          name: "Least Privilege"
+          description: "Employ least privilege principle"
+        - id: AC-17
+          name: "Remote Access"
+          description: "Authorize and monitor remote access"
+      secondary:
+        - id: SC-2
+          name: "Separation of System and User Functionality"
+          description: "Separate user and system functionality"
+
+    cis_controls:
+      primary:
+        - control: 5
+          name: "Account Management"
+          description: "Use processes and tools to manage accounts"
+        - control: 6
+          name: "Access Control Management"
+          description: "Create, assign, manage, revoke access"
+
+    owasp_asvs:
+      - chapter: V4
+        requirements:
+          - V4.1.1: "Access control design"
+          - V4.1.2: "Attribute-based access control"
+          - V4.1.3: "Least privilege"
+          - V4.2.1: "Sensitive operations protection"
+          - V4.3.1: "Admin access restrictions"
+
+    csa_ccm:
+      primary:
+        - domain: IAM
+          controls:
+            - IAM-05: "Segregation of Privileged Access Roles"
+            - IAM-08: "User Access Authorization"
+            - IAM-09: "User Access Reviews"
+            - IAM-12: "User ID Credentials"
+
+    ai_specific:
+      owasp_llm:
+        - LLM01: "Prompt Injection"
+        - LLM05: "Improper Output Handling"
+        - LLM06: "Excessive Agency"
+      owasp_agentic_ai:
+        - A01: "Uncontrolled Access"
+        - A02: "Tool Misuse"
+        - A03: "Excessive Permissions"
+
+# ============================================================================
+# CWE to Compliance Control Mappings
+# Maps specific CWEs to applicable compliance controls
+# ============================================================================
+
+cwe_compliance_mappings:
+  # OWASP Top 10 2025 Categories
+  A01_broken_access_control:
+    owasp_2025: A01
+    name: "Broken Access Control"
+    cwes: [CWE-200, CWE-201, CWE-352, CWE-284, CWE-285, CWE-639, CWE-862, CWE-863]
+    stride: [E, I]
+    controls:
+      nist_800_53: [AC-2, AC-3, AC-5, AC-6, AC-17]
+      cis_v8: [5, 6]
+      owasp_asvs: [V4.1, V4.2, V4.3]
+      csa_ccm: [IAM-05, IAM-08, IAM-09]
+
+  A02_cryptographic_failures:
+    owasp_2025: A02
+    name: "Cryptographic Failures"
+    cwes: [CWE-259, CWE-261, CWE-311, CWE-312, CWE-327, CWE-328, CWE-330]
+    stride: [I, T]
+    controls:
+      nist_800_53: [SC-8, SC-13, SC-28]
+      cis_v8: [3]
+      owasp_asvs: [V6.1, V6.2, V6.3, V6.4]
+      csa_ccm: [CEK-01, CEK-03, CEK-04]
+
+  A03_injection:
+    owasp_2025: A03
+    name: "Injection"
+    cwes: [CWE-20, CWE-74, CWE-75, CWE-77, CWE-78, CWE-79, CWE-89, CWE-94, CWE-95]
+    stride: [T, E]
+    controls:
+      nist_800_53: [SI-10, SA-11]
+      cis_v8: [7, 16]
+      owasp_asvs: [V5.1, V5.2, V5.3, V5.4, V5.5]
+      csa_ccm: [AIS-01, AIS-02, AIS-04]
+
+  A04_insecure_design:
+    owasp_2025: A04
+    name: "Insecure Design"
+    cwes: [CWE-73, CWE-183, CWE-209, CWE-256, CWE-501, CWE-522, CWE-656]
+    stride: [T, I, E]
+    controls:
+      nist_800_53: [SA-8, SA-10, SA-11, SA-15]
+      cis_v8: [16]
+      owasp_asvs: [V1.1, V1.2, V1.3, V1.4]
+      csa_ccm: [AIS-01, AIS-02]
+
+  A05_security_misconfiguration:
+    owasp_2025: A05
+    name: "Security Misconfiguration"
+    cwes: [CWE-2, CWE-11, CWE-13, CWE-15, CWE-16, CWE-260, CWE-315, CWE-520]
+    stride: [T, I, E]
+    controls:
+      nist_800_53: [CM-2, CM-6, CM-7, CM-8, SA-22]
+      cis_v8: [4, 18]
+      owasp_asvs: [V14.1, V14.2, V14.3, V14.4]
+      csa_ccm: [CCC-01, CCC-02, CCC-03]
+
+  A06_vulnerable_components:
+    owasp_2025: A06
+    name: "Vulnerable and Outdated Components"
+    cwes: [CWE-1104]
+    stride: [T, E]
+    controls:
+      nist_800_53: [SA-22, SR-3, SR-4]
+      cis_v8: [2, 7]
+      owasp_asvs: [V14.2]
+      csa_ccm: [STA-01, STA-02, TVM-01]
+
+  A07_auth_failures:
+    owasp_2025: A07
+    name: "Identification and Authentication Failures"
+    cwes: [CWE-255, CWE-259, CWE-287, CWE-288, CWE-290, CWE-294, CWE-295, CWE-306]
+    stride: [S, E]
+    controls:
+      nist_800_53: [IA-2, IA-5, IA-8, IA-11]
+      cis_v8: [5, 6]
+      owasp_asvs: [V2.1, V2.2, V2.3, V2.5, V2.7, V2.8, V2.9]
+      csa_ccm: [IAM-01, IAM-02, IAM-03]
+
+  A08_integrity_failures:
+    owasp_2025: A08
+    name: "Software and Data Integrity Failures"
+    cwes: [CWE-345, CWE-346, CWE-353, CWE-426, CWE-494, CWE-502, CWE-565]
+    stride: [T]
+    controls:
+      nist_800_53: [SI-7, SA-22, SR-3, SR-4]
+      cis_v8: [2, 7, 10]
+      owasp_asvs: [V5.5, V10.1, V10.2, V10.3]
+      csa_ccm: [AIS-02, STA-01, STA-02]
+
+  A09_logging_failures:
+    owasp_2025: A09
+    name: "Security Logging and Monitoring Failures"
+    cwes: [CWE-117, CWE-223, CWE-532, CWE-778]
+    stride: [R]
+    controls:
+      nist_800_53: [AU-2, AU-3, AU-6, AU-9, AU-12]
+      cis_v8: [8]
+      owasp_asvs: [V7.1, V7.2, V7.3, V7.4]
+      csa_ccm: [LOG-01, LOG-03, LOG-05, LOG-09]
+
+  A10_exception_handling:
+    owasp_2025: A10
+    name: "Server-Side Exception and Error Handling"
+    cwes: [CWE-392, CWE-397, CWE-400, CWE-703, CWE-754, CWE-755, CWE-770]
+    stride: [I, D]
+    controls:
+      nist_800_53: [SI-11, SC-5]
+      cis_v8: [8, 17]
+      owasp_asvs: [V7.4, V11.1, V12.5]
+      csa_ccm: [BCR-01, LOG-03]
+
+# ============================================================================
+# AI-Specific Compliance Mappings
+# ============================================================================
+
+ai_compliance_mappings:
+  llm_threats:
+    LLM01:
+      name: "Prompt Injection"
+      stride: [S, T, E]
+      iso_42001: ["A.6.2", "A.8.1", "A.8.4"]
+      nist_ai_rmf: ["MAP 2.3", "GOVERN 1.7"]
+      eu_ai_act: ["Article 9", "Article 15"]
+
+    LLM02:
+      name: "Sensitive Information Disclosure"
+      stride: [I]
+      iso_42001: ["A.8.5", "A.8.6"]
+      nist_ai_rmf: ["MEASURE 2.5", "MANAGE 3.2"]
+      eu_ai_act: ["Article 10", "Article 13"]
+
+    LLM03:
+      name: "Supply Chain Vulnerabilities"
+      stride: [S, T]
+      iso_42001: ["A.11.1", "A.11.2"]
+      nist_ai_rmf: ["MAP 4.1", "GOVERN 3.2"]
+      eu_ai_act: ["Article 17"]
+
+    LLM04:
+      name: "Data Poisoning"
+      stride: [T]
+      iso_42001: ["A.7.2", "A.7.3", "A.10.2"]
+      nist_ai_rmf: ["MAP 2.1", "MEASURE 2.2"]
+      eu_ai_act: ["Article 10"]
+
+    LLM05:
+      name: "Improper Output Handling"
+      stride: [T, E]
+      iso_42001: ["A.8.3", "A.8.4"]
+      nist_ai_rmf: ["MEASURE 2.6"]
+      eu_ai_act: ["Article 14", "Article 15"]
+
+    LLM06:
+      name: "Excessive Agency"
+      stride: [E]
+      iso_42001: ["A.8.1", "A.8.2", "A.10.4"]
+      nist_ai_rmf: ["GOVERN 1.3", "MANAGE 1.1"]
+      eu_ai_act: ["Article 14"]
+
+    LLM07:
+      name: "Prompt Leakage"
+      stride: [I]
+      iso_42001: ["A.8.5"]
+      nist_ai_rmf: ["MEASURE 2.5"]
+      eu_ai_act: ["Article 13"]
+
+    LLM08:
+      name: "Embedding Inversion"
+      stride: [T, I]
+      iso_42001: ["A.6.3", "A.8.6"]
+      nist_ai_rmf: ["MEASURE 2.5", "MEASURE 2.7"]
+      eu_ai_act: ["Article 10"]
+
+    LLM09:
+      name: "Misinformation"
+      stride: [R]
+      iso_42001: ["A.8.8", "A.10.3"]
+      nist_ai_rmf: ["MAP 2.3", "MEASURE 2.9"]
+      eu_ai_act: ["Article 13", "Article 52"]
+
+    LLM10:
+      name: "Unbounded Consumption"
+      stride: [D]
+      iso_42001: ["A.9.1", "A.9.3"]
+      nist_ai_rmf: ["MANAGE 2.2"]
+      eu_ai_act: ["Article 15"]
+
+  agentic_ai_threats:
+    A01:
+      name: "Uncontrolled Access"
+      stride: [E, S]
+      iso_42001: ["A.8.1", "A.8.2", "A.10.4"]
+      nist_ai_rmf: ["GOVERN 1.3", "MANAGE 1.1"]
+
+    A02:
+      name: "Tool Misuse"
+      stride: [S, T, E]
+      iso_42001: ["A.8.3", "A.10.4"]
+      nist_ai_rmf: ["MANAGE 1.4", "MANAGE 2.3"]
+
+    A03:
+      name: "Excessive Permissions"
+      stride: [E]
+      iso_42001: ["A.8.2", "A.10.5"]
+      nist_ai_rmf: ["GOVERN 1.5", "MANAGE 1.2"]
+
+    A05:
+      name: "Inadequate Sandboxing"
+      stride: [I, E]
+      iso_42001: ["A.9.2", "A.10.6"]
+      nist_ai_rmf: ["MANAGE 2.1", "MANAGE 2.4"]
+
+# ============================================================================
+# Compliance Metadata
+# ============================================================================
+
+compliance_metadata:
+  version: "1.0.0"
+  last_updated: "2024-12-26"
+  framework_count: 14
+  stride_coverage:
+    S: ["NIST-800-53 IA", "CIS 5-6", "OWASP-ASVS V2-V3", "CSA-CCM IAM"]
+    T: ["NIST-800-53 SI/SC", "CIS 7/10", "OWASP-ASVS V5-V6", "CSA-CCM AIS/CEK"]
+    R: ["NIST-800-53 AU", "CIS 8", "OWASP-ASVS V7", "CSA-CCM LOG"]
+    I: ["NIST-800-53 SC/AC", "CIS 3", "OWASP-ASVS V6/V8", "CSA-CCM DSP/CEK"]
+    D: ["NIST-800-53 SC/CP", "CIS 11/17", "OWASP-ASVS V11-V12", "CSA-CCM BCR"]
+    E: ["NIST-800-53 AC", "CIS 5-6", "OWASP-ASVS V4", "CSA-CCM IAM"]
+  category_coverage:
+    sdlc_security: ["NIST-SSDF", "OWASP-SAMM"]
+    application_security: ["OWASP-ASVS", "CWE-TOP25", "OWASP-TOP10"]
+    information_security: ["NIST-CSF", "NIST-800-53", "CIS-V8"]
+    cloud_security: ["CSA-CCM"]
+    ai_governance: ["EU-AI-ACT", "ISO-42001", "NIST-AI-RMF"]
+    ai_security_technical: ["OWASP-LLM", "MITRE-ATLAS", "OWASP-AGENTIC-AI"]

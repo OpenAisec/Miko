@@ -1,0 +1,63 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Security Principles - Core security principles for threat modeling
+# Each principle: one-line definition
+# Referenced in: Phase 1, 2, 3, 4
+
+principles:
+  defense_in_depth:
+    code: DID
+    name: Defense in Depth
+    definition: "Multiple independent security layers; single failure does not compromise system."
+
+  least_privilege:
+    code: LP
+    name: Least Privilege
+    definition: "Grant minimum permissions required; no access by default."
+
+  zero_trust:
+    code: ZT
+    name: Zero Trust
+    definition: "Never trust, always verify; authenticate every request regardless of origin."
+
+  fail_secure:
+    code: FS
+    name: Fail Secure
+    definition: "On error or exception, deny access rather than grant."
+
+  separation_of_duties:
+    code: SOD
+    name: Separation of Duties
+    definition: "No single entity controls entire critical operation; require multiple parties."
+
+  security_by_default:
+    code: SBD
+    name: Security by Default
+    definition: "Secure configuration out of box; user must explicitly disable protections."
+
+  complete_mediation:
+    code: CM
+    name: Complete Mediation
+    definition: "Every access to every resource must be checked for authorization."
+
+  economy_of_mechanism:
+    code: EOM
+    name: Economy of Mechanism
+    definition: "Keep security mechanisms simple; complexity breeds vulnerabilities."
+
+  open_design:
+    code: OD
+    name: Open Design
+    definition: "Security should not depend on secrecy of design; only keys should be secret."
+
+  input_validation:
+    code: IV
+    name: Input Validation
+    definition: "Never trust external input; validate type, length, format, range at trust boundary."
+
+# Phase mapping
+phase_reference:
+  phase_1: [DID, LP, ZT]           # Project understanding - identify design gaps
+  phase_2: [CM, IV, ZT]            # DFD analysis - identify trust boundaries
+  phase_3: [ZT, SOD, LP]           # Trust boundaries - evaluate access controls
+  phase_4: [ALL]                   # Security design - full principle assessment

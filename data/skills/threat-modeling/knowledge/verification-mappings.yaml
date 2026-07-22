@@ -1,0 +1,756 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Security Verification Knowledge Layer (Layer 3)
+# Maps CWE, STRIDE, and CAPEC to verification test procedures
+# Source: OWASP WSTG, MASTG, ASVS 5.0
+# Version: 1.0.0
+# Created: 2024-12-26
+
+# ============================================================================
+# WSTG Test Categories (Web Security Testing Guide)
+# Reference: https://owasp.org/www-project-web-security-testing-guide/
+# ============================================================================
+
+wstg_categories:
+  INFO:
+    name: "Information Gathering"
+    description: "Reconnaissance and information collection about the target"
+    test_count: 10
+    stride_relevance: [I]  # Information Disclosure
+
+  CONF:
+    name: "Configuration and Deployment Management Testing"
+    description: "Testing for configuration weaknesses and deployment issues"
+    test_count: 14
+    stride_relevance: [T, I, E]  # Tampering, Info Disclosure, Elevation
+
+  IDNT:
+    name: "Identity Management Testing"
+    description: "Testing identity management functions"
+    test_count: 5
+    stride_relevance: [S, E]  # Spoofing, Elevation
+
+  ATHN:
+    name: "Authentication Testing"
+    description: "Testing authentication mechanisms"
+    test_count: 11
+    stride_relevance: [S, E]  # Spoofing, Elevation
+
+  AUTHZ:
+    name: "Authorization Testing"
+    description: "Testing authorization and access control"
+    test_count: 8
+    stride_relevance: [E, I]  # Elevation, Info Disclosure
+
+  SESS:
+    name: "Session Management Testing"
+    description: "Testing session handling mechanisms"
+    test_count: 11
+    stride_relevance: [S, T, E]  # Spoofing, Tampering, Elevation
+
+  INPV:
+    name: "Input Validation Testing"
+    description: "Testing input validation and injection flaws"
+    test_count: 20
+    stride_relevance: [T, E]  # Tampering, Elevation
+
+  ERRH:
+    name: "Testing for Error Handling"
+    description: "Testing error handling and information leakage"
+    test_count: 2
+    stride_relevance: [I]  # Information Disclosure
+
+  CRYP:
+    name: "Testing for Weak Cryptography"
+    description: "Testing cryptographic implementations"
+    test_count: 4
+    stride_relevance: [I, T]  # Info Disclosure, Tampering
+
+  BUSL:
+    name: "Business Logic Testing"
+    description: "Testing business logic vulnerabilities"
+    test_count: 9
+    stride_relevance: [T, E, R]  # Tampering, Elevation, Repudiation
+
+  CLNT:
+    name: "Client-side Testing"
+    description: "Testing client-side vulnerabilities"
+    test_count: 13
+    stride_relevance: [T, I, E]  # Tampering, Info Disclosure, Elevation
+
+  APIT:
+    name: "API Testing"
+    description: "Testing API-specific vulnerabilities"
+    test_count: 6
+    stride_relevance: [S, T, I, E]  # All except DoS, Repudiation
+
+# ============================================================================
+# MASTG Test Categories (Mobile Application Security Testing Guide)
+# Reference: https://mas.owasp.org/MASTG/
+# ============================================================================
+
+mastg_categories:
+  MASVS-STORAGE:
+    name: "Data Storage"
+    description: "Testing secure data storage on mobile devices"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [I]  # Information Disclosure
+    test_count: 15
+
+  MASVS-CRYPTO:
+    name: "Cryptography"
+    description: "Testing cryptographic implementations on mobile"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [I, T]  # Info Disclosure, Tampering
+    test_count: 10
+
+  MASVS-AUTH:
+    name: "Authentication"
+    description: "Testing mobile authentication mechanisms"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [S, E]  # Spoofing, Elevation
+    test_count: 8
+
+  MASVS-NETWORK:
+    name: "Network Communication"
+    description: "Testing network security on mobile"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [I, T]  # Info Disclosure, Tampering
+    test_count: 12
+
+  MASVS-PLATFORM:
+    name: "Platform Interaction"
+    description: "Testing platform-specific security"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [T, I, E]  # Tampering, Info Disclosure, Elevation
+    test_count: 15
+
+  MASVS-CODE:
+    name: "Code Quality"
+    description: "Testing code quality and security"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [T, E]  # Tampering, Elevation
+    test_count: 12
+
+  MASVS-RESILIENCE:
+    name: "Resilience"
+    description: "Testing anti-tampering and resilience"
+    test_prefix: "MASTG-TEST-00"
+    stride_relevance: [T, E]  # Tampering, Elevation
+    test_count: 10
+
+# ============================================================================
+# STRIDE to Verification Mappings
+# Detailed mapping of STRIDE categories to verification tests
+# ============================================================================
+
+stride_verification_mappings:
+  spoofing:
+    code: S
+    security_property: Authentication
+    description: "Verify identity claims cannot be falsified"
+
+    wstg_tests:
+      primary:
+        - id: WSTG-IDNT-01
+          name: "Test Role Definitions"
+          objective: "Verify role definitions are properly enforced"
+
+        - id: WSTG-ATHN-01
+          name: "Testing for Credentials Transported over Encrypted Channel"
+          objective: "Verify credentials are transmitted securely"
+
+        - id: WSTG-ATHN-02
+          name: "Testing for Default Credentials"
+          objective: "Verify no default credentials exist"
+
+        - id: WSTG-ATHN-03
+          name: "Testing for Weak Lock Out Mechanism"
+          objective: "Verify account lockout protects against brute force"
+
+        - id: WSTG-ATHN-04
+          name: "Testing for Bypassing Authentication Schema"
+          objective: "Verify authentication cannot be bypassed"
+
+        - id: WSTG-ATHN-07
+          name: "Testing for Weak Authentication Methods"
+          objective: "Verify strong authentication is implemented"
+
+        - id: WSTG-ATHN-11
+          name: "Testing Multi-Factor Authentication"
+          objective: "Verify MFA is properly implemented"
+
+        - id: WSTG-SESS-03
+          name: "Testing for Session Fixation"
+          objective: "Verify session IDs are regenerated on auth"
+
+        - id: WSTG-SESS-09
+          name: "Testing for Session Hijacking"
+          objective: "Verify sessions cannot be hijacked"
+
+      secondary:
+        - id: WSTG-CRYP-03
+          name: "Testing for Sensitive Information Sent via Unencrypted Channels"
+          objective: "Verify sensitive data is encrypted"
+
+    mastg_tests:
+      primary:
+        - id: MASTG-TEST-0017
+          name: "Testing Confirm Credentials"
+          platform: android
+          objective: "Verify credential confirmation security"
+
+        - id: MASTG-TEST-0018
+          name: "Testing Biometric Authentication"
+          platform: android
+          objective: "Verify biometric auth implementation"
+
+    asvs_requirements:
+      - chapter: V2
+        name: "Authentication"
+        requirements:
+          - V2.1.1: "Verify strong password hashing"
+          - V2.1.2: "Verify password length requirements"
+          - V2.2.1: "Verify anti-automation controls"
+          - V2.5.1: "Verify recovery credential reset"
+          - V2.8.1: "Verify time-based OTP"
+
+    test_procedures:
+      manual:
+        - step: 1
+          action: "Attempt authentication with invalid credentials"
+          expected: "Authentication fails, no credential information leaked"
+        - step: 2
+          action: "Test credential transport encryption"
+          expected: "All credentials transmitted over TLS 1.2+"
+        - step: 3
+          action: "Verify session token regeneration after login"
+          expected: "New session ID issued upon successful authentication"
+        - step: 4
+          action: "Test for authentication bypass using direct URL access"
+          expected: "Protected resources require valid authentication"
+
+      automated_tools:
+        - name: "Burp Suite"
+          usage: "Credential testing, session analysis"
+        - name: "OWASP ZAP"
+          usage: "Authentication scanning"
+        - name: "Hydra"
+          usage: "Brute force testing (authorized only)"
+
+  tampering:
+    code: T
+    security_property: Integrity
+    description: "Verify data cannot be modified without detection"
+
+    wstg_tests:
+      primary:
+        - id: WSTG-INPV-01
+          name: "Testing for Reflected Cross Site Scripting"
+          objective: "Verify input is properly sanitized"
+
+        - id: WSTG-INPV-02
+          name: "Testing for Stored Cross Site Scripting"
+          objective: "Verify stored data is properly encoded"
+
+        - id: WSTG-INPV-05
+          name: "Testing for SQL Injection"
+          objective: "Verify SQL queries use parameterization"
+
+        - id: WSTG-INPV-06
+          name: "Testing for LDAP Injection"
+          objective: "Verify LDAP queries are sanitized"
+
+        - id: WSTG-INPV-07
+          name: "Testing for XML Injection"
+          objective: "Verify XML parsers are secure"
+
+        - id: WSTG-INPV-11
+          name: "Testing for Code Injection"
+          objective: "Verify code execution paths are secure"
+
+        - id: WSTG-INPV-12
+          name: "Testing for Command Injection"
+          objective: "Verify OS commands are sanitized"
+
+        - id: WSTG-INPV-18
+          name: "Testing for Server-side Template Injection"
+          objective: "Verify template engines are secure"
+
+        - id: WSTG-INPV-19
+          name: "Testing for Server-Side Request Forgery"
+          objective: "Verify SSRF protections"
+
+        - id: WSTG-INPV-20
+          name: "Testing for Mass Assignment"
+          objective: "Verify object binding is restricted"
+
+      secondary:
+        - id: WSTG-CRYP-01
+          name: "Testing for Weak Transport Layer Security"
+          objective: "Verify TLS integrity protections"
+
+        - id: WSTG-SESS-02
+          name: "Testing for Cookie Attributes"
+          objective: "Verify cookie integrity protections"
+
+    mastg_tests:
+      primary:
+        - id: MASTG-TEST-0050
+          name: "Testing Input Validation"
+          platform: android
+          objective: "Verify mobile input validation"
+
+        - id: MASTG-TEST-0051
+          name: "Testing for Injection Flaws"
+          platform: android
+          objective: "Verify mobile injection prevention"
+
+    asvs_requirements:
+      - chapter: V5
+        name: "Validation, Sanitization and Encoding"
+        requirements:
+          - V5.1.1: "Verify input validation architecture"
+          - V5.1.2: "Verify structured data is strongly typed"
+          - V5.2.1: "Verify HTML sanitization"
+          - V5.3.1: "Verify output encoding"
+          - V5.3.4: "Verify parameterized queries"
+          - V5.5.1: "Verify deserialization security"
+
+    test_procedures:
+      manual:
+        - step: 1
+          action: "Test all input fields with injection payloads"
+          expected: "Payloads are rejected or properly encoded"
+        - step: 2
+          action: "Verify parameterized queries in database calls"
+          expected: "No string concatenation in SQL queries"
+        - step: 3
+          action: "Test for mass assignment vulnerabilities"
+          expected: "Only allowed fields can be bound"
+        - step: 4
+          action: "Verify integrity checks on critical data"
+          expected: "Modifications are detected via signatures/HMAC"
+
+      automated_tools:
+        - name: "SQLMap"
+          usage: "SQL injection testing"
+        - name: "Commix"
+          usage: "Command injection testing"
+        - name: "XSStrike"
+          usage: "XSS vulnerability detection"
+
+  repudiation:
+    code: R
+    security_property: Non-repudiation
+    description: "Verify actions are properly logged and attributable"
+
+    wstg_tests:
+      primary:
+        - id: WSTG-BUSL-01
+          name: "Test Business Logic Data Validation"
+          objective: "Verify business transactions are logged"
+
+        - id: WSTG-BUSL-02
+          name: "Test Ability to Forge Requests"
+          objective: "Verify request authenticity"
+
+        - id: WSTG-CONF-09
+          name: "Test File Permission"
+          objective: "Verify log file permissions"
+
+    asvs_requirements:
+      - chapter: V7
+        name: "Error Handling and Logging"
+        requirements:
+          - V7.1.1: "Verify log content"
+          - V7.1.2: "Verify sensitive data not logged"
+          - V7.2.1: "Verify log format"
+          - V7.3.1: "Verify log protection"
+          - V7.4.1: "Verify time synchronization"
+
+    test_procedures:
+      manual:
+        - step: 1
+          action: "Perform security-relevant actions"
+          expected: "All actions are logged with user ID, timestamp, IP"
+        - step: 2
+          action: "Attempt to modify or delete logs"
+          expected: "Logs are protected from tampering"
+        - step: 3
+          action: "Verify log correlation capabilities"
+          expected: "Actions can be traced across systems"
+        - step: 4
+          action: "Test log completeness for transactions"
+          expected: "Complete audit trail for business operations"
+
+      automated_tools:
+        - name: "Elastic Stack (ELK)"
+          usage: "Log analysis and correlation"
+        - name: "Splunk"
+          usage: "Security log monitoring"
+
+  information_disclosure:
+    code: I
+    security_property: Confidentiality
+    description: "Verify sensitive information is protected"
+
+    wstg_tests:
+      primary:
+        - id: WSTG-INFO-01
+          name: "Conduct Search Engine Discovery"
+          objective: "Verify no sensitive data in search engines"
+
+        - id: WSTG-INFO-02
+          name: "Fingerprint Web Server"
+          objective: "Verify server information not exposed"
+
+        - id: WSTG-INFO-05
+          name: "Review Web Page Content for Information Leakage"
+          objective: "Verify no data leakage in pages"
+
+        - id: WSTG-ERRH-01
+          name: "Testing for Improper Error Handling"
+          objective: "Verify errors don't leak information"
+
+        - id: WSTG-ERRH-02
+          name: "Testing for Stack Traces"
+          objective: "Verify stack traces not exposed"
+
+        - id: WSTG-CRYP-01
+          name: "Testing for Weak Transport Layer Security"
+          objective: "Verify data encrypted in transit"
+
+        - id: WSTG-CRYP-02
+          name: "Testing for Padding Oracle"
+          objective: "Verify no padding oracle vulnerabilities"
+
+        - id: WSTG-CRYP-04
+          name: "Testing for Weak Encryption"
+          objective: "Verify strong encryption algorithms"
+
+        - id: WSTG-AUTHZ-04
+          name: "Testing for Insecure Direct Object References"
+          objective: "Verify IDOR protection"
+
+      secondary:
+        - id: WSTG-CONF-04
+          name: "Review Old Backup and Unreferenced Files"
+          objective: "Verify no exposed backup files"
+
+        - id: WSTG-CONF-05
+          name: "Enumerate Infrastructure and Application Admin Interfaces"
+          objective: "Verify admin interfaces secured"
+
+    mastg_tests:
+      primary:
+        - id: MASTG-TEST-0001
+          name: "Testing Local Storage for Sensitive Data"
+          platform: android
+          objective: "Verify secure local storage"
+
+        - id: MASTG-TEST-0002
+          name: "Testing Logs for Sensitive Data"
+          platform: android
+          objective: "Verify no sensitive data in logs"
+
+        - id: MASTG-TEST-0008
+          name: "Testing for Sensitive Data in Backups"
+          platform: android
+          objective: "Verify backup security"
+
+    asvs_requirements:
+      - chapter: V6
+        name: "Stored Cryptography"
+        requirements:
+          - V6.1.1: "Verify regulated data encryption"
+          - V6.2.1: "Verify approved cryptographic algorithms"
+          - V6.2.5: "Verify proper key management"
+
+      - chapter: V8
+        name: "Data Protection"
+        requirements:
+          - V8.1.1: "Verify sensitive data identification"
+          - V8.2.1: "Verify data caching controls"
+          - V8.3.1: "Verify sensitive data in URLs"
+
+    test_procedures:
+      manual:
+        - step: 1
+          action: "Scan for exposed sensitive files"
+          expected: "No sensitive data in public areas"
+        - step: 2
+          action: "Test error messages for information leakage"
+          expected: "Generic error messages shown to users"
+        - step: 3
+          action: "Verify encryption at rest for sensitive data"
+          expected: "AES-256 or equivalent encryption used"
+        - step: 4
+          action: "Test for IDOR vulnerabilities"
+          expected: "Access control enforced on all objects"
+
+      automated_tools:
+        - name: "TruffleHog"
+          usage: "Secrets scanning"
+        - name: "GitLeaks"
+          usage: "Credential detection"
+        - name: "Nuclei"
+          usage: "Exposure scanning"
+
+  denial_of_service:
+    code: D
+    security_property: Availability
+    description: "Verify system maintains availability under stress"
+
+    wstg_tests:
+      primary:
+        - id: WSTG-INPV-13
+          name: "Testing for Buffer Overflow"
+          objective: "Verify buffer handling"
+
+        - id: WSTG-BUSL-06
+          name: "Test Number of Times a Function Can Be Used"
+          objective: "Verify rate limiting"
+
+        - id: WSTG-CONF-06
+          name: "Test HTTP Methods"
+          objective: "Verify only needed methods enabled"
+
+        - id: WSTG-APIT-01
+          name: "Testing GraphQL"
+          objective: "Verify query complexity limits"
+
+    asvs_requirements:
+      - chapter: V11
+        name: "Business Logic"
+        requirements:
+          - V11.1.2: "Verify rate limiting"
+          - V11.1.5: "Verify API rate controls"
+
+      - chapter: V12
+        name: "Files and Resources"
+        requirements:
+          - V12.1.1: "Verify file size limits"
+          - V12.5.1: "Verify resource consumption limits"
+
+    test_procedures:
+      manual:
+        - step: 1
+          action: "Test rate limiting on critical endpoints"
+          expected: "Requests throttled after threshold"
+        - step: 2
+          action: "Verify timeout configurations"
+          expected: "Long-running requests terminated"
+        - step: 3
+          action: "Test file upload size limits"
+          expected: "Large files rejected"
+        - step: 4
+          action: "Verify query complexity limits (GraphQL)"
+          expected: "Complex queries rejected"
+
+      automated_tools:
+        - name: "Locust"
+          usage: "Load testing"
+        - name: "Apache JMeter"
+          usage: "Performance testing"
+        - name: "k6"
+          usage: "Load and stress testing"
+
+  elevation_of_privilege:
+    code: E
+    security_property: Authorization
+    description: "Verify access control is properly enforced"
+
+    wstg_tests:
+      primary:
+        - id: WSTG-AUTHZ-01
+          name: "Testing Directory Traversal File Include"
+          objective: "Verify path traversal protection"
+
+        - id: WSTG-AUTHZ-02
+          name: "Testing for Bypassing Authorization Schema"
+          objective: "Verify authorization cannot be bypassed"
+
+        - id: WSTG-AUTHZ-03
+          name: "Testing for Privilege Escalation"
+          objective: "Verify vertical privilege escalation blocked"
+
+        - id: WSTG-AUTHZ-04
+          name: "Testing for Insecure Direct Object References"
+          objective: "Verify horizontal privilege escalation blocked"
+
+        - id: WSTG-AUTHZ-05
+          name: "Testing for OAuth Weaknesses"
+          objective: "Verify OAuth implementation security"
+
+        - id: WSTG-SESS-01
+          name: "Testing for Session Management Schema"
+          objective: "Verify session security"
+
+      secondary:
+        - id: WSTG-IDNT-01
+          name: "Test Role Definitions"
+          objective: "Verify RBAC implementation"
+
+        - id: WSTG-BUSL-03
+          name: "Test Integrity Checks"
+          objective: "Verify authorization integrity"
+
+    mastg_tests:
+      primary:
+        - id: MASTG-TEST-0030
+          name: "Testing for Sensitive Functionality Exposure"
+          platform: android
+          objective: "Verify sensitive functions protected"
+
+    asvs_requirements:
+      - chapter: V4
+        name: "Access Control"
+        requirements:
+          - V4.1.1: "Verify access control design"
+          - V4.1.2: "Verify attribute-based access control"
+          - V4.1.3: "Verify least privilege"
+          - V4.2.1: "Verify sensitive operations protection"
+          - V4.3.1: "Verify admin access restrictions"
+
+    test_procedures:
+      manual:
+        - step: 1
+          action: "Test for vertical privilege escalation"
+          expected: "Lower privilege users cannot access admin functions"
+        - step: 2
+          action: "Test for horizontal privilege escalation"
+          expected: "Users cannot access other users' data"
+        - step: 3
+          action: "Verify authorization on every request"
+          expected: "Server-side authorization enforced"
+        - step: 4
+          action: "Test for IDOR/BOLA vulnerabilities"
+          expected: "Object-level authorization enforced"
+
+      automated_tools:
+        - name: "Autorize (Burp Extension)"
+          usage: "Authorization testing"
+        - name: "AuthMatrix (Burp Extension)"
+          usage: "Access control matrix testing"
+
+# ============================================================================
+# CWE to Verification Test Mappings
+# Maps specific CWEs to relevant verification tests
+# ============================================================================
+
+cwe_verification_mappings:
+  # Injection CWEs
+  CWE-89:  # SQL Injection
+    name: "Improper Neutralization of Special Elements used in an SQL Command"
+    wstg_tests: [WSTG-INPV-05, WSTG-INPV-05.1, WSTG-INPV-05.2, WSTG-INPV-05.3]
+    mastg_tests: [MASTG-TEST-0051]
+    asvs_requirements: [V5.3.4, V5.3.5]
+
+  CWE-79:  # XSS
+    name: "Improper Neutralization of Input During Web Page Generation"
+    wstg_tests: [WSTG-INPV-01, WSTG-INPV-02, WSTG-CLNT-01]
+    asvs_requirements: [V5.3.1, V5.3.3]
+
+  CWE-78:  # OS Command Injection
+    name: "Improper Neutralization of Special Elements used in an OS Command"
+    wstg_tests: [WSTG-INPV-12]
+    asvs_requirements: [V5.2.4]
+
+  CWE-94:  # Code Injection
+    name: "Improper Control of Generation of Code"
+    wstg_tests: [WSTG-INPV-11, WSTG-INPV-18]
+    asvs_requirements: [V5.2.5]
+
+  # Authentication CWEs
+  CWE-287:  # Improper Authentication
+    name: "Improper Authentication"
+    wstg_tests: [WSTG-ATHN-04, WSTG-ATHN-07, WSTG-ATHN-11]
+    mastg_tests: [MASTG-TEST-0017, MASTG-TEST-0018]
+    asvs_requirements: [V2.1.1, V2.2.1, V2.8.1]
+
+  CWE-306:  # Missing Authentication
+    name: "Missing Authentication for Critical Function"
+    wstg_tests: [WSTG-ATHN-04, WSTG-APIT-02]
+    asvs_requirements: [V2.1.5]
+
+  CWE-522:  # Insufficiently Protected Credentials
+    name: "Insufficiently Protected Credentials"
+    wstg_tests: [WSTG-ATHN-01, WSTG-CRYP-03]
+    mastg_tests: [MASTG-TEST-0001, MASTG-TEST-0002]
+    asvs_requirements: [V2.1.1, V6.2.1]
+
+  # Authorization CWEs
+  CWE-284:  # Improper Access Control
+    name: "Improper Access Control"
+    wstg_tests: [WSTG-AUTHZ-02, WSTG-AUTHZ-03, WSTG-AUTHZ-04]
+    asvs_requirements: [V4.1.1, V4.1.2, V4.1.3]
+
+  CWE-863:  # Incorrect Authorization
+    name: "Incorrect Authorization"
+    wstg_tests: [WSTG-AUTHZ-02, WSTG-AUTHZ-03]
+    asvs_requirements: [V4.2.1, V4.2.2]
+
+  CWE-269:  # Improper Privilege Management
+    name: "Improper Privilege Management"
+    wstg_tests: [WSTG-AUTHZ-03, WSTG-IDNT-01]
+    asvs_requirements: [V4.1.3, V4.3.1]
+
+  # Cryptography CWEs
+  CWE-327:  # Broken Crypto
+    name: "Use of a Broken or Risky Cryptographic Algorithm"
+    wstg_tests: [WSTG-CRYP-04]
+    mastg_tests: [MASTG-TEST-0013, MASTG-TEST-0014]
+    asvs_requirements: [V6.2.1, V6.2.2]
+
+  CWE-311:  # Missing Encryption
+    name: "Missing Encryption of Sensitive Data"
+    wstg_tests: [WSTG-CRYP-01, WSTG-CRYP-03]
+    mastg_tests: [MASTG-TEST-0001]
+    asvs_requirements: [V6.1.1, V8.1.1]
+
+  # Information Disclosure CWEs
+  CWE-200:  # Exposure of Sensitive Info
+    name: "Exposure of Sensitive Information to an Unauthorized Actor"
+    wstg_tests: [WSTG-INFO-05, WSTG-ERRH-01, WSTG-ERRH-02]
+    mastg_tests: [MASTG-TEST-0002]
+    asvs_requirements: [V8.1.1, V8.3.1]
+
+  CWE-209:  # Error Message Info Disclosure
+    name: "Generation of Error Message Containing Sensitive Information"
+    wstg_tests: [WSTG-ERRH-01, WSTG-ERRH-02]
+    asvs_requirements: [V7.4.1]
+
+  CWE-532:  # Insertion of Sensitive Info into Log File
+    name: "Insertion of Sensitive Information into Log File"
+    wstg_tests: [WSTG-CONF-09]
+    mastg_tests: [MASTG-TEST-0002]
+    asvs_requirements: [V7.1.2]
+
+# ============================================================================
+# Verification Test Metadata
+# ============================================================================
+
+verification_metadata:
+  version: "1.0.0"
+  last_updated: "2024-12-26"
+  sources:
+    wstg:
+      version: "5.0-dev"
+      url: "https://github.com/OWASP/wstg"
+      test_count: 107
+    mastg:
+      version: "latest"
+      url: "https://github.com/OWASP/owasp-mastg"
+      test_count: 82
+    asvs:
+      version: "5.0"
+      url: "https://github.com/OWASP/ASVS"
+      requirement_count: 286
+  stride_coverage:
+    S: ["ATHN", "SESS", "IDNT"]
+    T: ["INPV", "CRYP", "SESS"]
+    R: ["BUSL", "CONF"]
+    I: ["INFO", "ERRH", "CRYP", "AUTHZ"]
+    D: ["INPV", "BUSL", "CONF"]
+    E: ["AUTHZ", "IDNT", "SESS"]

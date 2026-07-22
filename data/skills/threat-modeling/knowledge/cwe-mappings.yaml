@@ -1,0 +1,2512 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+metadata:
+  version: '4.19'
+  source: https://cwe.mitre.org
+  last_updated: '2025-12-11'
+  description: CWE Knowledge Base for STRIDE Threat Modeling
+cwe_top_25_2025:
+  CWE-125:
+    name: Out-of-bounds Read
+    description: The product reads data past the end, or before the beginning, of the intended buffer.
+    abstraction: Base
+    applicable_platforms:
+    - Memory-Unsafe
+    - C
+    - C++
+    - ICS/OT
+    consequences:
+    - scope: Confidentiality
+      impact: Read Memory
+      note: An attacker could get secret values such as cryptographic keys, PII, memory addresses, or other information that
+        could be used in additional attacks.
+    - scope: Confidentiality
+      impact: Bypass Protection Mechanism
+      note: Out-of-bounds memory could contain memory addresses or other information that can be used to bypass ASLR and other
+        protection mechanisms in order to improve the reliability of exploiting a separate weakness for code execution.
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: An attacker could cause a segmentation fault or crash by causing memory to be read outside of the bounds of the
+        buffer. This is especially likely when the code reads a variable amount of data and assumes that a sentinel exists
+        to stop the read operation, such as a NUL in a string.
+    mitigations:
+    - Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a list of acceptable
+      inputs that strictly conform to specifications. Reject any input that does not stric
+    - Use a language that provides appropriate memory abstractions.
+    related_capec:
+    - CAPEC-540
+    stride_categories:
+    - denial_of_service
+    - information_disclosure
+    - spoofing
+  CWE-79:
+    name: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+    description: The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in
+      output that is used as a web page that is served to other users.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - AI/ML
+    - Web Based
+    - Web Server
+    consequences:
+    - scope: Access Control
+      impact: Bypass Protection Mechanism
+      note: The most common attack performed with cross-site scripting involves the disclosure of private information stored
+        in user cookies, such as session information. Typically, a malicious user will craft a client-side script, which --
+        when parsed by a web browser -- performs some activity on behalf of the victim to an attacker-controlled system (such
+        as sending all site cookies to a given E-mail address). This could be especially dangerous to the site if the victim
+        has administrator privileges to manage that site. This script will be loaded and run by each user visiting the web
+        site. Since the site requesting to run the script has access to the cookies in question, the malicious script does
+        also.
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: In some circumstances it may be possible to run arbitrary code on a victim's computer when cross-site scripting
+        is combined with other flaws, for example, "drive-by hacking."
+    - scope: Confidentiality
+      impact: Execute Unauthorized Code or Commands
+      note: The consequence of an XSS attack is the same regardless of whether it is stored or reflected. The difference is
+        in how the payload arrives at the server. XSS can cause a variety of problems for the end user that range in severity
+        from an annoyance to complete account compromise. Some cross-site scripting vulnerabilities can be exploited to manipulate
+        or steal cookies, create requests that can be mistaken for those of a valid user, compromise confidential information,
+        or execute malicious code on the end user systems for a variety of nefarious purposes. Other damaging attacks include
+        the disclosure of end user files, installation of Trojan horse programs, redirecting the user to some other page or
+        site, running "Active X" controls (under Microsoft Internet Explorer) from sites that a user perceives as trustworthy,
+        and modifying presentation of content.
+    mitigations:
+    - Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness
+      easier to avoid [REF-1482]. Examples of libraries and frameworks that make i
+    - Understand the context in which your data will be used and the encoding that will be expected. This is especially important
+      when transmitting data between different components, or when generating outp
+    - 'Understand all the potential areas where untrusted inputs can enter your software: parameters or arguments, cookies,
+      anything read from the network, environment variables, reverse DNS lookups, query r'
+    related_capec:
+    - CAPEC-209
+    - CAPEC-588
+    - CAPEC-591
+    - CAPEC-592
+    - CAPEC-63
+    stride_categories:
+    - elevation_of_privilege
+    - information_disclosure
+    - spoofing
+    - tampering
+  CWE-89:
+    name: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+    description: The product constructs all or part of an SQL command using externally-influenced input from an upstream component,
+      but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when
+      it is sent to a downstream component. Without sufficient removal or quoting of SQL syntax in user-controllable inputs,
+      the generated SQL query can cause those inputs to be interpreted as SQL instead of ordinary user data.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - SQL
+    - Database Server
+    consequences:
+    - scope: Confidentiality
+      impact: Execute Unauthorized Code or Commands
+      note: Adversaries could execute system commands, typically by changing the SQL statement to redirect output to a file
+        that can then be executed.
+    - scope: Confidentiality
+      impact: Read Application Data
+      note: Since SQL databases generally hold sensitive data, loss of confidentiality is a frequent problem with SQL injection
+        vulnerabilities.
+    - scope: Authentication
+      impact: Gain Privileges or Assume Identity
+      note: If poor SQL commands are used to check user names and passwords or perform other kinds of authentication, it may
+        be possible to connect to the product as another user with no previous knowledge of the password.
+    mitigations:
+    - Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness
+      easier to avoid [REF-1482]. For example, consider using persistence layers s
+    - If available, use structured mechanisms that automatically enforce the separation between data and code. These mechanisms
+      may be able to provide the relevant quoting, encoding, and validation automati
+    - Run your code using the lowest privileges that are required to accomplish the necessary tasks [REF-76]. If possible,
+      create isolated accounts with limited privileges that are only used for a single ta
+    related_capec:
+    - CAPEC-108
+    - CAPEC-109
+    - CAPEC-110
+    - CAPEC-470
+    - CAPEC-66
+    stride_categories:
+    - elevation_of_privilege
+    - information_disclosure
+    - spoofing
+    - tampering
+  CWE-416:
+    name: Use After Free
+    description: The product reuses or references memory after it has been freed. At some point afterward, the memory may
+      be allocated again and saved in another pointer, while the original pointer references a location somewhere within the
+      new allocation. Any operations using the original pointer are no longer valid because the memory "belongs" to the code
+      that operates on the new pointer.
+    abstraction: Variant
+    applicable_platforms:
+    - Memory-Unsafe
+    - C
+    - C++
+    consequences:
+    - scope: Integrity
+      impact: Modify Memory
+      note: The use of previously freed memory may corrupt valid data, if the memory area in question has been allocated and
+        used properly elsewhere.
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: If chunk consolidation occurs after the use of previously freed data, the process may crash when invalid data
+        is used as chunk information.
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: If malicious data is entered before chunk consolidation can take place, it may be possible to take advantage of
+        a write-what-where primitive to execute arbitrary code. If the newly allocated data happens to hold a class, in C++
+        for example, various function pointers may be scattered within the heap data. If one of these function pointers is
+        overwritten with an address to valid shellcode, execution of arbitrary code can be achieved.
+    mitigations:
+    - Choose a language that provides automatic memory management.
+    - When freeing pointers, be sure to set them to NULL once they are freed. However, the utilization of multiple or complex
+      data structures may lower the usefulness of this strategy.
+    related_capec: []
+    stride_categories:
+    - denial_of_service
+    - tampering
+  CWE-78:
+    name: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
+    description: The product constructs all or part of an OS command using externally-influenced input from an upstream component,
+      but it does not neutralize or incorrectly neutralizes special elements that could modify the intended OS command when
+      it is sent to a downstream component.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - Not Technology-Specific
+    - AI/ML
+    - Web Server
+    consequences:
+    - scope: Confidentiality
+      impact: Execute Unauthorized Code or Commands
+      note: Attackers could execute unauthorized operating system commands, which could then be used to disable the product,
+        or read and modify data for which the attacker does not have permissions to access directly. Since the targeted application
+        is directly executing the commands instead of the attacker, any malicious activities may appear to come from the application
+        or the application's owner.
+    mitigations:
+    - If at all possible, use library calls rather than external processes to recreate the desired functionality.
+    - Run the code in a "jail" or similar sandbox environment that enforces strict boundaries between the process and the
+      operating system. This may effectively restrict which files can be accessed in a par
+    - 'For any data that will be used to generate a command to be executed, keep as much of that data out of external control
+      as possible. For example, in web applications, this may require storing the data '
+    related_capec:
+    - CAPEC-108
+    - CAPEC-15
+    - CAPEC-43
+    - CAPEC-6
+    - CAPEC-88
+    stride_categories:
+    - information_disclosure
+    - tampering
+  CWE-20:
+    name: Improper Input Validation
+    description: "The product receives input or data, but it does\n        not validate or incorrectly validates that the\
+      \ input has the\n        properties that are required to process the data safely and\n        correctly."
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    consequences:
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: An attacker could provide unexpected values and cause a program crash or arbitrary control of resource allocation,
+        leading to excessive consumption of resources such as memory and CPU.
+    - scope: Confidentiality
+      impact: Read Memory
+      note: An attacker could read confidential data if they are able to control resource references.
+    - scope: Integrity
+      impact: Modify Memory
+      note: An attacker could use malicious input to modify data or possibly alter control flow in unexpected ways, including
+        arbitrary command execution.
+    mitigations:
+    - Consider using language-theoretic security (LangSec) techniques that characterize inputs using a formal language and
+      build "recognizers" for that language.  This effectively requires parsing to be a d
+    - Use an input validation framework such as Struts or the OWASP ESAPI Validation API. Note that using a framework does
+      not automatically address all input validation problems; be mindful of weaknesses t
+    - 'Understand all the potential areas where untrusted inputs can enter the product, including but not limited to: parameters
+      or arguments, cookies, anything read from the network, environment variables, '
+    related_capec:
+    - CAPEC-10
+    - CAPEC-101
+    - CAPEC-104
+    - CAPEC-108
+    - CAPEC-109
+    stride_categories:
+    - denial_of_service
+    - information_disclosure
+    - tampering
+  CWE-119:
+    name: Improper Restriction of Operations within the Bounds of a Memory Buffer
+    description: The product performs operations on a memory buffer, but it reads from or writes to a memory location outside
+      the buffer's intended boundary. This may result in read or write operations on unexpected memory locations that could
+      be linked to other variables, data structures, or internal program data.
+    abstraction: Class
+    applicable_platforms:
+    - Memory-Unsafe
+    - C
+    - C++
+    - Assembly
+    - Not Technology-Specific
+    consequences:
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: If the memory accessible by the attacker can be effectively controlled, it may be possible to execute arbitrary
+        code, as with a standard buffer overflow. If the attacker can overwrite a pointer's worth of memory (usually 32 or
+        64 bits), they can alter the intended control flow by redirecting a function pointer to their own malicious code.
+        Even when the attacker can only modify a single byte arbitrary code execution can be possible. Sometimes this is because
+        the same problem can be exploited repeatedly to the same effect. Other times it is because the attacker can overwrite
+        security-critical application-specific data -- such as a flag indicating whether the user is an administrator.
+    - scope: Availability
+      impact: Read Memory
+      note: Out of bounds memory access will very likely result in the corruption of relevant memory, and perhaps instructions,
+        possibly leading to a crash. Other attacks leading to lack of availability are possible, including putting the program
+        into an infinite loop.
+    - scope: Confidentiality
+      impact: Read Memory
+      note: In the case of an out-of-bounds read, the attacker may have access to sensitive information. If the sensitive
+        information contains system details, such as the current buffer's position in memory, this knowledge can be used to
+        craft further attacks, possibly with more severe consequences.
+    mitigations:
+    - 'Use a language that does not allow this weakness to occur or provides constructs that make this weakness easier to
+      avoid. For example, many languages that perform their own memory management, such as '
+    - Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness
+      easier to avoid. Examples include the Safe C String Library (SafeStr) by Mes
+    - 'Use automatic buffer overflow detection mechanisms that are offered by certain compilers or compiler extensions. Examples
+      include: the Microsoft Visual Studio /GS flag, Fedora/Red Hat FORTIFY_SOURCE G'
+    related_capec:
+    - CAPEC-10
+    - CAPEC-100
+    - CAPEC-123
+    - CAPEC-14
+    - CAPEC-24
+    stride_categories:
+    - denial_of_service
+    - information_disclosure
+    - tampering
+  CWE-787:
+    name: Out-of-bounds Write
+    description: The product writes data past the end, or before the beginning, of the intended buffer.
+    abstraction: Base
+    applicable_platforms:
+    - Memory-Unsafe
+    - C
+    - C++
+    - Assembly
+    - ICS/OT
+    consequences:
+    - scope: Integrity
+      impact: Modify Memory
+      note: Write operations could cause memory corruption. In some cases, an adversary can modify control data such as return
+        addresses in order to execute unexpected code.
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: Attempting to access out-of-range, invalid, or unauthorized memory could cause the product to crash.
+    - scope: Other
+      impact: Unexpected State
+      note: Subsequent write operations can produce undefined or unexpected results.
+    mitigations:
+    - 'Use a language that does not allow this weakness to occur or provides constructs that make this weakness easier to
+      avoid. For example, many languages that perform their own memory management, such as '
+    - Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness
+      easier to avoid. Examples include the Safe C String Library (SafeStr) by Mes
+    - 'Use automatic buffer overflow detection mechanisms that are offered by certain compilers or compiler extensions. Examples
+      include: the Microsoft Visual Studio /GS flag, Fedora/Red Hat FORTIFY_SOURCE G'
+    related_capec: []
+    stride_categories:
+    - denial_of_service
+    - tampering
+  CWE-22:
+    name: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+    description: The product uses external input to construct a pathname that is intended to identify a file or directory
+      that is located underneath a restricted parent directory, but the product does not properly neutralize special elements
+      within the pathname that can cause the pathname to resolve to a location that is outside of the restricted directory.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - AI/ML
+    consequences:
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: The attacker may be able to create or overwrite critical files that are used to execute code, such as programs
+        or libraries.
+    - scope: Integrity
+      impact: Modify Files or Directories
+      note: The attacker may be able to overwrite or create critical files, such as programs, libraries, or important data.
+        If the targeted file is used for a security mechanism, then the attacker may be able to bypass that mechanism. For
+        example, appending a new account at the end of a password file may allow an attacker to bypass authentication.
+    - scope: Confidentiality
+      impact: Read Files or Directories
+      note: The attacker may be able read the contents of unexpected files and expose sensitive data. If the targeted file
+        is used for a security mechanism, then the attacker may be able to bypass that mechanism. For example, by reading
+        a password file, the attacker could conduct brute force password guessing attacks in order to break into an account
+        on the system.
+    mitigations:
+    - Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a list of acceptable
+      inputs that strictly conform to specifications. Reject any input that does not stric
+    - For any security checks that are performed on the client side, ensure that these checks are duplicated on the server
+      side, in order to avoid CWE-602. Attackers can bypass the client-side checks by mod
+    - Inputs should be decoded and canonicalized to the application's current internal representation before being validated
+      (CWE-180). Make sure that the application does not decode the same input twice (C
+    related_capec:
+    - CAPEC-126
+    - CAPEC-64
+    - CAPEC-76
+    - CAPEC-78
+    - CAPEC-79
+    stride_categories:
+    - denial_of_service
+    - information_disclosure
+    - tampering
+  CWE-352:
+    name: Cross-Site Request Forgery (CSRF)
+    description: The web application does not, or cannot, sufficiently verify whether a request was intentionally provided
+      by the user who sent the request, which could have originated from an unauthorized actor.
+    abstraction: Compound
+    applicable_platforms:
+    - Not Language-Specific
+    - Web Based
+    - Web Server
+    consequences:
+    - scope: Confidentiality
+      impact: Gain Privileges or Assume Identity
+      note: The consequences will vary depending on the nature of the functionality that is vulnerable to CSRF. An attacker
+        could trick a client into making an unintentional request to the web server via a URL, image load, XMLHttpRequest,
+        etc., which would then be treated as an authentic request from the client - effectively performing any operations
+        as the victim, leading to an exposure of data, unintended code execution, etc. If the victim is an administrator or
+        privileged user, the consequences may include obtaining complete control over the web application - deleting or stealing
+        data, uninstalling the product, or using it to launch other attacks against all of the product's users. Because the
+        attacker has the identity of the victim, the scope of CSRF is limited only by the victim's privileges.
+    mitigations:
+    - 'Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this
+      weakness easier to avoid [REF-1482]. For example, use anti-CSRF packages such as the '
+    - Ensure that the application is free of cross-site scripting issues (CWE-79), because most CSRF defenses can be bypassed
+      using attacker-controlled script.
+    - Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form.
+      Be sure that the nonce is not predictable (CWE-330). [REF-332]
+    related_capec:
+    - CAPEC-111
+    - CAPEC-462
+    - CAPEC-467
+    - CAPEC-62
+    stride_categories:
+    - elevation_of_privilege
+    - information_disclosure
+  CWE-434:
+    name: Unrestricted Upload of File with Dangerous Type
+    description: The product allows the upload or transfer of dangerous file types that are automatically processed within
+      its environment.
+    abstraction: Base
+    applicable_platforms:
+    - ASP.NET
+    - PHP
+    - Not Language-Specific
+    - Web Server
+    consequences:
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: Arbitrary code execution is possible if an uploaded file is interpreted and executed as code by the recipient.
+        This is especially true for web-server extensions such as .asp and .php because these file types are often treated
+        as automatically executable, even when file system permissions do not specify execution. For example, in Unix environments,
+        programs typically cannot run unless the execute bit is set, but PHP programs may be executed by the web server without
+        directly invoking them on the operating system.
+    mitigations:
+    - Generate a new, unique filename for an uploaded file instead of using the user-supplied filename, so that no external
+      input is used at all.[REF-422] [REF-423]
+    - 'When the set of acceptable objects, such as filenames or URLs, is limited or known, create a mapping from a set of
+      fixed input values (such as numeric IDs) to the actual filenames or URLs, and reject '
+    - Consider storing the uploaded files outside of the web document root entirely. Then, use other mechanisms to deliver
+      the files dynamically. [REF-423]
+    related_capec:
+    - CAPEC-1
+    stride_categories:
+    - tampering
+  CWE-862:
+    name: Missing Authorization
+    description: The product does not perform an authorization check when an actor attempts to access a resource or perform
+      an action.
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    - AI/ML
+    - Web Server
+    - Database Server
+    - Not Technology-Specific
+    consequences:
+    - scope: Confidentiality
+      impact: Read Application Data
+      note: An attacker could read sensitive data, either by reading the data directly from a data store that is not restricted,
+        or by accessing insufficiently-protected, privileged functionality to read the data.
+    - scope: Integrity
+      impact: Modify Application Data
+      note: An attacker could modify sensitive data, either by writing the data directly to a data store that is not restricted,
+        or by accessing insufficiently-protected, privileged functionality to write the data.
+    - scope: Access Control
+      impact: Gain Privileges or Assume Identity
+      note: An attacker could gain privileges by modifying or reading critical data directly, or by accessing privileged functionality.
+    mitigations:
+    - 'Divide the product into anonymous, normal, privileged, and administrative areas. Reduce the attack surface by carefully
+      mapping roles with data and functionality. Use role-based access control (RBAC) '
+    - Ensure that access control checks are performed related to the business logic. These checks may be different than the
+      access control checks that are applied to more generic resources such as files, co
+    - Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness
+      easier to avoid. For example, consider using authorization frameworks such a
+    related_capec:
+    - CAPEC-665
+    stride_categories:
+    - denial_of_service
+    - elevation_of_privilege
+    - information_disclosure
+    - spoofing
+    - tampering
+  CWE-476:
+    name: NULL Pointer Dereference
+    description: The product dereferences a pointer that it expects to be valid but is NULL.
+    abstraction: Base
+    applicable_platforms:
+    - C
+    - C++
+    - Java
+    - C#
+    - Go
+    consequences:
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: NULL pointer dereferences usually result in the failure of the process unless exception handling (on some platforms)
+        is available and implemented. Even when exception handling is being used, it can still be very difficult to return
+        the software to a safe state of operation.
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: In rare circumstances, when NULL is equivalent to the 0x0 memory address and privileged code can access it, then
+        writing or reading memory is possible, which may lead to code execution.
+    mitigations:
+    - For any pointers that could have been modified or provided from a function that can return NULL, check the pointer for
+      NULL before use. When working with a multithreaded or otherwise asynchronous envi
+    - Select a programming language that is not susceptible to these issues.
+    - Check the results of all functions that return a value and verify that the value is non-null before acting upon it.
+    related_capec: []
+    stride_categories:
+    - denial_of_service
+    - tampering
+  CWE-287:
+    name: Improper Authentication
+    description: When an actor claims to have a given identity, the product does not prove or insufficiently proves that the
+      claim is correct.
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    - Not Technology-Specific
+    - Web Based
+    - ICS/OT
+    consequences:
+    - scope: Integrity
+      impact: Read Application Data
+      note: This weakness can lead to the exposure of resources or functionality to unintended actors, possibly providing
+        attackers with sensitive information or even execute arbitrary code.
+    mitigations:
+    - Use an authentication framework or library such as the OWASP ESAPI Authentication feature.
+    related_capec:
+    - CAPEC-114
+    - CAPEC-115
+    - CAPEC-151
+    - CAPEC-194
+    - CAPEC-22
+    stride_categories:
+    - information_disclosure
+    - spoofing
+    - tampering
+  CWE-190:
+    name: Integer Overflow or Wraparound
+    description: "The product performs a calculation that can\n         produce an integer overflow or wraparound when the\
+      \ logic\n         assumes that the resulting value will always be larger than\n         the original value. This occurs\
+      \ when an integer value is\n         incremented to a value that is too large to store in the\n         associated representation.\
+      \ When this occurs, the value may\n         become a very small or negative number."
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - C
+    - Not Technology-Specific
+    consequences:
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: This weakness can generally lead to undefined behavior and therefore crashes. When the calculated result is used
+        for resource allocation, this weakness can cause too many (or too few) resources to be allocated, possibly enabling
+        crashes if the product requests more resources than can be provided.
+    - scope: Integrity
+      impact: Modify Memory
+      note: If the value in question is important to data (as opposed to flow), simple data corruption has occurred. Also,
+        if the overflow/wraparound results in other conditions such as buffer overflows, further memory corruption may occur.
+    - scope: Confidentiality
+      impact: Execute Unauthorized Code or Commands
+      note: This weakness can sometimes trigger buffer overflows, which can be used to execute arbitrary code. This is usually
+        outside the scope of the product's implicit security policy.
+    mitigations:
+    - Ensure that all protocols are strictly defined, such that all out-of-bounds behavior can be identified simply, and require
+      strict conformance to the protocol.
+    - Use a language that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.
+      If possible, choose a language or compiler that performs automatic bounds chec
+    - 'Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this
+      weakness easier to avoid [REF-1482]. Use libraries or frameworks that make it easier '
+    related_capec:
+    - CAPEC-92
+    stride_categories:
+    - denial_of_service
+    - elevation_of_privilege
+    - information_disclosure
+    - repudiation
+    - spoofing
+    - tampering
+  CWE-502:
+    name: Deserialization of Untrusted Data
+    description: The product deserializes untrusted data without sufficiently ensuring that the resulting data will be valid.
+    abstraction: Base
+    applicable_platforms:
+    - Java
+    - Ruby
+    - PHP
+    - Python
+    - JavaScript
+    consequences:
+    - scope: Integrity
+      impact: Modify Application Data
+      note: Attackers can modify unexpected objects or data that was assumed to be safe from modification. Deserialized data
+        or code could be modified without using the provided accessor functions, or unexpected functions could be invoked.
+    - scope: Availability
+      impact: 'DoS: Resource Consumption (CPU)'
+      note: If a function is making an assumption on when to terminate, based on a sentry in a string, it could easily never
+        terminate.
+    - scope: Other
+      impact: Varies by Context
+      note: The consequences can vary widely, because it depends on which objects or methods are being deserialized, and how
+        they are used. Making an assumption that the code in the deserialized object is valid is dangerous and can enable
+        exploitation. One example is attackers using gadget chains to perform unauthorized actions, such as generating a shell.
+    mitigations:
+    - 'If available, use the signing/sealing features of the programming language to assure that deserialized data has not
+      been tainted. For example, a hash-based message authentication code (HMAC) could be '
+    - When deserializing data, populate a new object rather than just deserializing. The result is that the data flows through
+      safe input validation and that the functions are safe.
+    - Explicitly define a final object() to prevent deserialization.
+    related_capec:
+    - CAPEC-586
+    stride_categories:
+    - denial_of_service
+    - tampering
+  CWE-77:
+    name: Improper Neutralization of Special Elements used in a Command ('Command Injection')
+    description: The product constructs all or part of a command using externally-influenced input from an upstream component,
+      but it does not neutralize or incorrectly neutralizes special elements that could modify the intended command when it
+      is sent to a downstream component.
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    - AI/ML
+    consequences:
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: If a malicious user injects a character (such as a semi-colon) that delimits the end of one command and the beginning
+        of another, it may be possible to then insert an entirely new and unrelated command that was not intended to be executed.
+        This gives an attacker a privilege or capability that they would not otherwise have.
+    mitigations:
+    - If at all possible, use library calls rather than external processes to recreate the desired functionality.
+    - If possible, ensure that all external commands called from the program are statically created.
+    - Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a list of acceptable
+      inputs that strictly conform to specifications. Reject any input that does not stric
+    related_capec:
+    - CAPEC-136
+    - CAPEC-15
+    - CAPEC-183
+    - CAPEC-248
+    - CAPEC-40
+    stride_categories:
+    - tampering
+  CWE-269:
+    name: Improper Privilege Management
+    description: The product does not properly assign, modify, track, or check privileges for an actor, creating an unintended
+      sphere of control for that actor.
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    consequences:
+    - scope: Access Control
+      impact: Gain Privileges or Assume Identity
+      note: ''
+    mitigations:
+    - Very carefully manage the setting, management, and handling of privileges. Explicitly manage trust zones in the software.
+    - Follow the principle of least privilege when assigning access rights to entities in a software system.
+    - Consider following the principle of separation of privilege. Require multiple conditions to be met before permitting
+      access to a system resource.
+    related_capec:
+    - CAPEC-122
+    - CAPEC-233
+    - CAPEC-58
+    stride_categories:
+    - elevation_of_privilege
+    - spoofing
+    - tampering
+  CWE-863:
+    name: Incorrect Authorization
+    description: The product performs an authorization check when an actor attempts to access a resource or perform an action,
+      but it does not correctly perform the check.
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    - Web Server
+    - Database Server
+    - Not Technology-Specific
+    consequences:
+    - scope: Confidentiality
+      impact: Read Application Data
+      note: An attacker could bypass intended access restrictions to read sensitive data, either by reading the data directly
+        from a data store that is not correctly restricted, or by accessing insufficiently-protected, privileged functionality
+        to read the data.
+    - scope: Integrity
+      impact: Modify Application Data
+      note: An attacker could bypass intended access restrictions to modify sensitive data, either by writing the data directly
+        to a data store that is not correctly restricted, or by accessing insufficiently-protected, privileged functionality
+        to write the data.
+    - scope: Access Control
+      impact: Gain Privileges or Assume Identity
+      note: An attacker could bypass intended access restrictions to gain privileges by modifying or reading critical data
+        directly, or by accessing privileged functionality.
+    mitigations:
+    - 'Divide the product into anonymous, normal, privileged, and administrative areas. Reduce the attack surface by carefully
+      mapping roles with data and functionality. Use role-based access control (RBAC) '
+    - Ensure that access control checks are performed related to the business logic. These checks may be different than the
+      access control checks that are applied to more generic resources such as files, co
+    - Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness
+      easier to avoid. For example, consider using authorization frameworks such a
+    related_capec: []
+    stride_categories:
+    - denial_of_service
+    - elevation_of_privilege
+    - information_disclosure
+    - spoofing
+    - tampering
+  CWE-400:
+    name: Uncontrolled Resource Consumption
+    description: The product does not properly control the allocation and maintenance of a limited resource.
+    abstraction: Class
+    applicable_platforms:
+    - Not Language-Specific
+    - Not Technology-Specific
+    consequences:
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: If an attacker can trigger the allocation of the limited resources, but the number or size of the resources is
+        not controlled, then the most common result is denial of service. This would prevent valid users from accessing the
+        product, and it could potentially have an impact on the surrounding environment, i.e., the product may slow down,
+        crash due to unhandled errors, or lock out legitimate users. For example, a memory exhaustion attack against an application
+        could slow down the application as well as its host operating system.
+    - scope: Access Control
+      impact: Bypass Protection Mechanism
+      note: In some cases it may be possible to force the product to "fail open" in the event of resource exhaustion. The
+        state of the product -- and possibly the security functionality - may then be compromised.
+    mitigations:
+    - Design throttling mechanisms into the system architecture. The best protection is to limit the amount of resources that
+      an unauthorized user can cause to be expended. A strong authentication and acces
+    - 'Mitigation of resource exhaustion attacks requires that the target system either: recognizes the attack and denies
+      that user further access for a given amount of time, or uniformly throttles all reque'
+    - Ensure that protocols have specific limits of scale placed on them.
+    related_capec:
+    - CAPEC-147
+    - CAPEC-227
+    - CAPEC-492
+    stride_categories:
+    - denial_of_service
+    - elevation_of_privilege
+    - spoofing
+  CWE-306:
+    name: Missing Authentication for Critical Function
+    description: The product does not perform any authentication for functionality that requires a provable user identity
+      or consumes a significant amount of resources.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - Cloud Computing
+    - ICS/OT
+    consequences:
+    - scope: Access Control
+      impact: Gain Privileges or Assume Identity
+      note: Exposing critical functionality essentially provides an attacker with the privilege level of that functionality.
+        The consequences will depend on the associated functionality, but they can range from reading or modifying sensitive
+        data, accessing administrative or other privileged functionality, or possibly even executing arbitrary code.
+    mitigations:
+    - Divide the software into anonymous, normal, privileged, and administrative areas. Identify which of these areas require
+      a proven user identity, and use a centralized authentication capability. Identif
+    - For any security checks that are performed on the client side, ensure that these checks are duplicated on the server
+      side, in order to avoid CWE-602. Attackers can bypass the client-side checks by mod
+    - Where possible, avoid implementing custom, "grow-your-own" authentication routines and consider using authentication
+      capabilities as provided by the surrounding framework, operating system, or environ
+    related_capec:
+    - CAPEC-12
+    - CAPEC-166
+    - CAPEC-216
+    - CAPEC-36
+    - CAPEC-62
+    stride_categories:
+    - denial_of_service
+    - elevation_of_privilege
+    - spoofing
+  CWE-918:
+    name: Server-Side Request Forgery (SSRF)
+    description: The web server receives a URL or similar request from an upstream component and retrieves the contents of
+      this URL, but it does not sufficiently ensure that the request is being sent to the expected destination.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - Web Based
+    - AI/ML
+    - Web Server
+    consequences:
+    - scope: Confidentiality
+      impact: Read Application Data
+      note: ''
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: ''
+    - scope: Access Control
+      impact: Bypass Protection Mechanism
+      note: By providing URLs to unexpected hosts or ports, attackers can make it appear that the server is sending the request,
+        possibly bypassing access controls such as firewalls that prevent the attackers from accessing the URLs directly.
+        The server can be used as a proxy to conduct port scanning of hosts in internal networks, use other URLs such as that
+        can access documents on the system (using file://), or use other protocols such as gopher:// or tftp://, which may
+        provide greater control over the contents of requests.
+    mitigations: []
+    related_capec:
+    - CAPEC-664
+    stride_categories:
+    - elevation_of_privilege
+    - information_disclosure
+    - spoofing
+    - tampering
+  CWE-362:
+    name: Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')
+    description: The product contains a concurrent code sequence that requires temporary, exclusive access to a shared resource,
+      but a timing window exists in which the shared resource can be modified by another code sequence operating concurrently.
+    abstraction: Class
+    applicable_platforms:
+    - C
+    - C++
+    - Java
+    - Mobile
+    - ICS/OT
+    consequences:
+    - scope: Availability
+      impact: 'DoS: Resource Consumption (CPU)'
+      note: When a race condition makes it possible to bypass a resource cleanup routine or trigger multiple initialization
+        routines, it may lead to resource exhaustion.
+    - scope: Availability
+      impact: 'DoS: Crash, Exit, or Restart'
+      note: When a race condition allows multiple control flows to access a resource simultaneously, it might lead the product(s)
+        into unexpected states, possibly resulting in a crash.
+    - scope: Confidentiality
+      impact: Read Files or Directories
+      note: When a race condition is combined with predictable resource names and loose permissions, it may be possible for
+        an attacker to overwrite or access confidential data (CWE-59).
+    mitigations:
+    - In languages that support it, use synchronization primitives. Only wrap these around critical code to minimize the impact
+      on performance.
+    - Use thread-safe capabilities such as the data access abstraction in Spring.
+    - 'Minimize the usage of shared resources in order to remove as much complexity as possible from the control flow and
+      to reduce the likelihood of unexpected conditions occurring. Additionally, this will '
+    related_capec:
+    - CAPEC-26
+    - CAPEC-29
+    stride_categories:
+    - denial_of_service
+    - elevation_of_privilege
+    - information_disclosure
+    - spoofing
+  CWE-276:
+    name: Incorrect Default Permissions
+    description: During installation, installed file permissions are set to allow anyone to modify those files.
+    abstraction: Base
+    applicable_platforms:
+    - Not Language-Specific
+    - Not Technology-Specific
+    - ICS/OT
+    consequences:
+    - scope: Confidentiality
+      impact: Read Application Data
+      note: ''
+    mitigations:
+    - The architecture needs to access and modification attributes for files to only those users who actually require those
+      actions.
+    - Compartmentalize the system to have "safe" areas where trust boundaries can be unambiguously drawn. Do not allow sensitive
+      data to go outside of the trust boundary and always be careful when interfaci
+    related_capec:
+    - CAPEC-1
+    - CAPEC-127
+    - CAPEC-81
+    stride_categories:
+    - information_disclosure
+    - tampering
+  CWE-94:
+    name: Improper Control of Generation of Code ('Code Injection')
+    description: The product constructs all or part of a code segment using externally-influenced input from an upstream component,
+      but it does not neutralize or incorrectly neutralizes special elements that could modify the syntax or behavior of the
+      intended code segment.
+    abstraction: Base
+    applicable_platforms:
+    - Interpreted
+    - AI/ML
+    consequences:
+    - scope: Access Control
+      impact: Bypass Protection Mechanism
+      note: In some cases, injectable code controls authentication; this may lead to a remote vulnerability.
+    - scope: Access Control
+      impact: Gain Privileges or Assume Identity
+      note: Injected code can access resources that the attacker is directly prevented from accessing.
+    - scope: Integrity
+      impact: Execute Unauthorized Code or Commands
+      note: When a product allows a user's input to contain code syntax, it might be possible for an attacker to craft the
+        code in such a way that it will alter the intended control flow of the product. As a result, code injection can often
+        result in the execution of arbitrary code. Code injection   attacks can also lead to loss of data integrity in nearly
+        all cases, since the control-plane data injected is always incidental to data recall or writing.
+    mitigations:
+    - Refactor your program so that you do not have to dynamically generate code.
+    - 'Run your code in a "jail" or similar sandbox environment that enforces strict boundaries between the process and the
+      operating system. This may effectively restrict which code can be executed by your '
+    - Assume all input is malicious. Use an "accept known good" input validation strategy, i.e., use a list of acceptable
+      inputs that strictly conform to specifications. Reject any input that does not stric
+    related_capec:
+    - CAPEC-242
+    - CAPEC-35
+    - CAPEC-77
+    stride_categories:
+    - elevation_of_privilege
+    - repudiation
+    - spoofing
+    - tampering
+owasp_top_10_2025_mapping:
+  A01:2025:
+    name: Broken Access Control
+    description: Restrictions on authenticated users are not properly enforced
+    cwes:
+    - CWE-22
+    - CWE-23
+    - CWE-35
+    - CWE-59
+    - CWE-200
+    - CWE-201
+    - CWE-219
+    - CWE-264
+    - CWE-275
+    - CWE-276
+    - CWE-284
+    - CWE-285
+    - CWE-352
+    - CWE-359
+    - CWE-377
+    - CWE-402
+    - CWE-425
+    - CWE-441
+    - CWE-497
+    - CWE-538
+    - CWE-540
+    - CWE-548
+    - CWE-552
+    - CWE-566
+    - CWE-601
+    - CWE-639
+    - CWE-651
+    - CWE-668
+    - CWE-706
+    - CWE-862
+    - CWE-863
+    - CWE-913
+    - CWE-922
+    - CWE-1275
+    - CWE-918
+    stride:
+    - spoofing
+    - elevation_of_privilege
+    - information_disclosure
+  A02:2025:
+    name: Security Misconfiguration
+    description: Security hardening missing or improperly configured
+    cwes:
+    - CWE-2
+    - CWE-11
+    - CWE-13
+    - CWE-15
+    - CWE-16
+    - CWE-260
+    - CWE-315
+    - CWE-520
+    - CWE-526
+    - CWE-537
+    - CWE-541
+    - CWE-547
+    - CWE-611
+    - CWE-614
+    - CWE-756
+    - CWE-776
+    - CWE-942
+    stride:
+    - information_disclosure
+    - tampering
+    - denial_of_service
+  A03:2025:
+    name: Software Supply Chain Failures
+    description: Failures in software dependencies, build, and distribution
+    cwes:
+    - CWE-353
+    - CWE-426
+    - CWE-427
+    - CWE-494
+    - CWE-829
+    stride:
+    - tampering
+    - elevation_of_privilege
+  A04:2025:
+    name: Cryptographic Failures
+    description: Failures related to cryptography leading to data exposure
+    cwes:
+    - CWE-261
+    - CWE-296
+    - CWE-310
+    - CWE-319
+    - CWE-321
+    - CWE-322
+    - CWE-323
+    - CWE-324
+    - CWE-325
+    - CWE-326
+    - CWE-327
+    - CWE-328
+    - CWE-329
+    - CWE-330
+    - CWE-331
+    - CWE-335
+    - CWE-336
+    - CWE-337
+    - CWE-338
+    - CWE-339
+    - CWE-340
+    - CWE-347
+    - CWE-523
+    - CWE-720
+    - CWE-757
+    - CWE-759
+    - CWE-760
+    - CWE-780
+    - CWE-818
+    - CWE-916
+    stride:
+    - information_disclosure
+    - tampering
+    - spoofing
+  A05:2025:
+    name: Injection
+    description: Untrusted data sent to interpreter as command or query
+    cwes:
+    - CWE-20
+    - CWE-74
+    - CWE-75
+    - CWE-77
+    - CWE-78
+    - CWE-79
+    - CWE-80
+    - CWE-83
+    - CWE-87
+    - CWE-88
+    - CWE-89
+    - CWE-90
+    - CWE-91
+    - CWE-93
+    - CWE-94
+    - CWE-95
+    - CWE-96
+    - CWE-97
+    - CWE-98
+    - CWE-99
+    - CWE-100
+    - CWE-113
+    - CWE-116
+    - CWE-138
+    - CWE-184
+    - CWE-470
+    - CWE-471
+    - CWE-564
+    - CWE-610
+    - CWE-643
+    - CWE-644
+    - CWE-652
+    - CWE-917
+    stride:
+    - tampering
+    - information_disclosure
+    - elevation_of_privilege
+  A06:2025:
+    name: Insecure Design
+    description: Missing or ineffective security controls in design
+    cwes:
+    - CWE-73
+    - CWE-183
+    - CWE-209
+    - CWE-213
+    - CWE-235
+    - CWE-256
+    - CWE-257
+    - CWE-266
+    - CWE-269
+    - CWE-280
+    - CWE-311
+    - CWE-312
+    - CWE-313
+    - CWE-316
+    - CWE-419
+    - CWE-430
+    - CWE-434
+    - CWE-444
+    - CWE-451
+    - CWE-472
+    - CWE-501
+    - CWE-522
+    - CWE-525
+    - CWE-539
+    - CWE-579
+    - CWE-598
+    - CWE-602
+    - CWE-642
+    - CWE-646
+    - CWE-650
+    - CWE-653
+    - CWE-656
+    - CWE-657
+    - CWE-799
+    - CWE-807
+    - CWE-840
+    - CWE-841
+    - CWE-927
+    - CWE-1021
+    - CWE-1173
+    stride:
+    - all
+  A07:2025:
+    name: Authentication Failures
+    description: Broken authentication and session management
+    cwes:
+    - CWE-255
+    - CWE-259
+    - CWE-287
+    - CWE-288
+    - CWE-290
+    - CWE-294
+    - CWE-295
+    - CWE-297
+    - CWE-300
+    - CWE-302
+    - CWE-304
+    - CWE-306
+    - CWE-307
+    - CWE-346
+    - CWE-384
+    - CWE-521
+    - CWE-613
+    - CWE-620
+    - CWE-640
+    - CWE-798
+    - CWE-940
+    - CWE-1216
+    stride:
+    - spoofing
+    - elevation_of_privilege
+  A08:2025:
+    name: Software or Data Integrity Failures
+    description: Code and infrastructure not protected against integrity violations
+    cwes:
+    - CWE-345
+    - CWE-353
+    - CWE-426
+    - CWE-494
+    - CWE-502
+    - CWE-565
+    - CWE-784
+    - CWE-829
+    - CWE-830
+    - CWE-915
+    stride:
+    - tampering
+    - repudiation
+  A09:2025:
+    name: Security Logging and Alerting Failures
+    description: Insufficient logging, detection, and response
+    cwes:
+    - CWE-117
+    - CWE-223
+    - CWE-532
+    - CWE-778
+    - CWE-779
+    stride:
+    - repudiation
+  A10:2025:
+    name: Mishandling of Exceptional Conditions
+    description: Improper error handling and exceptional condition management
+    cwes:
+    - CWE-190
+    - CWE-191
+    - CWE-193
+    - CWE-252
+    - CWE-253
+    - CWE-273
+    - CWE-280
+    - CWE-354
+    - CWE-391
+    - CWE-392
+    - CWE-393
+    - CWE-394
+    - CWE-395
+    - CWE-396
+    - CWE-397
+    - CWE-460
+    - CWE-476
+    - CWE-544
+    - CWE-617
+    - CWE-636
+    - CWE-703
+    - CWE-754
+    - CWE-755
+    stride:
+    - denial_of_service
+    - information_disclosure
+stride_mappings:
+  denial_of_service:
+  - id: CWE-125
+    name: Out-of-bounds Read
+    severity: high
+  - id: CWE-416
+    name: Use After Free
+    severity: high
+  - id: CWE-20
+    name: Improper Input Validation
+    severity: high
+  - id: CWE-119
+    name: Improper Restriction of Operations within the Bounds of a Memory Buffer
+    severity: high
+  - id: CWE-787
+    name: Out-of-bounds Write
+    severity: high
+  - id: CWE-22
+    name: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+    severity: high
+  - id: CWE-862
+    name: Missing Authorization
+    severity: high
+  - id: CWE-476
+    name: NULL Pointer Dereference
+    severity: high
+  - id: CWE-190
+    name: Integer Overflow or Wraparound
+    severity: high
+  - id: CWE-502
+    name: Deserialization of Untrusted Data
+    severity: high
+  - id: CWE-863
+    name: Incorrect Authorization
+    severity: high
+  - id: CWE-400
+    name: Uncontrolled Resource Consumption
+    severity: high
+  - id: CWE-306
+    name: Missing Authentication for Critical Function
+    severity: high
+  - id: CWE-362
+    name: Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')
+    severity: high
+  - id: CWE-611
+    name: Improper Restriction of XML External Entity Reference
+    severity: medium
+  - id: CWE-653
+    name: Improper Isolation or Compartmentalization
+    severity: medium
+  - id: CWE-402
+    name: Transmission of Private Resources into a New Sphere ('Resource Leak')
+    severity: medium
+  - id: CWE-395
+    name: Use of NullPointerException Catch to Detect NULL Pointer Dereference
+    severity: medium
+  - id: CWE-191
+    name: Integer Underflow (Wrap or Wraparound)
+    severity: medium
+  - id: CWE-321
+    name: Use of Hard-coded Cryptographic Key
+    severity: medium
+  - id: CWE-73
+    name: External Control of File Name or Path
+    severity: medium
+  - id: CWE-427
+    name: Uncontrolled Search Path Element
+    severity: medium
+  - id: CWE-668
+    name: Exposure of Resource to Wrong Sphere
+    severity: medium
+  - id: CWE-13
+    name: 'ASP.NET Misconfiguration: Password in Configuration File'
+    severity: medium
+  - id: CWE-285
+    name: Improper Authorization
+    severity: medium
+  - id: CWE-799
+    name: Improper Control of Interaction Frequency
+    severity: medium
+  - id: CWE-256
+    name: Plaintext Storage of a Password
+    severity: medium
+  - id: CWE-280
+    name: 'Improper Handling of Insufficient Permissions or Privileges '
+    severity: medium
+  - id: CWE-776
+    name: Improper Restriction of Recursive Entity References in DTDs ('XML Entity Expansion')
+    severity: medium
+  - id: CWE-642
+    name: External Control of Critical State Data
+    severity: medium
+  - id: CWE-284
+    name: Improper Access Control
+    severity: medium
+  - id: CWE-99
+    name: Improper Control of Resource Identifiers ('Resource Injection')
+    severity: medium
+  - id: CWE-548
+    name: Exposure of Information Through Directory Listing
+    severity: medium
+  - id: CWE-426
+    name: Untrusted Search Path
+    severity: medium
+  - id: CWE-296
+    name: Improper Following of a Certificate's Chain of Trust
+    severity: medium
+  - id: CWE-650
+    name: Trusting HTTP Permission Methods on the Server Side
+    severity: medium
+  - id: CWE-706
+    name: Use of Incorrectly-Resolved Name or Reference
+    severity: medium
+  - id: CWE-610
+    name: Externally Controlled Reference to a Resource in Another Sphere
+    severity: medium
+  - id: CWE-547
+    name: Use of Hard-coded, Security-relevant Constants
+    severity: medium
+  - id: CWE-620
+    name: Unverified Password Change
+    severity: medium
+  - id: CWE-470
+    name: Use of Externally-Controlled Input to Select Classes or Code ('Unsafe Reflection')
+    severity: medium
+  - id: CWE-294
+    name: Authentication Bypass by Capture-replay
+    severity: medium
+  - id: CWE-646
+    name: Reliance on File Name or Extension of Externally-Supplied File
+    severity: medium
+  - id: CWE-322
+    name: Key Exchange without Entity Authentication
+    severity: medium
+  - id: CWE-640
+    name: Weak Password Recovery Mechanism for Forgotten Password
+    severity: medium
+  - id: CWE-252
+    name: Unchecked Return Value
+    severity: medium
+  - id: CWE-617
+    name: Reachable Assertion
+    severity: medium
+  - id: CWE-96
+    name: Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')
+    severity: medium
+  - id: CWE-193
+    name: Off-by-one Error
+    severity: medium
+  - id: CWE-779
+    name: Logging of Excessive Data
+    severity: medium
+  - id: CWE-312
+    name: Cleartext Storage of Sensitive Information
+    severity: medium
+  - id: CWE-59
+    name: Improper Link Resolution Before File Access ('Link Following')
+    severity: medium
+  - id: CWE-23
+    name: Relative Path Traversal
+    severity: medium
+  - id: CWE-913
+    name: Improper Control of Dynamically-Managed Code Resources
+    severity: medium
+  - id: CWE-253
+    name: Incorrect Check of Function Return Value
+    severity: medium
+  - id: CWE-754
+    name: Improper Check for Unusual or Exceptional Conditions
+    severity: medium
+  information_disclosure:
+  - id: CWE-125
+    name: Out-of-bounds Read
+    severity: high
+  - id: CWE-79
+    name: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+    severity: high
+  - id: CWE-89
+    name: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+    severity: high
+  - id: CWE-78
+    name: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
+    severity: high
+  - id: CWE-20
+    name: Improper Input Validation
+    severity: high
+  - id: CWE-119
+    name: Improper Restriction of Operations within the Bounds of a Memory Buffer
+    severity: high
+  - id: CWE-22
+    name: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+    severity: high
+  - id: CWE-352
+    name: Cross-Site Request Forgery (CSRF)
+    severity: high
+  - id: CWE-862
+    name: Missing Authorization
+    severity: high
+  - id: CWE-287
+    name: Improper Authentication
+    severity: high
+  - id: CWE-190
+    name: Integer Overflow or Wraparound
+    severity: high
+  - id: CWE-863
+    name: Incorrect Authorization
+    severity: high
+  - id: CWE-918
+    name: Server-Side Request Forgery (SSRF)
+    severity: high
+  - id: CWE-362
+    name: Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')
+    severity: high
+  - id: CWE-276
+    name: Incorrect Default Permissions
+    severity: high
+  - id: CWE-611
+    name: Improper Restriction of XML External Entity Reference
+    severity: medium
+  - id: CWE-311
+    name: Missing Encryption of Sensitive Data
+    severity: medium
+  - id: CWE-402
+    name: Transmission of Private Resources into a New Sphere ('Resource Leak')
+    severity: medium
+  - id: CWE-922
+    name: Insecure Storage of Sensitive Information
+    severity: medium
+  - id: CWE-537
+    name: Java Runtime Error Message Containing Sensitive Information
+    severity: medium
+  - id: CWE-191
+    name: Integer Underflow (Wrap or Wraparound)
+    severity: medium
+  - id: CWE-319
+    name: Cleartext Transmission of Sensitive Information
+    severity: medium
+  - id: CWE-703
+    name: Improper Check or Handling of Exceptional Conditions
+    severity: medium
+  - id: CWE-73
+    name: External Control of File Name or Path
+    severity: medium
+  - id: CWE-300
+    name: Channel Accessible by Non-Endpoint
+    severity: medium
+  - id: CWE-1275
+    name: Sensitive Cookie with Improper SameSite Attribute
+    severity: medium
+  - id: CWE-95
+    name: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')
+    severity: medium
+  - id: CWE-213
+    name: Exposure of Sensitive Information Due to Incompatible Policies
+    severity: medium
+  - id: CWE-552
+    name: Files or Directories Accessible to External Parties
+    severity: medium
+  - id: CWE-427
+    name: Uncontrolled Search Path Element
+    severity: medium
+  - id: CWE-668
+    name: Exposure of Resource to Wrong Sphere
+    severity: medium
+  - id: CWE-13
+    name: 'ASP.NET Misconfiguration: Password in Configuration File'
+    severity: medium
+  - id: CWE-285
+    name: Improper Authorization
+    severity: medium
+  - id: CWE-201
+    name: Insertion of Sensitive Information Into Sent Data
+    severity: medium
+  - id: CWE-540
+    name: Inclusion of Sensitive Information in Source Code
+    severity: medium
+  - id: CWE-316
+    name: Cleartext Storage of Sensitive Information in Memory
+    severity: medium
+  - id: CWE-83
+    name: Improper Neutralization of Script in Attributes in a Web Page
+    severity: medium
+  - id: CWE-830
+    name: Inclusion of Web Functionality from an Untrusted Source
+    severity: medium
+  - id: CWE-566
+    name: Authorization Bypass Through User-Controlled SQL Primary Key
+    severity: medium
+  - id: CWE-927
+    name: Use of Implicit Intent for Sensitive Communication
+    severity: medium
+  - id: CWE-917
+    name: Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection')
+    severity: medium
+  - id: CWE-532
+    name: Insertion of Sensitive Information into Log File
+    severity: medium
+  - id: CWE-652
+    name: Improper Neutralization of Data within XQuery Expressions ('XQuery Injection')
+    severity: medium
+  - id: CWE-315
+    name: Cleartext Storage of Sensitive Information in a Cookie
+    severity: medium
+  - id: CWE-644
+    name: Improper Neutralization of HTTP Headers for Scripting Syntax
+    severity: medium
+  - id: CWE-539
+    name: Use of Persistent Cookies Containing Sensitive Information
+    severity: medium
+  - id: CWE-80
+    name: Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)
+    severity: medium
+  - id: CWE-497
+    name: Exposure of Sensitive System Information to an Unauthorized Control Sphere
+    severity: medium
+  - id: CWE-336
+    name: Same Seed in Pseudo-Random Number Generator (PRNG)
+    severity: medium
+  - id: CWE-116
+    name: Improper Encoding or Escaping of Output
+    severity: medium
+  - id: CWE-564
+    name: 'SQL Injection: Hibernate'
+    severity: medium
+  - id: CWE-87
+    name: Improper Neutralization of Alternate XSS Syntax
+    severity: medium
+  - id: CWE-425
+    name: Direct Request ('Forced Browsing')
+    severity: medium
+  - id: CWE-642
+    name: External Control of Critical State Data
+    severity: medium
+  - id: CWE-756
+    name: Missing Custom Error Page
+    severity: medium
+  - id: CWE-99
+    name: Improper Control of Resource Identifiers ('Resource Injection')
+    severity: medium
+  - id: CWE-359
+    name: Exposure of Private Personal Information to an Unauthorized Actor
+    severity: medium
+  - id: CWE-451
+    name: User Interface (UI) Misrepresentation of Critical Information
+    severity: medium
+  - id: CWE-548
+    name: Exposure of Information Through Directory Listing
+    severity: medium
+  - id: CWE-11
+    name: 'ASP.NET Misconfiguration: Creating Debug Binary'
+    severity: medium
+  - id: CWE-656
+    name: Reliance on Security Through Obscurity
+    severity: medium
+  - id: CWE-541
+    name: Inclusion of Sensitive Information in an Include File
+    severity: medium
+  - id: CWE-426
+    name: Untrusted Search Path
+    severity: medium
+  - id: CWE-650
+    name: Trusting HTTP Permission Methods on the Server Side
+    severity: medium
+  - id: CWE-798
+    name: Use of Hard-coded Credentials
+    severity: medium
+  - id: CWE-706
+    name: Use of Incorrectly-Resolved Name or Reference
+    severity: medium
+  - id: CWE-610
+    name: Externally Controlled Reference to a Resource in Another Sphere
+    severity: medium
+  - id: CWE-841
+    name: Improper Enforcement of Behavioral Workflow
+    severity: medium
+  - id: CWE-35
+    name: 'Path Traversal: ''.../...//'''
+    severity: medium
+  - id: CWE-643
+    name: Improper Neutralization of Data within XPath Expressions ('XPath Injection')
+    severity: medium
+  - id: CWE-15
+    name: External Control of System or Configuration Setting
+    severity: medium
+  - id: CWE-598
+    name: Use of GET Request Method With Sensitive Query Strings
+    severity: medium
+  - id: CWE-138
+    name: Improper Neutralization of Special Elements
+    severity: medium
+  - id: CWE-329
+    name: Generation of Predictable IV with CBC Mode
+    severity: medium
+  - id: CWE-829
+    name: Inclusion of Functionality from Untrusted Control Sphere
+    severity: medium
+  - id: CWE-337
+    name: Predictable Seed in Pseudo-Random Number Generator (PRNG)
+    severity: medium
+  - id: CWE-579
+    name: 'J2EE Bad Practices: Non-serializable Object Stored in Session'
+    severity: medium
+  - id: CWE-313
+    name: Cleartext Storage in a File or on Disk
+    severity: medium
+  - id: CWE-97
+    name: Improper Neutralization of Server-Side Includes (SSI) Within a Web Page
+    severity: medium
+  - id: CWE-460
+    name: Improper Cleanup on Thrown Exception
+    severity: medium
+  - id: CWE-377
+    name: Insecure Temporary File
+    severity: medium
+  - id: CWE-470
+    name: Use of Externally-Controlled Input to Select Classes or Code ('Unsafe Reflection')
+    severity: medium
+  - id: CWE-74
+    name: Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')
+    severity: medium
+  - id: CWE-90
+    name: Improper Neutralization of Special Elements used in an LDAP Query ('LDAP Injection')
+    severity: medium
+  - id: CWE-325
+    name: Missing Cryptographic Step
+    severity: medium
+  - id: CWE-651
+    name: Exposure of WSDL File Containing Sensitive Information
+    severity: medium
+  - id: CWE-646
+    name: Reliance on File Name or Extension of Externally-Supplied File
+    severity: medium
+  - id: CWE-322
+    name: Key Exchange without Entity Authentication
+    severity: medium
+  - id: CWE-614
+    name: Sensitive Cookie in HTTPS Session Without 'Secure' Attribute
+    severity: medium
+  - id: CWE-657
+    name: Violation of Secure Design Principles
+    severity: medium
+  - id: CWE-326
+    name: Inadequate Encryption Strength
+    severity: medium
+  - id: CWE-223
+    name: Omission of Security-relevant Information
+    severity: medium
+  - id: CWE-96
+    name: Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')
+    severity: medium
+  - id: CWE-193
+    name: Off-by-one Error
+    severity: medium
+  - id: CWE-807
+    name: Reliance on Untrusted Inputs in a Security Decision
+    severity: medium
+  - id: CWE-779
+    name: Logging of Excessive Data
+    severity: medium
+  - id: CWE-91
+    name: XML Injection (aka Blind XPath Injection)
+    severity: medium
+  - id: CWE-538
+    name: Insertion of Sensitive Information into Externally-Accessible File or Directory
+    severity: medium
+  - id: CWE-312
+    name: Cleartext Storage of Sensitive Information
+    severity: medium
+  - id: CWE-257
+    name: Storing Passwords in a Recoverable Format
+    severity: medium
+  - id: CWE-565
+    name: Reliance on Cookies without Validation and Integrity Checking
+    severity: medium
+  - id: CWE-59
+    name: Improper Link Resolution Before File Access ('Link Following')
+    severity: medium
+  - id: CWE-23
+    name: Relative Path Traversal
+    severity: medium
+  - id: CWE-88
+    name: Improper Neutralization of Argument Delimiters in a Command ('Argument Injection')
+    severity: medium
+  - id: CWE-327
+    name: Use of a Broken or Risky Cryptographic Algorithm
+    severity: medium
+  - id: CWE-339
+    name: Small Seed Space in PRNG
+    severity: medium
+  - id: CWE-913
+    name: Improper Control of Dynamically-Managed Code Resources
+    severity: medium
+  - id: CWE-340
+    name: Generation of Predictable Numbers or Identifiers
+    severity: medium
+  - id: CWE-209
+    name: Generation of Error Message Containing Sensitive Information
+    severity: medium
+  - id: CWE-526
+    name: Cleartext Storage of Sensitive Information in an Environment Variable
+    severity: medium
+  - id: CWE-219
+    name: Storage of File with Sensitive Data Under Web Root
+    severity: medium
+  - id: CWE-755
+    name: Improper Handling of Exceptional Conditions
+    severity: medium
+  - id: CWE-525
+    name: Use of Web Browser Cache Containing Sensitive Information
+    severity: medium
+  - id: CWE-330
+    name: Use of Insufficiently Random Values
+    severity: medium
+  - id: CWE-942
+    name: Permissive Cross-domain Security Policy with Untrusted Domains
+    severity: medium
+  - id: CWE-200
+    name: Exposure of Sensitive Information to an Unauthorized Actor
+    severity: medium
+  spoofing:
+  - id: CWE-125
+    name: Out-of-bounds Read
+    severity: high
+  - id: CWE-79
+    name: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+    severity: high
+  - id: CWE-89
+    name: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+    severity: high
+  - id: CWE-862
+    name: Missing Authorization
+    severity: high
+  - id: CWE-287
+    name: Improper Authentication
+    severity: high
+  - id: CWE-190
+    name: Integer Overflow or Wraparound
+    severity: high
+  - id: CWE-269
+    name: Improper Privilege Management
+    severity: high
+  - id: CWE-863
+    name: Incorrect Authorization
+    severity: high
+  - id: CWE-400
+    name: Uncontrolled Resource Consumption
+    severity: high
+  - id: CWE-306
+    name: Missing Authentication for Critical Function
+    severity: high
+  - id: CWE-918
+    name: Server-Side Request Forgery (SSRF)
+    severity: high
+  - id: CWE-362
+    name: Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')
+    severity: high
+  - id: CWE-94
+    name: Improper Control of Generation of Code ('Code Injection')
+    severity: high
+  - id: CWE-611
+    name: Improper Restriction of XML External Entity Reference
+    severity: medium
+  - id: CWE-347
+    name: Improper Verification of Cryptographic Signature
+    severity: medium
+  - id: CWE-653
+    name: Improper Isolation or Compartmentalization
+    severity: medium
+  - id: CWE-346
+    name: Origin Validation Error
+    severity: medium
+  - id: CWE-321
+    name: Use of Hard-coded Cryptographic Key
+    severity: medium
+  - id: CWE-273
+    name: Improper Check for Dropped Privileges
+    severity: medium
+  - id: CWE-300
+    name: Channel Accessible by Non-Endpoint
+    severity: medium
+  - id: CWE-95
+    name: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')
+    severity: medium
+  - id: CWE-297
+    name: Improper Validation of Certificate with Host Mismatch
+    severity: medium
+  - id: CWE-304
+    name: Missing Critical Step in Authentication
+    severity: medium
+  - id: CWE-13
+    name: 'ASP.NET Misconfiguration: Password in Configuration File'
+    severity: medium
+  - id: CWE-285
+    name: Improper Authorization
+    severity: medium
+  - id: CWE-266
+    name: Incorrect Privilege Assignment
+    severity: medium
+  - id: CWE-940
+    name: Improper Verification of Source of a Communication Channel
+    severity: medium
+  - id: CWE-328
+    name: Use of Weak Hash
+    severity: medium
+  - id: CWE-523
+    name: Unprotected Transport of Credentials
+    severity: medium
+  - id: CWE-288
+    name: Authentication Bypass Using an Alternate Path or Channel
+    severity: medium
+  - id: CWE-256
+    name: Plaintext Storage of a Password
+    severity: medium
+  - id: CWE-522
+    name: Insufficiently Protected Credentials
+    severity: medium
+  - id: CWE-916
+    name: Use of Password Hash With Insufficient Computational Effort
+    severity: medium
+  - id: CWE-295
+    name: Improper Certificate Validation
+    severity: medium
+  - id: CWE-639
+    name: Authorization Bypass Through User-Controlled Key
+    severity: medium
+  - id: CWE-116
+    name: Improper Encoding or Escaping of Output
+    severity: medium
+  - id: CWE-419
+    name: Unprotected Primary Channel
+    severity: medium
+  - id: CWE-613
+    name: Insufficient Session Expiration
+    severity: medium
+  - id: CWE-601
+    name: URL Redirection to Untrusted Site ('Open Redirect')
+    severity: medium
+  - id: CWE-521
+    name: Weak Password Requirements
+    severity: medium
+  - id: CWE-260
+    name: Password in Configuration File
+    severity: medium
+  - id: CWE-642
+    name: External Control of Critical State Data
+    severity: medium
+  - id: CWE-784
+    name: Reliance on Cookies without Validation and Integrity Checking in a Security Decision
+    severity: medium
+  - id: CWE-757
+    name: Selection of Less-Secure Algorithm During Negotiation ('Algorithm Downgrade')
+    severity: medium
+  - id: CWE-760
+    name: Use of a One-Way Hash with a Predictable Salt
+    severity: medium
+  - id: CWE-384
+    name: Session Fixation
+    severity: medium
+  - id: CWE-520
+    name: '.NET Misconfiguration: Use of Impersonation'
+    severity: medium
+  - id: CWE-650
+    name: Trusting HTTP Permission Methods on the Server Side
+    severity: medium
+  - id: CWE-798
+    name: Use of Hard-coded Credentials
+    severity: medium
+  - id: CWE-610
+    name: Externally Controlled Reference to a Resource in Another Sphere
+    severity: medium
+  - id: CWE-184
+    name: Incomplete List of Disallowed Inputs
+    severity: medium
+  - id: CWE-643
+    name: Improper Neutralization of Data within XPath Expressions ('XPath Injection')
+    severity: medium
+  - id: CWE-602
+    name: Client-Side Enforcement of Server-Side Security
+    severity: medium
+  - id: CWE-259
+    name: Use of Hard-coded Password
+    severity: medium
+  - id: CWE-302
+    name: Authentication Bypass by Assumed-Immutable Data
+    severity: medium
+  - id: CWE-183
+    name: Permissive List of Allowed Inputs
+    severity: medium
+  - id: CWE-620
+    name: Unverified Password Change
+    severity: medium
+  - id: CWE-501
+    name: Trust Boundary Violation
+    severity: medium
+  - id: CWE-1021
+    name: Improper Restriction of Rendered UI Layers or Frames
+    severity: medium
+  - id: CWE-74
+    name: Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')
+    severity: medium
+  - id: CWE-780
+    name: Use of RSA Algorithm without OAEP
+    severity: medium
+  - id: CWE-294
+    name: Authentication Bypass by Capture-replay
+    severity: medium
+  - id: CWE-325
+    name: Missing Cryptographic Step
+    severity: medium
+  - id: CWE-646
+    name: Reliance on File Name or Extension of Externally-Supplied File
+    severity: medium
+  - id: CWE-322
+    name: Key Exchange without Entity Authentication
+    severity: medium
+  - id: CWE-640
+    name: Weak Password Recovery Mechanism for Forgotten Password
+    severity: medium
+  - id: CWE-759
+    name: Use of a One-Way Hash without a Salt
+    severity: medium
+  - id: CWE-290
+    name: Authentication Bypass by Spoofing
+    severity: medium
+  - id: CWE-326
+    name: Inadequate Encryption Strength
+    severity: medium
+  - id: CWE-96
+    name: Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')
+    severity: medium
+  - id: CWE-331
+    name: Insufficient Entropy
+    severity: medium
+  - id: CWE-335
+    name: Incorrect Usage of Seeds in Pseudo-Random Number Generator (PRNG)
+    severity: medium
+  - id: CWE-807
+    name: Reliance on Untrusted Inputs in a Security Decision
+    severity: medium
+  - id: CWE-323
+    name: Reusing a Nonce, Key Pair in Encryption
+    severity: medium
+  - id: CWE-338
+    name: Use of Cryptographically Weak Pseudo-Random Number Generator (PRNG)
+    severity: medium
+  - id: CWE-636
+    name: Not Failing Securely ('Failing Open')
+    severity: medium
+  - id: CWE-257
+    name: Storing Passwords in a Recoverable Format
+    severity: medium
+  - id: CWE-565
+    name: Reliance on Cookies without Validation and Integrity Checking
+    severity: medium
+  - id: CWE-307
+    name: Improper Restriction of Excessive Authentication Attempts
+    severity: medium
+  - id: CWE-330
+    name: Use of Insufficiently Random Values
+    severity: medium
+  - id: CWE-324
+    name: Use of a Key Past its Expiration Date
+    severity: medium
+  - id: CWE-261
+    name: Weak Encoding for Password
+    severity: medium
+  elevation_of_privilege:
+  - id: CWE-79
+    name: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+    severity: high
+  - id: CWE-89
+    name: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+    severity: high
+  - id: CWE-352
+    name: Cross-Site Request Forgery (CSRF)
+    severity: high
+  - id: CWE-862
+    name: Missing Authorization
+    severity: high
+  - id: CWE-190
+    name: Integer Overflow or Wraparound
+    severity: high
+  - id: CWE-269
+    name: Improper Privilege Management
+    severity: high
+  - id: CWE-863
+    name: Incorrect Authorization
+    severity: high
+  - id: CWE-400
+    name: Uncontrolled Resource Consumption
+    severity: high
+  - id: CWE-306
+    name: Missing Authentication for Critical Function
+    severity: high
+  - id: CWE-918
+    name: Server-Side Request Forgery (SSRF)
+    severity: high
+  - id: CWE-362
+    name: Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')
+    severity: high
+  - id: CWE-94
+    name: Improper Control of Generation of Code ('Code Injection')
+    severity: high
+  - id: CWE-347
+    name: Improper Verification of Cryptographic Signature
+    severity: medium
+  - id: CWE-653
+    name: Improper Isolation or Compartmentalization
+    severity: medium
+  - id: CWE-346
+    name: Origin Validation Error
+    severity: medium
+  - id: CWE-922
+    name: Insecure Storage of Sensitive Information
+    severity: medium
+  - id: CWE-537
+    name: Java Runtime Error Message Containing Sensitive Information
+    severity: medium
+  - id: CWE-319
+    name: Cleartext Transmission of Sensitive Information
+    severity: medium
+  - id: CWE-321
+    name: Use of Hard-coded Cryptographic Key
+    severity: medium
+  - id: CWE-273
+    name: Improper Check for Dropped Privileges
+    severity: medium
+  - id: CWE-95
+    name: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')
+    severity: medium
+  - id: CWE-213
+    name: Exposure of Sensitive Information Due to Incompatible Policies
+    severity: medium
+  - id: CWE-297
+    name: Improper Validation of Certificate with Host Mismatch
+    severity: medium
+  - id: CWE-552
+    name: Files or Directories Accessible to External Parties
+    severity: medium
+  - id: CWE-304
+    name: Missing Critical Step in Authentication
+    severity: medium
+  - id: CWE-13
+    name: 'ASP.NET Misconfiguration: Password in Configuration File'
+    severity: medium
+  - id: CWE-285
+    name: Improper Authorization
+    severity: medium
+  - id: CWE-266
+    name: Incorrect Privilege Assignment
+    severity: medium
+  - id: CWE-940
+    name: Improper Verification of Source of a Communication Channel
+    severity: medium
+  - id: CWE-328
+    name: Use of Weak Hash
+    severity: medium
+  - id: CWE-523
+    name: Unprotected Transport of Credentials
+    severity: medium
+  - id: CWE-288
+    name: Authentication Bypass Using an Alternate Path or Channel
+    severity: medium
+  - id: CWE-256
+    name: Plaintext Storage of a Password
+    severity: medium
+  - id: CWE-522
+    name: Insufficiently Protected Credentials
+    severity: medium
+  - id: CWE-916
+    name: Use of Password Hash With Insufficient Computational Effort
+    severity: medium
+  - id: CWE-639
+    name: Authorization Bypass Through User-Controlled Key
+    severity: medium
+  - id: CWE-280
+    name: 'Improper Handling of Insufficient Permissions or Privileges '
+    severity: medium
+  - id: CWE-497
+    name: Exposure of Sensitive System Information to an Unauthorized Control Sphere
+    severity: medium
+  - id: CWE-419
+    name: Unprotected Primary Channel
+    severity: medium
+  - id: CWE-613
+    name: Insufficient Session Expiration
+    severity: medium
+  - id: CWE-601
+    name: URL Redirection to Untrusted Site ('Open Redirect')
+    severity: medium
+  - id: CWE-521
+    name: Weak Password Requirements
+    severity: medium
+  - id: CWE-260
+    name: Password in Configuration File
+    severity: medium
+  - id: CWE-642
+    name: External Control of Critical State Data
+    severity: medium
+  - id: CWE-284
+    name: Improper Access Control
+    severity: medium
+  - id: CWE-784
+    name: Reliance on Cookies without Validation and Integrity Checking in a Security Decision
+    severity: medium
+  - id: CWE-757
+    name: Selection of Less-Secure Algorithm During Negotiation ('Algorithm Downgrade')
+    severity: medium
+  - id: CWE-760
+    name: Use of a One-Way Hash with a Predictable Salt
+    severity: medium
+  - id: CWE-359
+    name: Exposure of Private Personal Information to an Unauthorized Actor
+    severity: medium
+  - id: CWE-384
+    name: Session Fixation
+    severity: medium
+  - id: CWE-296
+    name: Improper Following of a Certificate's Chain of Trust
+    severity: medium
+  - id: CWE-520
+    name: '.NET Misconfiguration: Use of Impersonation'
+    severity: medium
+  - id: CWE-650
+    name: Trusting HTTP Permission Methods on the Server Side
+    severity: medium
+  - id: CWE-798
+    name: Use of Hard-coded Credentials
+    severity: medium
+  - id: CWE-610
+    name: Externally Controlled Reference to a Resource in Another Sphere
+    severity: medium
+  - id: CWE-184
+    name: Incomplete List of Disallowed Inputs
+    severity: medium
+  - id: CWE-643
+    name: Improper Neutralization of Data within XPath Expressions ('XPath Injection')
+    severity: medium
+  - id: CWE-602
+    name: Client-Side Enforcement of Server-Side Security
+    severity: medium
+  - id: CWE-259
+    name: Use of Hard-coded Password
+    severity: medium
+  - id: CWE-302
+    name: Authentication Bypass by Assumed-Immutable Data
+    severity: medium
+  - id: CWE-183
+    name: Permissive List of Allowed Inputs
+    severity: medium
+  - id: CWE-620
+    name: Unverified Password Change
+    severity: medium
+  - id: CWE-501
+    name: Trust Boundary Violation
+    severity: medium
+  - id: CWE-1021
+    name: Improper Restriction of Rendered UI Layers or Frames
+    severity: medium
+  - id: CWE-74
+    name: Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')
+    severity: medium
+  - id: CWE-780
+    name: Use of RSA Algorithm without OAEP
+    severity: medium
+  - id: CWE-294
+    name: Authentication Bypass by Capture-replay
+    severity: medium
+  - id: CWE-325
+    name: Missing Cryptographic Step
+    severity: medium
+  - id: CWE-646
+    name: Reliance on File Name or Extension of Externally-Supplied File
+    severity: medium
+  - id: CWE-322
+    name: Key Exchange without Entity Authentication
+    severity: medium
+  - id: CWE-640
+    name: Weak Password Recovery Mechanism for Forgotten Password
+    severity: medium
+  - id: CWE-759
+    name: Use of a One-Way Hash without a Salt
+    severity: medium
+  - id: CWE-290
+    name: Authentication Bypass by Spoofing
+    severity: medium
+  - id: CWE-326
+    name: Inadequate Encryption Strength
+    severity: medium
+  - id: CWE-96
+    name: Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')
+    severity: medium
+  - id: CWE-331
+    name: Insufficient Entropy
+    severity: medium
+  - id: CWE-335
+    name: Incorrect Usage of Seeds in Pseudo-Random Number Generator (PRNG)
+    severity: medium
+  - id: CWE-323
+    name: Reusing a Nonce, Key Pair in Encryption
+    severity: medium
+  - id: CWE-338
+    name: Use of Cryptographically Weak Pseudo-Random Number Generator (PRNG)
+    severity: medium
+  - id: CWE-636
+    name: Not Failing Securely ('Failing Open')
+    severity: medium
+  - id: CWE-257
+    name: Storing Passwords in a Recoverable Format
+    severity: medium
+  - id: CWE-565
+    name: Reliance on Cookies without Validation and Integrity Checking
+    severity: medium
+  - id: CWE-307
+    name: Improper Restriction of Excessive Authentication Attempts
+    severity: medium
+  - id: CWE-219
+    name: Storage of File with Sensitive Data Under Web Root
+    severity: medium
+  - id: CWE-330
+    name: Use of Insufficiently Random Values
+    severity: medium
+  - id: CWE-324
+    name: Use of a Key Past its Expiration Date
+    severity: medium
+  - id: CWE-261
+    name: Weak Encoding for Password
+    severity: medium
+  - id: CWE-200
+    name: Exposure of Sensitive Information to an Unauthorized Actor
+    severity: medium
+  tampering:
+  - id: CWE-79
+    name: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+    severity: high
+  - id: CWE-89
+    name: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+    severity: high
+  - id: CWE-416
+    name: Use After Free
+    severity: high
+  - id: CWE-78
+    name: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
+    severity: high
+  - id: CWE-20
+    name: Improper Input Validation
+    severity: high
+  - id: CWE-119
+    name: Improper Restriction of Operations within the Bounds of a Memory Buffer
+    severity: high
+  - id: CWE-787
+    name: Out-of-bounds Write
+    severity: high
+  - id: CWE-22
+    name: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+    severity: high
+  - id: CWE-434
+    name: Unrestricted Upload of File with Dangerous Type
+    severity: high
+  - id: CWE-862
+    name: Missing Authorization
+    severity: high
+  - id: CWE-476
+    name: NULL Pointer Dereference
+    severity: high
+  - id: CWE-287
+    name: Improper Authentication
+    severity: high
+  - id: CWE-190
+    name: Integer Overflow or Wraparound
+    severity: high
+  - id: CWE-502
+    name: Deserialization of Untrusted Data
+    severity: high
+  - id: CWE-77
+    name: Improper Neutralization of Special Elements used in a Command ('Command Injection')
+    severity: high
+  - id: CWE-269
+    name: Improper Privilege Management
+    severity: high
+  - id: CWE-863
+    name: Incorrect Authorization
+    severity: high
+  - id: CWE-918
+    name: Server-Side Request Forgery (SSRF)
+    severity: high
+  - id: CWE-276
+    name: Incorrect Default Permissions
+    severity: high
+  - id: CWE-94
+    name: Improper Control of Generation of Code ('Code Injection')
+    severity: high
+  - id: CWE-611
+    name: Improper Restriction of XML External Entity Reference
+    severity: medium
+  - id: CWE-311
+    name: Missing Encryption of Sensitive Data
+    severity: medium
+  - id: CWE-922
+    name: Insecure Storage of Sensitive Information
+    severity: medium
+  - id: CWE-395
+    name: Use of NullPointerException Catch to Detect NULL Pointer Dereference
+    severity: medium
+  - id: CWE-191
+    name: Integer Underflow (Wrap or Wraparound)
+    severity: medium
+  - id: CWE-319
+    name: Cleartext Transmission of Sensitive Information
+    severity: medium
+  - id: CWE-235
+    name: Improper Handling of Extra Parameters
+    severity: medium
+  - id: CWE-73
+    name: External Control of File Name or Path
+    severity: medium
+  - id: CWE-915
+    name: Improperly Controlled Modification of Dynamically-Determined Object Attributes
+    severity: medium
+  - id: CWE-472
+    name: External Control of Assumed-Immutable Web Parameter
+    severity: medium
+  - id: CWE-1275
+    name: Sensitive Cookie with Improper SameSite Attribute
+    severity: medium
+  - id: CWE-93
+    name: Improper Neutralization of CRLF Sequences ('CRLF Injection')
+    severity: medium
+  - id: CWE-95
+    name: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')
+    severity: medium
+  - id: CWE-394
+    name: Unexpected Status Code or Return Value
+    severity: medium
+  - id: CWE-668
+    name: Exposure of Resource to Wrong Sphere
+    severity: medium
+  - id: CWE-444
+    name: Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')
+    severity: medium
+  - id: CWE-285
+    name: Improper Authorization
+    severity: medium
+  - id: CWE-391
+    name: Unchecked Error Condition
+    severity: medium
+  - id: CWE-392
+    name: Missing Report of Error Condition
+    severity: medium
+  - id: CWE-393
+    name: Return of Wrong Status Code
+    severity: medium
+  - id: CWE-927
+    name: Use of Implicit Intent for Sensitive Communication
+    severity: medium
+  - id: CWE-345
+    name: Insufficient Verification of Data Authenticity
+    severity: medium
+  - id: CWE-917
+    name: Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection')
+    severity: medium
+  - id: CWE-288
+    name: Authentication Bypass Using an Alternate Path or Channel
+    severity: medium
+  - id: CWE-532
+    name: Insertion of Sensitive Information into Log File
+    severity: medium
+  - id: CWE-652
+    name: Improper Neutralization of Data within XQuery Expressions ('XQuery Injection')
+    severity: medium
+  - id: CWE-430
+    name: Deployment of Wrong Handler
+    severity: medium
+  - id: CWE-354
+    name: Improper Validation of Integrity Check Value
+    severity: medium
+  - id: CWE-644
+    name: Improper Neutralization of HTTP Headers for Scripting Syntax
+    severity: medium
+  - id: CWE-295
+    name: Improper Certificate Validation
+    severity: medium
+  - id: CWE-639
+    name: Authorization Bypass Through User-Controlled Key
+    severity: medium
+  - id: CWE-116
+    name: Improper Encoding or Escaping of Output
+    severity: medium
+  - id: CWE-113
+    name: Improper Neutralization of CRLF Sequences in HTTP Headers ('HTTP Request/Response Splitting')
+    severity: medium
+  - id: CWE-564
+    name: 'SQL Injection: Hibernate'
+    severity: medium
+  - id: CWE-87
+    name: Improper Neutralization of Alternate XSS Syntax
+    severity: medium
+  - id: CWE-544
+    name: Missing Standardized Error Handling Mechanism
+    severity: medium
+  - id: CWE-99
+    name: Improper Control of Resource Identifiers ('Resource Injection')
+    severity: medium
+  - id: CWE-75
+    name: Failure to Sanitize Special Elements into a Different Plane (Special Element Injection)
+    severity: medium
+  - id: CWE-426
+    name: Untrusted Search Path
+    severity: medium
+  - id: CWE-296
+    name: Improper Following of a Certificate's Chain of Trust
+    severity: medium
+  - id: CWE-650
+    name: Trusting HTTP Permission Methods on the Server Side
+    severity: medium
+  - id: CWE-1173
+    name: Improper Use of Validation Framework
+    severity: medium
+  - id: CWE-798
+    name: Use of Hard-coded Credentials
+    severity: medium
+  - id: CWE-643
+    name: Improper Neutralization of Data within XPath Expressions ('XPath Injection')
+    severity: medium
+  - id: CWE-471
+    name: Modification of Assumed-Immutable Data (MAID)
+    severity: medium
+  - id: CWE-494
+    name: Download of Code Without Integrity Check
+    severity: medium
+  - id: CWE-470
+    name: Use of Externally-Controlled Input to Select Classes or Code ('Unsafe Reflection')
+    severity: medium
+  - id: CWE-74
+    name: Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')
+    severity: medium
+  - id: CWE-90
+    name: Improper Neutralization of Special Elements used in an LDAP Query ('LDAP Injection')
+    severity: medium
+  - id: CWE-353
+    name: Missing Support for Integrity Check
+    severity: medium
+  - id: CWE-640
+    name: Weak Password Recovery Mechanism for Forgotten Password
+    severity: medium
+  - id: CWE-96
+    name: Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')
+    severity: medium
+  - id: CWE-193
+    name: Off-by-one Error
+    severity: medium
+  - id: CWE-91
+    name: XML Injection (aka Blind XPath Injection)
+    severity: medium
+  - id: CWE-565
+    name: Reliance on Cookies without Validation and Integrity Checking
+    severity: medium
+  - id: CWE-23
+    name: Relative Path Traversal
+    severity: medium
+  - id: CWE-88
+    name: Improper Neutralization of Argument Delimiters in a Command ('Argument Injection')
+    severity: medium
+  - id: CWE-117
+    name: Improper Output Neutralization for Logs
+    severity: medium
+  - id: CWE-327
+    name: Use of a Broken or Risky Cryptographic Algorithm
+    severity: medium
+  - id: CWE-913
+    name: Improper Control of Dynamically-Managed Code Resources
+    severity: medium
+  - id: CWE-98
+    name: Improper Control of Filename for Include/Require Statement in PHP Program ('PHP Remote File Inclusion')
+    severity: medium
+  - id: CWE-754
+    name: Improper Check for Unusual or Exceptional Conditions
+    severity: medium
+  repudiation:
+  - id: CWE-190
+    name: Integer Overflow or Wraparound
+    severity: high
+  - id: CWE-94
+    name: Improper Control of Generation of Code ('Code Injection')
+    severity: high
+  - id: CWE-95
+    name: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')
+    severity: medium
+  - id: CWE-523
+    name: Unprotected Transport of Credentials
+    severity: medium
+  - id: CWE-778
+    name: Insufficient Logging
+    severity: medium
+  - id: CWE-532
+    name: Insertion of Sensitive Information into Log File
+    severity: medium
+  - id: CWE-354
+    name: Improper Validation of Integrity Check Value
+    severity: medium
+  - id: CWE-396
+    name: Declaration of Catch for Generic Exception
+    severity: medium
+  - id: CWE-451
+    name: User Interface (UI) Misrepresentation of Critical Information
+    severity: medium
+  - id: CWE-296
+    name: Improper Following of a Certificate's Chain of Trust
+    severity: medium
+  - id: CWE-397
+    name: Declaration of Throws for Generic Exception
+    severity: medium
+  - id: CWE-441
+    name: Unintended Proxy or Intermediary ('Confused Deputy')
+    severity: medium
+  - id: CWE-74
+    name: Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')
+    severity: medium
+  - id: CWE-325
+    name: Missing Cryptographic Step
+    severity: medium
+  - id: CWE-353
+    name: Missing Support for Integrity Check
+    severity: medium
+  - id: CWE-223
+    name: Omission of Security-relevant Information
+    severity: medium
+  - id: CWE-96
+    name: Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')
+    severity: medium
+  - id: CWE-779
+    name: Logging of Excessive Data
+    severity: medium
+  - id: CWE-117
+    name: Improper Output Neutralization for Logs
+    severity: medium
+  - id: CWE-327
+    name: Use of a Broken or Risky Cryptographic Algorithm
+    severity: medium

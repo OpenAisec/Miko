@@ -1,0 +1,406 @@
+# Python Security Controls Adapter
+# Python 安全控制适配器
+#
+# 定义 Python 生态系统中各安全控制的检测模式
+# 支持: Django, Flask, FastAPI, Tornado
+#
+# 版本: 1.0.0
+
+language: python
+file_extensions:
+  - ".py"
+
+# ============================================================================
+# 安全控制检测模式 (Control Detection Patterns)
+# ============================================================================
+
+control_patterns:
+  # ---------------------------------------------------------------------------
+  # 身份认证 (Authentication)
+  # ---------------------------------------------------------------------------
+  authentication:
+    django:
+      - '@login_required'
+      - 'LoginRequiredMixin'
+      - 'request\.user\.is_authenticated'
+      - 'authenticate\('
+      - 'UserPassesTestMixin'
+      - '@permission_required'
+
+    django_rest:
+      - 'IsAuthenticated'
+      - 'authentication_classes'
+      - 'TokenAuthentication'
+      - 'JWTAuthentication'
+      - 'SessionAuthentication'
+
+    flask:
+      - '@login_required'
+      - 'current_user\.is_authenticated'
+      - 'flask_login'
+      - '@jwt_required'
+      - 'verify_jwt_in_request'
+
+    fastapi:
+      - 'Depends\(.*auth'
+      - 'OAuth2PasswordBearer'
+      - 'get_current_user'
+      - 'HTTPBearer'
+      - 'Security\('
+
+  # ---------------------------------------------------------------------------
+  # 授权检查 (Authorization)
+  # ---------------------------------------------------------------------------
+  authorization:
+    django:
+      - '@permission_required'
+      - 'PermissionRequiredMixin'
+      - 'has_perm\('
+      - 'user_passes_test'
+      - '@user_passes_test'
+      - 'get_permission_required'
+
+    django_rest:
+      - 'permission_classes'
+      - 'IsAdminUser'
+      - 'DjangoModelPermissions'
+      - 'DjangoObjectPermissions'
+      - 'BasePermission'
+      - 'has_permission'
+      - 'has_object_permission'
+
+    flask:
+      - '@roles_required'
+      - '@permission_required'
+      - 'has_role\('
+      - 'flask_principal'
+      - 'Permission\('
+
+    fastapi:
+      - 'Depends\(.*permission'
+      - 'Depends\(.*role'
+      - 'check_permission'
+      - 'RoleChecker'
+
+  # ---------------------------------------------------------------------------
+  # 资源所有权验证 (Ownership Check)
+  # ---------------------------------------------------------------------------
+  ownership_check:
+    patterns:
+      - 'owner=request\.user'
+      - 'user=request\.user'
+      - 'created_by=request\.user'
+      - '\.filter\(.*user=.*request\.user'
+      - '\.filter\(.*owner='
+      - 'get_object_or_404.*owner'
+      - 'get_queryset.*filter.*user'
+      - 'current_user\.id\s*=='
+      - 'user_id\s*==\s*current_user'
+
+  # ---------------------------------------------------------------------------
+  # CSRF保护 (CSRF Protection)
+  # ---------------------------------------------------------------------------
+  csrf_protection:
+    django:
+      - '@csrf_protect'
+      - 'CsrfViewMiddleware'
+      - '{% csrf_token %}'
+      - 'csrf_token'
+      - '@csrf_exempt'  # 反向检测
+      - 'CSRF_COOKIE'
+
+    flask:
+      - 'CSRFProtect'
+      - 'csrf\.protect'
+      - 'validate_csrf'
+      - 'csrf_token\(\)'
+      - 'flask_wtf\.csrf'
+
+    fastapi:
+      - 'CSRFProtect'
+      - 'csrf_token'
+
+  # ---------------------------------------------------------------------------
+  # 输入验证 (Input Validation)
+  # ---------------------------------------------------------------------------
+  input_validation:
+    django:
+      - 'forms\.Form'
+      - 'ModelForm'
+      - 'is_valid\(\)'
+      - 'cleaned_data'
+      - 'ValidationError'
+      - 'validators='
+      - '@validator'
+
+    django_rest:
+      - 'Serializer'
+      - 'serializer\.is_valid'
+      - 'ValidationError'
+      - 'validate_'
+
+    flask:
+      - 'WTForms'
+      - 'form\.validate'
+      - 'DataRequired'
+      - 'Length\('
+      - 'InputRequired'
+
+    fastapi:
+      - 'Pydantic'
+      - 'BaseModel'
+      - 'Field\('
+      - '@validator'
+      - 'Query\(.*ge=|Query\(.*le='
+      - 'Path\(.*regex='
+
+    general:
+      - 're\.match\('
+      - 're\.search\('
+      - 'isinstance\('
+      - 'int\(|float\('
+
+  # ---------------------------------------------------------------------------
+  # 审计日志 (Audit Logging)
+  # ---------------------------------------------------------------------------
+  audit_log:
+    patterns:
+      - 'logging\.'
+      - 'logger\.'
+      - '@audit'
+      - 'AuditLog'
+      - 'django\.contrib\.admin\.models\.LogEntry'
+      - 'auditlog'
+      - 'activity_log'
+      - 'log\.info|log\.warning|log\.error'
+
+  # ---------------------------------------------------------------------------
+  # 速率限制 (Rate Limiting)
+  # ---------------------------------------------------------------------------
+  rate_limit:
+    django:
+      - 'ratelimit'
+      - '@ratelimit'
+      - 'django_ratelimit'
+      - 'DRF.*throttle'
+      - 'throttle_classes'
+      - 'UserRateThrottle'
+      - 'AnonRateThrottle'
+
+    flask:
+      - 'flask_limiter'
+      - '@limiter\.limit'
+      - 'Limiter\('
+      - 'RateLimitExceeded'
+
+    fastapi:
+      - 'slowapi'
+      - '@limiter\.limit'
+      - 'RateLimiter'
+
+  # ---------------------------------------------------------------------------
+  # 安全传输 (Secure Transport)
+  # ---------------------------------------------------------------------------
+  secure_transport:
+    patterns:
+      - 'SECURE_SSL_REDIRECT.*True'
+      - 'SESSION_COOKIE_SECURE.*True'
+      - 'CSRF_COOKIE_SECURE.*True'
+      - 'https://'
+      - 'ssl_context'
+      - 'PREFERRED_URL_SCHEME.*https'
+
+  # ---------------------------------------------------------------------------
+  # 安全存储 (Secure Storage)
+  # ---------------------------------------------------------------------------
+  secure_storage:
+    patterns:
+      - 'make_password\('
+      - 'check_password\('
+      - 'pbkdf2_sha256'
+      - 'bcrypt'
+      - 'argon2'
+      - 'hashlib\.'
+      - 'Fernet\('
+      - 'cryptography\.'
+      - 'generate_password_hash'
+      - 'check_password_hash'
+
+  # ---------------------------------------------------------------------------
+  # 会话管理 (Session Management)
+  # ---------------------------------------------------------------------------
+  session_management:
+    patterns:
+      - 'SESSION_EXPIRE_AT_BROWSER_CLOSE'
+      - 'SESSION_COOKIE_AGE'
+      - 'SESSION_COOKIE_HTTPONLY'
+      - 'session\.clear\(\)'
+      - 'logout\('
+      - 'session\.regenerate'
+      - 'cycle_key\(\)'
+
+  # ---------------------------------------------------------------------------
+  # 错误处理 (Error Handling)
+  # ---------------------------------------------------------------------------
+  error_handling:
+    patterns:
+      - 'try:|except'
+      - '@app\.errorhandler'
+      - 'exception_handler'
+      - 'DEBUG.*False'
+      - 'ALLOWED_HOSTS'
+      - 'Http404|Http403|Http500'
+      - 'HTTPException'
+
+  # ---------------------------------------------------------------------------
+  # 安全响应头 (Security Headers)
+  # ---------------------------------------------------------------------------
+  security_headers:
+    django:
+      - 'SecurityMiddleware'
+      - 'SECURE_CONTENT_TYPE_NOSNIFF'
+      - 'SECURE_BROWSER_XSS_FILTER'
+      - 'X_FRAME_OPTIONS'
+      - 'SECURE_HSTS_SECONDS'
+
+    flask:
+      - 'flask_talisman'
+      - 'Talisman\('
+      - 'response\.headers\['
+
+    fastapi:
+      - 'response\.headers\['
+      - 'add_middleware.*TrustedHostMiddleware'
+
+  # ---------------------------------------------------------------------------
+  # 文件验证 (File Validation)
+  # ---------------------------------------------------------------------------
+  file_validation:
+    patterns:
+      - 'content_type'
+      - 'allowed_extensions'
+      - 'ALLOWED_EXTENSIONS'
+      - 'secure_filename\('
+      - 'FileExtensionValidator'
+      - 'validate_file_extension'
+      - 'MAX_UPLOAD_SIZE'
+      - 'magic\.from_file'
+      - 'imghdr\.what'
+
+  # ---------------------------------------------------------------------------
+  # 文件操作 CRUD (File Operations CRUD) - v2.5.0 新增
+  # ---------------------------------------------------------------------------
+  file_operations_crud:
+    create:
+      - '\.save\('
+      - 'open\(.*[''"]w'
+      - 'shutil\.copy'
+      - 'Path.*write_'
+      - 'file\.write\('
+    read:
+      - 'open\(.*[''"]r'
+      - '\.read\('
+      - 'Path.*read_'
+      - 'file_get_contents'
+    update:
+      - 'open\(.*[''"]w'
+      - '\.write\('
+      - '\.truncate\('
+    delete:  # ⚠️ 易遗漏！
+      - 'os\.remove\('
+      - 'os\.unlink\('
+      - 'shutil\.rmtree\('
+      - 'Path.*unlink\('
+      - 'pathlib\.Path.*unlink'
+
+  # ---------------------------------------------------------------------------
+  # 参数化查询 (Parameterized Query)
+  # ---------------------------------------------------------------------------
+  parameterized_query:
+    django:
+      - '\.objects\.'
+      - 'QuerySet'
+      - 'filter\(|exclude\('
+      - 'raw\(.*%s'  # 参数化的raw查询
+      - 'params=\['
+      - 'extra\(.*params='
+
+    sqlalchemy:
+      - 'session\.query\('
+      - '\.filter\('
+      - 'text\(.*:param'
+      - 'bindparams'
+
+    general:
+      - 'execute\(.*%s'
+      - 'execute\(.*\?'
+      - 'cursor\.execute\(.*,\s*\('
+      - 'paramstyle'
+
+# ============================================================================
+# 敏感操作识别模式 (Sensitive Operation Patterns)
+# ============================================================================
+
+operation_patterns:
+  method_patterns:
+    delete:
+      - 'def\s+delete'
+      - 'def\s+destroy'
+      - 'def\s+remove'
+      - 'DeleteView'
+      - 'DestroyAPIView'
+
+    update:
+      - 'def\s+update'
+      - 'def\s+edit'
+      - 'def\s+put'
+      - 'def\s+patch'
+      - 'UpdateView'
+      - 'UpdateAPIView'
+
+    create:
+      - 'def\s+create'
+      - 'def\s+post'
+      - 'def\s+add'
+      - 'CreateView'
+      - 'CreateAPIView'
+
+  route_patterns:
+    delete:
+      - '@app\.route.*methods=.*DELETE'
+      - '@api\.route.*methods=.*DELETE'
+      - '@router\.delete'
+
+    update:
+      - '@app\.route.*methods=.*PUT'
+      - '@app\.route.*methods=.*PATCH'
+      - '@router\.put'
+      - '@router\.patch'
+
+    create:
+      - '@app\.route.*methods=.*POST'
+      - '@router\.post'
+
+# ============================================================================
+# 框架特定配置 (Framework-Specific Configuration)
+# ============================================================================
+
+frameworks:
+  django:
+    config_files:
+      - 'settings.py'
+      - 'urls.py'
+    views_location: '**/views.py'
+    models_location: '**/models.py'
+
+  flask:
+    config_files:
+      - 'config.py'
+      - 'app.py'
+    routes_location: '**/routes.py'
+
+  fastapi:
+    config_files:
+      - 'config.py'
+      - 'main.py'
+    routers_location: '**/routers/**'

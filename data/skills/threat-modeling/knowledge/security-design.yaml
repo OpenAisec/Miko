@@ -1,0 +1,441 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Security Design - Unified Security Domain Structure
+# Version: 4.0 (Strict Domain Sequence + Extension Naming)
+# Referenced in: Phase 2, 3, 4
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# FOUR-LEVEL KNOWLEDGE HIERARCHY
+# ═══════════════════════════════════════════════════════════════════════════════
+# L1: Security Principles - SKILL.md (11 principles: DID, LP, ZT, FS, SOD, SBD, CM, EOM, OD, IV, LA)
+# L2: Security Design    - This file (10 core + 6 extended domains)
+# L3: Security Controls  - security-controls/control-set-*.md (18 files)
+# L4: Scenario Practices - security-controls/references/reference-set-*.md (74 files)
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# NAMING CONVENTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+# Core Domain:        control-set-{NN}-{topic}.md          (NN: 01-10)
+# Domain Extension:   control-set-ext-{NN}-{topic}.md      (e.g., ext-10-hardcoded-credentials)
+# Cross-Domain Ext:   control-set-ext-{NN}_{MM}-{topic}.md (e.g., ext-01_02-auth-patterns)
+# Extended Domain:    control-set-ext-{NN}-{topic}.md      (NN: 11-16 for extended domains)
+# Ext-Domain Sub-Ext: control-set-ext-{NN}-a{N}-{topic}.md (e.g., ext-11-a1-container-hardening)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CORE SECURITY DOMAINS (10)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+core_domains:
+  authn:
+    code: AUTHN
+    seq: "01"
+    name: "认证与会话"
+    stride_category: S  # Spoofing
+    description: "身份验证和会话生命周期管理"
+    core_requirements:
+      - "多因素认证 (MFA) 用于敏感操作"
+      - "安全的密码存储 (bcrypt/argon2)"
+      - "会话固定攻击防护"
+      - "会话超时和失效机制"
+    core_principles: [ZT, CM, FS]
+    controls_ref: control-set-01-authentication.md
+    patterns_ref: control-set-ext-01_02-auth-patterns.md
+    owasp_refs:
+      - reference-set-01-authentication.md
+      - reference-set-01-multifactor-authentication.md
+      - reference-set-01-session-management.md
+      - reference-set-01-password-storage.md
+      - reference-set-01-forgot-password.md
+      - reference-set-01-credential-stuffing-prevention.md
+      - reference-set-01-saml-security.md
+      - reference-set-01-cookie-theft-mitigation.md
+      - reference-set-01-jwt-java.md
+      - reference-set-01-jaas.md
+      - reference-set-01-security-questions.md
+
+  authz:
+    code: AUTHZ
+    seq: "02"
+    name: "授权访问控制"
+    stride_category: E  # Elevation of Privilege
+    description: "访问权限的执行和验证"
+    core_requirements:
+      - "RBAC/ABAC 访问控制模型"
+      - "API 层权限检查"
+      - "资源所有权验证"
+      - "最小权限原则"
+    core_principles: [LP, SOD, CM]
+    controls_ref: control-set-02-authorization.md
+    patterns_ref: control-set-ext-01_02-auth-patterns.md
+    owasp_refs:
+      - reference-set-02-authorization.md
+      - reference-set-02-access-control.md
+      - reference-set-02-idor-prevention.md
+      - reference-set-02-transaction-authorization.md
+
+  input:
+    code: INPUT
+    seq: "03"
+    name: "输入验证"
+    stride_category: T  # Tampering
+    description: "外部输入的验证和净化"
+    core_requirements:
+      - "信任边界处验证"
+      - "参数化查询防注入"
+      - "白名单优于黑名单"
+      - "类型和范围验证"
+    core_principles: [IV, DID]
+    controls_ref: control-set-03-input-validation.md
+    owasp_refs:
+      - reference-set-03-input-validation.md
+      - reference-set-03-sql-injection-prevention.md
+      - reference-set-03-os-command-injection-defense.md
+      - reference-set-03-ldap-injection-prevention.md
+      - reference-set-03-deserialization.md
+      - reference-set-03-file-upload.md
+      - reference-set-03-ssrf-prevention.md
+      - reference-set-03-injection-prevention.md
+      - reference-set-03-query-parameterization.md
+      - reference-set-03-mass-assignment.md
+      - reference-set-03-unvalidated-redirects.md
+      - reference-set-03-bean-validation.md
+      - reference-set-03-injection-prevention-java.md
+
+  output:
+    code: OUTPUT
+    seq: "04"
+    name: "输出编码"
+    stride_category: [T, I]  # Tampering, Information Disclosure
+    description: "输出内容的上下文编码和安全处理"
+    core_requirements:
+      - "上下文感知的输出编码"
+      - "模板引擎安全配置"
+      - "文件导出安全"
+      - "API响应安全"
+      - "日志输出脱敏"
+    core_principles: [DID, SBD]
+    controls_ref: control-set-04-output-encoding.md
+    owasp_refs: []  # No dedicated OWASP refs yet
+
+  client:
+    code: CLIENT
+    seq: "05"
+    name: "客户端安全"
+    stride_category: [S, T, I]  # Multiple categories
+    description: "浏览器和客户端安全控制"
+    core_requirements:
+      - "XSS/DOM XSS 防护"
+      - "CSP 内容安全策略"
+      - "CSRF 防护"
+      - "Clickjacking 防护"
+      - "第三方脚本隔离"
+    core_principles: [DID, SBD]
+    controls_ref: control-set-05-client-side.md
+    owasp_refs:
+      - reference-set-05-xss-prevention.md
+      - reference-set-05-dom-xss-prevention.md
+      - reference-set-05-dom-clobbering-prevention.md
+      - reference-set-05-prototype-pollution-prevention.md
+      - reference-set-05-third-party-javascript.md
+      - reference-set-05-xss-filter-evasion.md
+      - reference-set-05-css-security.md
+      - reference-set-05-csp.md
+      - reference-set-05-http-headers.md
+      - reference-set-05-csrf-prevention.md
+      - reference-set-05-clickjacking-defense.md
+      - reference-set-05-html5-security.md
+      - reference-set-05-hsts.md
+
+  crypto:
+    code: CRYPTO
+    seq: "06"
+    name: "加密与传输安全"
+    stride_category: I  # Information Disclosure
+    description: "数据传输和存储加密"
+    core_requirements:
+      - "TLS 1.2+ 传输加密"
+      - "AES-256/ChaCha20 存储加密"
+      - "安全密钥管理和轮换"
+      - "避免自定义加密实现"
+    core_principles: [DID, EOM]
+    controls_ref: control-set-06-cryptography.md
+    owasp_refs:
+      - reference-set-06-cryptographic-storage.md
+      - reference-set-06-key-management.md
+      - reference-set-06-tls.md
+      - reference-set-06-tls-cipher-string.md
+      - reference-set-06-certificate-pinning.md
+      - reference-set-06-transport-layer-protection.md
+
+  log:
+    code: LOG
+    seq: "07"
+    name: "日志与监控"
+    stride_category: R  # Repudiation
+    description: "安全事件记录和审计"
+    core_requirements:
+      - "结构化日志 (JSON)"
+      - "敏感信息脱敏"
+      - "日志完整性保护"
+      - "关联ID追踪"
+    core_principles: [DID, CM]
+    controls_ref: control-set-07-logging.md
+    owasp_refs:
+      - reference-set-07-logging.md
+      - reference-set-07-logging-vocabulary.md
+
+  error:
+    code: ERROR
+    seq: "08"
+    name: "错误处理"
+    stride_category: I  # Information Disclosure
+    description: "安全的错误处理和信息控制"
+    core_requirements:
+      - "通用错误消息给用户"
+      - "详细日志给内部"
+      - "避免堆栈跟踪泄露"
+      - "安全失败模式"
+    core_principles: [FS, OD]
+    controls_ref: control-set-08-error-handling.md
+    owasp_refs:
+      - reference-set-08-error-handling.md
+      - reference-set-08-xs-leaks.md
+
+  api:
+    code: API
+    seq: "09"
+    name: "API与服务安全"
+    stride_category: [S, T, I, D, E]  # Multiple categories
+    description: "API 端点和服务间通信安全"
+    core_requirements:
+      - "API 认证和授权"
+      - "速率限制和配额"
+      - "输入输出验证"
+      - "版本管理和弃用"
+    core_principles: [ZT, CM, LP]
+    controls_ref: control-set-09-api-security.md
+    owasp_refs:
+      - reference-set-09-rest-security.md
+      - reference-set-09-graphql.md
+      - reference-set-09-web-service-security.md
+      - reference-set-09-microservices-security.md
+      - reference-set-09-dos-prevention.md
+      - reference-set-09-rest-assessment.md
+      - reference-set-09-ajax-security.md
+
+  data:
+    code: DATA
+    seq: "10"
+    name: "数据保护"
+    stride_category: I  # Information Disclosure
+    description: "敏感数据和凭证的保护"
+    core_requirements:
+      - "数据分类和标记"
+      - "凭证安全存储"
+      - "PII 最小化"
+      - "数据生命周期管理"
+    core_principles: [LP, DID]
+    controls_ref: control-set-10-data-protection.md
+    extensions:
+      - control-set-ext-10-hardcoded-credentials.md
+    owasp_refs:
+      - reference-set-10-database-security.md
+      - reference-set-10-secrets-management.md
+      - reference-set-10-user-privacy.md
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CROSS-DOMAIN EXTENSIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+cross_domain_extensions:
+  auth_patterns:
+    code: AUTHN_AUTHZ
+    domains: ["01", "02"]
+    name: "认证授权模式"
+    description: "跨 AUTHN 和 AUTHZ 域的实现模式集合"
+    controls_ref: control-set-ext-01_02-auth-patterns.md
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EXTENDED SECURITY DOMAINS (6) - Loaded on-demand based on tech stack detection
+# ═══════════════════════════════════════════════════════════════════════════════
+
+extended_domains:
+  infra:
+    code: INFRA
+    seq: "ext-11"
+    name: "基础设施安全"
+    trigger_conditions:
+      - "Dockerfile detected"
+      - "docker-compose.yml detected"
+      - "kubernetes/*.yaml detected"
+      - "helm chart detected"
+    core_requirements:
+      - "容器镜像安全扫描"
+      - "最小权限容器运行"
+      - "网络隔离和分段"
+      - "资源限制配置"
+    controls_ref: control-set-ext-11-infrastructure.md
+    owasp_refs:
+      - reference-set-ext-11-docker-security.md
+      - reference-set-ext-11-kubernetes-security.md
+      - reference-set-ext-11-iac-security.md
+      - reference-set-ext-11-nodejs-docker.md
+
+  supply:
+    code: SUPPLY
+    seq: "ext-12"
+    name: "供应链安全"
+    trigger_conditions:
+      - "package.json detected"
+      - "requirements.txt detected"
+      - "pom.xml detected"
+      - "go.mod detected"
+    core_requirements:
+      - "依赖漏洞扫描"
+      - "SBOM 生成和维护"
+      - "依赖锁定"
+      - "私有仓库安全"
+    controls_ref: control-set-ext-12-supply-chain.md
+    owasp_refs:
+      - reference-set-ext-12-dependency-management.md
+      - reference-set-ext-12-supply-chain-security.md
+      - reference-set-ext-12-npm-security.md
+      - reference-set-ext-12-cicd-security.md
+
+  ai:
+    code: AI
+    seq: "ext-13"
+    name: "AI/LLM安全"
+    trigger_conditions:
+      - "openai API usage"
+      - "anthropic API usage"
+      - "langchain import"
+      - "LLM model loading"
+    core_requirements:
+      - "Prompt 注入防护"
+      - "输出过滤和验证"
+      - "模型访问控制"
+      - "敏感数据隔离"
+    controls_ref: control-set-ext-13-ai-llm.md
+    owasp_refs:
+      - reference-set-ext-13-ai-agent-security.md
+    internal_ref: llm-threats.yaml
+
+  mobile:
+    code: MOBILE
+    seq: "ext-14"
+    name: "移动端安全"
+    trigger_conditions:
+      - "iOS project detected"
+      - "Android project detected"
+      - "React Native detected"
+      - "Flutter detected"
+    core_requirements:
+      - "安全本地存储"
+      - "证书固定"
+      - "代码混淆"
+      - "运行时保护"
+    controls_ref: control-set-ext-14-mobile.md
+    owasp_refs:
+      - reference-set-ext-14-mobile-security.md
+      - reference-set-ext-14-automotive-security.md
+      - reference-set-06-certificate-pinning.md  # Shared with CRYPTO
+
+  cloud:
+    code: CLOUD
+    seq: "ext-15"
+    name: "云服务安全"
+    trigger_conditions:
+      - "terraform/*.tf detected"
+      - "AWS SDK usage"
+      - "Azure SDK usage"
+      - "GCP SDK usage"
+      - "serverless.yml detected"
+    core_requirements:
+      - "IAM 最小权限"
+      - "资源访问策略"
+      - "安全组配置"
+      - "日志和监控启用"
+    controls_ref: control-set-ext-15-cloud.md
+    owasp_refs:
+      - reference-set-ext-15-cloud-architecture.md
+
+  agent:
+    code: AGENT
+    seq: "ext-16"
+    name: "Agent系统安全"
+    trigger_conditions:
+      - "langchain/langgraph import"
+      - "crewai/autogen/autogpt import"
+      - "anthropic.Agent/openai.Assistant API"
+      - "MCP Server config (mcp.json)"
+      - "Agent workflow (agent.yaml, crew.yaml)"
+      - "Tool/Function definitions"
+      - "Skill definitions (.claude/skills/)"
+    core_requirements:
+      - "目标与意图保护 (Goal Hijack 防护)"
+      - "工具与技能治理 (最小权限)"
+      - "自主边界与人工干预"
+      - "Agent 身份与认证"
+      - "多 Agent 协作安全"
+      - "Agent 行为审计与监控"
+    core_principles: [LP, ZT, CM, SOD]  # Least Privilege, Zero Trust, Continuous Monitoring, Separation of Duties
+    controls_ref: control-set-ext-16-agentic.md
+    owasp_refs:
+      - reference-set-ext-13-ai-agent-security.md  # Shared with ext-13
+    cross_reference: ext-13  # Complementary with AI/LLM Security
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STRIDE TO DOMAIN MAPPING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+stride_domain_map:
+  S: [authn, api, client]           # Spoofing
+  T: [input, output, api]           # Tampering
+  R: [log]                          # Repudiation
+  I: [crypto, error, data, output]  # Information Disclosure
+  D: [api]                          # Denial of Service
+  E: [authz]                        # Elevation of Privilege
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONTROL SET INDEX
+# ═══════════════════════════════════════════════════════════════════════════════
+
+control_set_index:
+  # Core Domains (01-10)
+  "01": { domain: AUTHN, file: control-set-01-authentication.md }
+  "02": { domain: AUTHZ, file: control-set-02-authorization.md }
+  "03": { domain: INPUT, file: control-set-03-input-validation.md }
+  "04": { domain: OUTPUT, file: control-set-04-output-encoding.md }
+  "05": { domain: CLIENT, file: control-set-05-client-side.md }
+  "06": { domain: CRYPTO, file: control-set-06-cryptography.md }
+  "07": { domain: LOG, file: control-set-07-logging.md }
+  "08": { domain: ERROR, file: control-set-08-error-handling.md }
+  "09": { domain: API, file: control-set-09-api-security.md }
+  "10": { domain: DATA, file: control-set-10-data-protection.md }
+  # Domain Extensions
+  "ext-01_02": { domain: AUTHN_AUTHZ, file: control-set-ext-01_02-auth-patterns.md }
+  "ext-10": { domain: DATA_EXT, file: control-set-ext-10-hardcoded-credentials.md }
+  # Extended Domains (ext-11 to ext-16)
+  "ext-11": { domain: INFRA, file: control-set-ext-11-infrastructure.md }
+  "ext-12": { domain: SUPPLY, file: control-set-ext-12-supply-chain.md }
+  "ext-13": { domain: AI, file: control-set-ext-13-ai-llm.md }
+  "ext-14": { domain: MOBILE, file: control-set-ext-14-mobile.md }
+  "ext-15": { domain: CLOUD, file: control-set-ext-15-cloud.md }
+  "ext-16": { domain: AGENT, file: control-set-ext-16-agentic.md }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHASE REFERENCE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+phase_reference:
+  phase_2:  # DFD security aspects
+    domains: [authn, authz, input]
+    focus: "Data flow security assessment"
+  phase_3:  # Trust boundary controls
+    domains: [authn, authz, data]
+    focus: "Trust boundary and access control"
+  phase_4:  # Full design assessment
+    domains: ALL
+    focus: "Comprehensive security design review"
+    extended_domains: "Loaded based on tech stack detection"

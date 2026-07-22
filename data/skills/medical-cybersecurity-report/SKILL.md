@@ -1,5 +1,5 @@
 ---
-category: custom
+category: audit
 name: medical-cybersecurity-report
 description: Generate medical device cybersecurity registration deliverables from project input files. Use when Codex needs to read DOCX/PDF/PNG project evidence such as user manuals, SRS, design documents, architecture diagrams, FDA cybersecurity guidance, or prior reports, then produce a cybersecurity risk management report draft, project fact sheet, missing-information list, traceability content, STRIDE threat model, risk analysis, SBOM/security-transparency notes, or user-manual cybersecurity supplement.
 ---

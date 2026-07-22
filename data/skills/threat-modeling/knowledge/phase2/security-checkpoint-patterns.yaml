@@ -1,0 +1,1114 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Security Checkpoint Patterns Knowledge Base
+# Phase 2 DFD/CFD Analysis Enhancement
+# Version: 1.1
+# Source: OWASP ASVS + Framework Security Documentation + CVE Analysis
+# Purpose: Help LLM identify security checkpoints in call flows
+#
+# Changelog:
+# - v1.1 (2026-01-26): Added AI/LLM security checkpoint patterns based on
+#   OWASP LLM Top 10 and ASI Top 10. Six new checkpoint categories:
+#   prompt_safety, output_validation, tool_function_control, rag_security,
+#   agent_governance, resource_control.
+# - v1.0 (Initial): Traditional web security checkpoints
+
+version: "1.1"
+description: "安全检查点模式知识库 - 用于 CFD 分析中识别安全控制"
+source_references:
+  - "OWASP ASVS v4.0.3"
+  - "OWASP Top 10 2021"
+  - "CWE/SANS Top 25"
+  - "OWASP LLM Top 10 v1.1"
+  - "Anthropic Safety Index (ASI) Top 10"
+
+# =============================================================================
+# AUTHENTICATION PATTERNS
+# =============================================================================
+authentication:
+  description: "身份验证检查点 - 验证用户身份"
+  stride_relevance: ["Spoofing"]
+  asvs_reference: "V2: Authentication"
+
+  function_patterns:
+    high_confidence:
+      - "authenticate"
+      - "verify_token"
+      - "validate_token"
+      - "check_auth"
+      - "verify_credentials"
+      - "login"
+      - "signin"
+      - "verify_password"
+      - "check_password"
+
+    medium_confidence:
+      - "is_authenticated"
+      - "is_logged_in"
+      - "get_current_user"
+      - "get_user_from_token"
+      - "decode_token"
+      - "parse_jwt"
+
+  decorator_patterns:
+    python:
+      - "@login_required"
+      - "@jwt_required"
+      - "@jwt_required()"
+      - "@token_required"
+      - "@auth_required"
+      - "@authenticated"
+      - "@requires_auth"
+    javascript:
+      - "passport.authenticate"
+      - "express-jwt"
+      - "jwt({ secret: })"
+    java:
+      - "@Authenticated"
+      - "@LoginRequired"
+    go:
+      - "AuthMiddleware"
+      - "JWTMiddleware"
+
+  middleware_patterns:
+    names:
+      - "AuthMiddleware"
+      - "AuthenticationMiddleware"
+      - "JWTMiddleware"
+      - "TokenMiddleware"
+      - "SessionMiddleware"
+      - "PassportMiddleware"
+    python_libraries:
+      - "flask_login.login_required"
+      - "flask_jwt_extended.jwt_required"
+      - "flask_jwt_extended.verify_jwt_in_request"
+      - "django.contrib.auth.decorators.login_required"
+      - "rest_framework.permissions.IsAuthenticated"
+      - "fastapi.security.OAuth2PasswordBearer"
+    javascript_libraries:
+      - "passport.authenticate('jwt')"
+      - "passport.authenticate('local')"
+      - "express-jwt"
+      - "jsonwebtoken.verify"
+      - "@nestjs/passport AuthGuard"
+    java_libraries:
+      - "SecurityContextHolder.getContext().getAuthentication()"
+      - "UsernamePasswordAuthenticationToken"
+      - "@AuthenticationPrincipal"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "skip_auth"
+      - "no_auth"
+      - "bypass_auth"
+      - "allow_anonymous"
+      - "@AllowAnonymous"
+      - "@PermitAll"
+    medium_risk:
+      - "optional_auth"
+      - "if token else anonymous"
+      - "try: authenticate() except: pass"
+
+# =============================================================================
+# AUTHORIZATION PATTERNS
+# =============================================================================
+authorization:
+  description: "授权检查点 - 验证用户权限"
+  stride_relevance: ["Elevation of Privilege"]
+  asvs_reference: "V4: Access Control"
+
+  function_patterns:
+    high_confidence:
+      - "authorize"
+      - "check_permission"
+      - "check_permissions"
+      - "has_permission"
+      - "has_role"
+      - "has_access"
+      - "can_access"
+      - "is_allowed"
+      - "verify_permission"
+      - "require_permission"
+      - "require_role"
+      - "enforce_policy"
+
+    medium_confidence:
+      - "check_access"
+      - "is_admin"
+      - "is_owner"
+      - "is_superuser"
+      - "get_permissions"
+      - "load_permissions"
+
+  decorator_patterns:
+    python:
+      - "@permission_required('permission')"
+      - "@permissions_required(['perm1', 'perm2'])"
+      - "@roles_required('role')"
+      - "@role_required('role')"
+      - "@has_permission('permission')"
+      - "@admin_required"
+      - "@staff_member_required"
+    javascript:
+      - "@Roles('admin')"
+      - "@RequirePermission('permission')"
+      - "@UseGuards(RolesGuard)"
+      - "@Authorize('permission')"
+    java:
+      - "@PreAuthorize('hasRole(...)')"
+      - "@PostAuthorize('hasPermission(...)')"
+      - "@Secured({'ROLE_ADMIN'})"
+      - "@RolesAllowed({'admin'})"
+
+  rbac_patterns:
+    role_check:
+      - "user.role == 'admin'"
+      - "user.roles.include('admin')"
+      - "user.hasRole('admin')"
+      - "'admin' in user.roles"
+    permission_check:
+      - "user.can('action', resource)"
+      - "user.hasPermission('action:resource')"
+      - "check_permission(user, 'action', resource)"
+    policy_check:
+      - "policy.evaluate(user, action, resource)"
+      - "enforcer.enforce(user, resource, action)"
+
+  abac_patterns:
+    - "check_attribute(user, resource, attribute)"
+    - "evaluate_policy(context)"
+    - "user.department == resource.department"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "skip_permission"
+      - "no_permission_check"
+      - "@AllowAll"
+      - "# TODO: add permission check"
+    medium_risk:
+      - "if user.is_admin: return True"
+      - "permission_check_disabled"
+
+# =============================================================================
+# INPUT VALIDATION PATTERNS
+# =============================================================================
+input_validation:
+  description: "输入验证检查点 - 验证和清洗用户输入"
+  stride_relevance: ["Tampering", "Information Disclosure"]
+  asvs_reference: "V5: Validation, Sanitization and Encoding"
+
+  function_patterns:
+    high_confidence:
+      - "validate"
+      - "validate_input"
+      - "sanitize"
+      - "sanitize_input"
+      - "clean"
+      - "clean_input"
+      - "escape"
+      - "encode"
+
+    medium_confidence:
+      - "check_input"
+      - "verify_input"
+      - "parse_input"
+      - "normalize"
+      - "filter_input"
+
+  validation_libraries:
+    python:
+      pydantic:
+        - "class Model(BaseModel)"
+        - "Field(..., min_length=, max_length=)"
+        - "@validator('field')"
+        - "@field_validator('field')"
+      marshmallow:
+        - "class Schema(Schema)"
+        - "fields.String(required=True)"
+        - "@validates('field')"
+      cerberus:
+        - "Validator(schema)"
+        - "v.validate(document)"
+      wtforms:
+        - "class Form(FlaskForm)"
+        - "StringField(validators=[...])"
+        - "DataRequired()"
+        - "Length(min=, max=)"
+
+    javascript:
+      joi:
+        - "Joi.object({ })"
+        - "Joi.string().required()"
+        - "schema.validate(data)"
+      yup:
+        - "yup.object().shape({ })"
+        - "yup.string().required()"
+        - "schema.validate(data)"
+      zod:
+        - "z.object({ })"
+        - "z.string().min().max()"
+        - "schema.parse(data)"
+        - "schema.safeParse(data)"
+      class_validator:
+        - "@IsString()"
+        - "@IsEmail()"
+        - "@MinLength()"
+        - "@MaxLength()"
+        - "@IsNotEmpty()"
+      express_validator:
+        - "body('field').isEmail()"
+        - "validationResult(req)"
+
+    java:
+      javax_validation:
+        - "@NotNull"
+        - "@NotEmpty"
+        - "@NotBlank"
+        - "@Size(min=, max=)"
+        - "@Email"
+        - "@Pattern(regexp=)"
+        - "@Valid"
+      hibernate_validator:
+        - "@Length"
+        - "@Range"
+        - "@SafeHtml"
+
+    go:
+      validator:
+        - "validate.Struct()"
+        - "`validate:\"required\"`"
+        - "`validate:\"email\"`"
+        - "`validate:\"min=,max=\"`"
+
+  sql_injection_prevention:
+    safe_patterns:
+      - "parameterized query"
+      - "prepared statement"
+      - "placeholders: ?, :name, $1"
+      - "ORM query builders"
+    dangerous_patterns:
+      - "string concatenation in SQL"
+      - "f-string in SQL"
+      - "format() in SQL"
+      - "sprintf() in SQL"
+      - "+ operator in SQL"
+
+  xss_prevention:
+    output_encoding:
+      - "html_escape"
+      - "escape()"
+      - "htmlspecialchars()"
+      - "sanitize-html"
+      - "DOMPurify"
+    template_auto_escape:
+      - "Jinja2 autoescape"
+      - "Django templates"
+      - "React JSX (default)"
+      - "Angular (default)"
+
+# =============================================================================
+# RATE LIMITING PATTERNS
+# =============================================================================
+rate_limiting:
+  description: "速率限制检查点 - 防止滥用和 DoS"
+  stride_relevance: ["Denial of Service"]
+  asvs_reference: "V13: API and Web Service"
+
+  function_patterns:
+    - "rate_limit"
+    - "ratelimit"
+    - "throttle"
+    - "check_rate"
+    - "is_rate_limited"
+
+  decorator_patterns:
+    python:
+      - "@limiter.limit('10/minute')"
+      - "@ratelimit(key='ip')"
+      - "@throttle_classes"
+    javascript:
+      - "rateLimit({ windowMs: })"
+    java:
+      - "@RateLimit"
+      - "@Throttle"
+
+  libraries:
+    python:
+      - "flask-limiter"
+      - "slowapi"
+      - "django-ratelimit"
+      - "ratelimit"
+    javascript:
+      - "express-rate-limit"
+      - "rate-limiter-flexible"
+      - "bottleneck"
+    java:
+      - "bucket4j"
+      - "resilience4j-ratelimiter"
+    go:
+      - "golang.org/x/time/rate"
+      - "uber-go/ratelimit"
+
+  implementation_patterns:
+    token_bucket: "token-based rate limiting"
+    sliding_window: "time-window rate limiting"
+    fixed_window: "per-interval rate limiting"
+
+# =============================================================================
+# CSRF PROTECTION PATTERNS
+# =============================================================================
+csrf_protection:
+  description: "CSRF 保护检查点"
+  stride_relevance: ["Tampering", "Repudiation"]
+  asvs_reference: "V4.2.2"
+
+  function_patterns:
+    - "csrf_protect"
+    - "validate_csrf"
+    - "check_csrf_token"
+    - "verify_csrf"
+
+  library_patterns:
+    python:
+      - "flask_wtf.csrf.CSRFProtect"
+      - "django.middleware.csrf.CsrfViewMiddleware"
+      - "@csrf_protect"
+      - "@csrf_exempt"  # bypass indicator
+    javascript:
+      - "csurf"
+      - "csrf()"
+    java:
+      - "CsrfFilter"
+      - "@CsrfToken"
+
+  token_patterns:
+    - "csrf_token"
+    - "_csrf"
+    - "X-CSRF-Token"
+    - "X-XSRF-Token"
+
+# =============================================================================
+# LOGGING/AUDIT PATTERNS
+# =============================================================================
+logging_audit:
+  description: "日志审计检查点 - 用于不可否认性"
+  stride_relevance: ["Repudiation"]
+  asvs_reference: "V7: Error Handling and Logging"
+
+  function_patterns:
+    - "log_action"
+    - "audit_log"
+    - "log_security_event"
+    - "record_event"
+    - "track_action"
+
+  sensitive_operations:
+    must_log:
+      - "login"
+      - "logout"
+      - "password_change"
+      - "permission_change"
+      - "data_access"
+      - "data_modification"
+      - "admin_action"
+      - "failed_auth"
+
+  logging_libraries:
+    python: ["logging", "structlog", "loguru"]
+    javascript: ["winston", "pino", "bunyan"]
+    java: ["slf4j", "log4j", "logback"]
+    go: ["log", "zap", "logrus"]
+
+# =============================================================================
+# ENCRYPTION PATTERNS
+# =============================================================================
+encryption:
+  description: "加密检查点 - 数据保护"
+  stride_relevance: ["Information Disclosure", "Tampering"]
+  asvs_reference: "V6: Stored Cryptography"
+
+  function_patterns:
+    - "encrypt"
+    - "decrypt"
+    - "hash"
+    - "sign"
+    - "verify_signature"
+
+  password_hashing:
+    safe_algorithms:
+      - "bcrypt"
+      - "argon2"
+      - "scrypt"
+      - "pbkdf2"
+    unsafe_algorithms:
+      - "md5"
+      - "sha1"
+      - "sha256 without salt"
+    library_patterns:
+      python:
+        - "bcrypt.hashpw"
+        - "passlib.hash.argon2"
+        - "werkzeug.security.generate_password_hash"
+      javascript:
+        - "bcrypt.hash"
+        - "argon2.hash"
+      java:
+        - "BCryptPasswordEncoder"
+        - "Argon2PasswordEncoder"
+
+  data_encryption:
+    libraries:
+      python: ["cryptography", "pycryptodome"]
+      javascript: ["crypto", "node-forge"]
+      java: ["javax.crypto", "bouncycastle"]
+
+# =============================================================================
+# FRAMEWORK-SPECIFIC SECURITY PATTERNS
+# =============================================================================
+framework_security:
+  flask:
+    auth:
+      - "flask_login.login_required"
+      - "flask_login.current_user"
+      - "flask_jwt_extended.jwt_required"
+      - "flask_jwt_extended.get_jwt_identity"
+      - "flask_httpauth.HTTPBasicAuth"
+      - "flask_httpauth.HTTPTokenAuth"
+    csrf:
+      - "flask_wtf.csrf.CSRFProtect"
+      - "generate_csrf()"
+    rate_limit:
+      - "flask_limiter.Limiter"
+
+  fastapi:
+    auth:
+      - "Depends(get_current_user)"
+      - "Depends(get_current_active_user)"
+      - "Security(oauth2_scheme)"
+      - "HTTPBearer()"
+      - "OAuth2PasswordBearer"
+    validation:
+      - "Pydantic BaseModel"
+      - "Field(min_length=, max_length=)"
+      - "@validator"
+    rate_limit:
+      - "slowapi.Limiter"
+
+  django:
+    auth:
+      - "@login_required"
+      - "@permission_required"
+      - "request.user.is_authenticated"
+      - "request.user.has_perm"
+    csrf:
+      - "CsrfViewMiddleware"
+      - "{% csrf_token %}"
+    permissions:
+      - "PermissionRequiredMixin"
+      - "LoginRequiredMixin"
+    drf:
+      - "IsAuthenticated"
+      - "IsAdminUser"
+      - "IsAuthenticatedOrReadOnly"
+      - "DjangoModelPermissions"
+
+  express:
+    auth:
+      - "passport.authenticate"
+      - "express-jwt"
+      - "jsonwebtoken.verify"
+    csrf:
+      - "csurf"
+      - "csrf({ cookie: true })"
+    rate_limit:
+      - "express-rate-limit"
+    helmet:
+      - "helmet()"
+      - "helmet.contentSecurityPolicy"
+
+  nestjs:
+    auth:
+      - "@UseGuards(AuthGuard('jwt'))"
+      - "@UseGuards(JwtAuthGuard)"
+      - "PassportModule"
+    authorization:
+      - "@UseGuards(RolesGuard)"
+      - "@Roles('admin')"
+    validation:
+      - "@UsePipes(ValidationPipe)"
+      - "class-validator decorators"
+
+  spring:
+    auth:
+      - "@PreAuthorize"
+      - "@PostAuthorize"
+      - "@Secured"
+      - "@RolesAllowed"
+      - "SecurityContextHolder"
+    csrf:
+      - "CsrfFilter"
+      - "csrf().disable()"  # bypass indicator
+    validation:
+      - "@Valid"
+      - "@Validated"
+      - "BindingResult"
+    method_security:
+      - "@EnableGlobalMethodSecurity"
+      - "@EnableMethodSecurity"
+
+  gin:
+    auth:
+      - "AuthMiddleware"
+      - "JWTMiddleware"
+      - "gin-jwt"
+    validation:
+      - "binding.Validator"
+      - "`binding:\"required\"`"
+    rate_limit:
+      - "gin-contrib/cors"
+      - "ulule/limiter"
+
+# =============================================================================
+# HEURISTIC HINTS FOR LLM
+# =============================================================================
+heuristic_hints:
+  checkpoint_detection_order:
+    - "1. 搜索中间件/拦截器链"
+    - "2. 搜索装饰器/注解"
+    - "3. 搜索函数名模式"
+    - "4. 搜索库导入"
+    - "5. 检查条件分支中的安全检查"
+
+  bypass_detection:
+    - "搜索 skip_, no_, disable_, bypass_ 前缀"
+    - "搜索 @exempt, @allow_anonymous 装饰器"
+    - "搜索 if debug: 条件"
+    - "搜索 TODO 注释中的安全相关内容"
+
+  coverage_validation:
+    - "每个 L1 接口应有认证检查"
+    - "修改操作应有授权检查"
+    - "用户输入应有验证"
+    - "敏感操作应有日志"
+    - "公开接口应有速率限制"
+
+  common_missing_checks:
+    - "内部 API 未做认证"
+    - "PATCH/DELETE 方法权限检查遗漏"
+    - "批量操作未做单独授权"
+    - "文件上传未做类型验证"
+    - "管理接口未做 IP 限制"
+
+  check_order_validation:
+    correct_order:
+      - "1. Rate Limiting"
+      - "2. Authentication"
+      - "3. Authorization"
+      - "4. Input Validation"
+      - "5. Business Logic"
+      - "6. Logging"
+    common_mistakes:
+      - "业务逻辑在认证之前执行"
+      - "数据库查询在授权之前执行"
+      - "日志记录在验证之前（可能记录恶意数据）"
+
+# =============================================================================
+# AI/LLM SECURITY CHECKPOINTS
+# =============================================================================
+# Reference: OWASP LLM Top 10 v1.1, Anthropic Safety Index (ASI) Top 10
+# Purpose: Identify security controls in LLM-powered applications
+
+# -----------------------------------------------------------------------------
+# PROMPT SAFETY
+# -----------------------------------------------------------------------------
+prompt_safety:
+  description: "提示安全检查点 - 防止提示注入和越狱攻击"
+  stride_relevance: ["Tampering", "Elevation of Privilege"]
+  owasp_llm_reference: "LLM01: Prompt Injection"
+
+  function_patterns:
+    high_confidence:
+      - "sanitize_prompt"
+      - "validate_prompt"
+      - "filter_prompt"
+      - "check_prompt_injection"
+      - "detect_injection"
+      - "prompt_guard"
+      - "safety_check"
+      - "moderation_check"
+    medium_confidence:
+      - "clean_input"
+      - "preprocess_prompt"
+      - "normalize_prompt"
+      - "format_prompt"
+
+  library_patterns:
+    python:
+      guardrails:
+        imports: ["guardrails", "guardrails-ai"]
+        patterns:
+          - "Guard.from_pydantic"
+          - "@guard"
+          - "validate()"
+      nemo_guardrails:
+        imports: ["nemoguardrails"]
+        patterns:
+          - "RailsConfig"
+          - "LLMRails"
+          - "rails.generate"
+      rebuff:
+        imports: ["rebuff"]
+        patterns:
+          - "RebuffSdk"
+          - "detect_injection"
+      llm_guard:
+        imports: ["llm_guard"]
+        patterns:
+          - "PromptInjectionScanner"
+          - "JailbreakScanner"
+          - "scan_prompt"
+      langchain_moderation:
+        imports: ["langchain.chains.moderation"]
+        patterns:
+          - "OpenAIModerationChain"
+          - "ModerationChain"
+    javascript:
+      - "promptInjectionDetector"
+      - "sanitizePrompt"
+      - "moderationApi"
+
+  prompt_template_patterns:
+    safe_patterns:
+      - "system message separation"
+      - "clear role boundaries"
+      - "input delimiters (<<<, >>>, ''')"
+      - "structured prompt templates"
+    dangerous_patterns:
+      - "direct user input concatenation"
+      - "f-string with user input"
+      - "template.format(user_input)"
+      - "no input escaping"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "skip_safety"
+      - "disable_moderation"
+      - "raw_prompt"
+      - "no_filter"
+      - "unsafe_mode"
+    medium_risk:
+      - "trust_user_input"
+      - "# TODO: add prompt validation"
+
+# -----------------------------------------------------------------------------
+# OUTPUT VALIDATION
+# -----------------------------------------------------------------------------
+output_validation:
+  description: "输出验证检查点 - 防止有害/敏感内容泄露"
+  stride_relevance: ["Information Disclosure", "Tampering"]
+  owasp_llm_reference: "LLM02: Insecure Output Handling"
+
+  function_patterns:
+    high_confidence:
+      - "validate_output"
+      - "filter_output"
+      - "sanitize_response"
+      - "check_pii"
+      - "redact_sensitive"
+      - "content_filter"
+      - "output_guard"
+    medium_confidence:
+      - "post_process_response"
+      - "clean_response"
+      - "format_output"
+
+  library_patterns:
+    python:
+      presidio:
+        imports: ["presidio_analyzer", "presidio_anonymizer"]
+        patterns:
+          - "AnalyzerEngine"
+          - "AnonymizerEngine"
+          - "analyze()"
+          - "anonymize()"
+      pii_detection:
+        imports: ["pii_codex", "scrubadub"]
+        patterns:
+          - "detect_pii"
+          - "scrub()"
+          - "clean()"
+      content_moderation:
+        imports: ["openai"]
+        patterns:
+          - "Moderation.create"
+          - "moderation.create"
+          - "client.moderations.create"
+
+  output_categories:
+    pii_detection:
+      - "email addresses"
+      - "phone numbers"
+      - "credit cards"
+      - "SSN/national IDs"
+      - "addresses"
+      - "names"
+    sensitive_content:
+      - "API keys/secrets"
+      - "passwords"
+      - "internal URLs"
+      - "database schemas"
+      - "source code"
+    harmful_content:
+      - "violence"
+      - "hate speech"
+      - "misinformation"
+      - "illegal activities"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "raw_output"
+      - "no_filter"
+      - "skip_moderation"
+      - "disable_pii_detection"
+
+# -----------------------------------------------------------------------------
+# TOOL/FUNCTION CONTROL
+# -----------------------------------------------------------------------------
+tool_function_control:
+  description: "工具/函数调用控制 - 防止未授权工具执行"
+  stride_relevance: ["Elevation of Privilege", "Tampering"]
+  owasp_llm_reference: "LLM07: Insecure Plugin Design"
+
+  function_patterns:
+    high_confidence:
+      - "validate_tool_call"
+      - "authorize_function"
+      - "check_tool_permission"
+      - "sandbox_execution"
+      - "restrict_tools"
+      - "tool_whitelist"
+    medium_confidence:
+      - "filter_tools"
+      - "allowed_tools"
+      - "tool_policy"
+
+  framework_patterns:
+    langchain:
+      imports: ["langchain.tools", "langchain.agents"]
+      patterns:
+        - "Tool(func=)"
+        - "@tool"
+        - "StructuredTool"
+        - "allowed_tools=[]"
+        - "handle_tool_error"
+    openai_functions:
+      patterns:
+        - "functions=[]"
+        - "function_call="
+        - "tools=[]"
+        - "tool_choice="
+    anthropic_tools:
+      patterns:
+        - "tools=[]"
+        - "tool_use"
+        - "ToolUseBlock"
+
+  control_patterns:
+    tool_whitelisting:
+      - "ALLOWED_TOOLS = [...]"
+      - "tool in allowed_list"
+      - "validate_tool_name()"
+    argument_validation:
+      - "validate_tool_args"
+      - "sanitize_args"
+      - "check_argument_types"
+    execution_sandboxing:
+      - "restricted execution environment"
+      - "safe execution wrapper"
+      - "container isolation"
+    confirmation_required:
+      - "require_confirmation"
+      - "human_in_loop"
+      - "await_approval"
+
+  dangerous_patterns:
+    high_risk:
+      - "dynamic code execution from LLM output"
+      - "shell command from LLM output"
+      - "unrestricted system access"
+      - "arbitrary code evaluation"
+    medium_risk:
+      - "dynamic tool loading"
+      - "unrestricted file access"
+      - "network requests without validation"
+
+# -----------------------------------------------------------------------------
+# RAG SECURITY
+# -----------------------------------------------------------------------------
+rag_security:
+  description: "RAG 安全检查点 - 检索增强生成安全"
+  stride_relevance: ["Information Disclosure", "Tampering"]
+  owasp_llm_reference: "LLM06: Sensitive Information Disclosure"
+
+  function_patterns:
+    high_confidence:
+      - "filter_retrieved_docs"
+      - "check_document_access"
+      - "validate_context"
+      - "permission_filter"
+      - "access_control_filter"
+    medium_confidence:
+      - "preprocess_context"
+      - "rank_documents"
+      - "filter_results"
+
+  access_control_patterns:
+    document_level:
+      - "doc.access_level"
+      - "doc.allowed_users"
+      - "check_doc_permission(user, doc)"
+    collection_level:
+      - "collection.is_public"
+      - "user_collections"
+      - "team_knowledge_base"
+    row_level_security:
+      - "metadata_filter"
+      - "where_clause"
+      - "filter_by_user"
+
+  vector_db_patterns:
+    pinecone:
+      imports: ["pinecone"]
+      patterns:
+        - "index.query(..., filter=)"
+        - "metadata_filter"
+    chromadb:
+      imports: ["chromadb"]
+      patterns:
+        - "collection.query(..., where=)"
+        - "where_document"
+    weaviate:
+      imports: ["weaviate"]
+      patterns:
+        - ".with_where()"
+        - "filter_clause"
+    pgvector:
+      patterns:
+        - "WHERE user_id = ?"
+        - "INNER JOIN permissions"
+
+  data_poisoning_prevention:
+    ingestion_validation:
+      - "validate_document_source"
+      - "check_document_integrity"
+      - "hash_verification"
+    content_scanning:
+      - "scan_for_injection"
+      - "detect_malicious_content"
+      - "sanitize_before_embed"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "skip_access_check"
+      - "all_documents"
+      - "no_filter"
+      - "admin_context"
+
+# -----------------------------------------------------------------------------
+# AGENT GOVERNANCE
+# -----------------------------------------------------------------------------
+agent_governance:
+  description: "Agent 治理检查点 - 多代理系统安全"
+  stride_relevance: ["Elevation of Privilege", "Repudiation", "Denial of Service"]
+  owasp_llm_reference: "LLM08: Excessive Agency"
+  asi_reference: "Agent Safety, Agentic Security"
+
+  function_patterns:
+    high_confidence:
+      - "validate_agent_action"
+      - "check_agent_permission"
+      - "agent_sandbox"
+      - "limit_agent_scope"
+      - "agent_supervisor"
+      - "action_approval"
+    medium_confidence:
+      - "monitor_agent"
+      - "log_agent_action"
+      - "track_agent_state"
+
+  framework_patterns:
+    langchain_agents:
+      imports: ["langchain.agents"]
+      patterns:
+        - "max_iterations="
+        - "max_execution_time="
+        - "early_stopping_method"
+        - "handle_parsing_errors"
+    autogen:
+      imports: ["autogen"]
+      patterns:
+        - "UserProxyAgent"
+        - "human_input_mode"
+        - "is_termination_msg"
+        - "code_execution_config"
+    crewai:
+      imports: ["crewai"]
+      patterns:
+        - "Agent(..., allow_delegation=)"
+        - "max_iter"
+        - "memory=True"
+
+  control_patterns:
+    iteration_limits:
+      - "max_iterations"
+      - "max_loops"
+      - "recursion_limit"
+      - "timeout"
+    scope_restrictions:
+      - "allowed_actions"
+      - "forbidden_actions"
+      - "action_whitelist"
+    human_oversight:
+      - "human_in_the_loop"
+      - "require_approval"
+      - "confirmation_required"
+      - "supervisor_agent"
+    action_logging:
+      - "log_all_actions"
+      - "audit_trail"
+      - "action_history"
+
+  multi_agent_patterns:
+    trust_boundaries:
+      - "agent_roles"
+      - "permission_matrix"
+      - "cross_agent_auth"
+    communication_security:
+      - "message_signing"
+      - "verify_sender"
+      - "encrypted_channel"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "unlimited_iterations"
+      - "no_timeout"
+      - "full_system_access"
+      - "disable_safety"
+    medium_risk:
+      - "skip_confirmation"
+      - "auto_approve"
+
+# -----------------------------------------------------------------------------
+# RESOURCE CONTROL
+# -----------------------------------------------------------------------------
+resource_control:
+  description: "资源控制检查点 - 防止资源滥用"
+  stride_relevance: ["Denial of Service"]
+  owasp_llm_reference: "LLM04: Model Denial of Service"
+
+  function_patterns:
+    high_confidence:
+      - "limit_tokens"
+      - "check_quota"
+      - "rate_limit_llm"
+      - "budget_check"
+      - "usage_limit"
+      - "cost_control"
+    medium_confidence:
+      - "track_usage"
+      - "monitor_cost"
+      - "log_tokens"
+
+  control_patterns:
+    token_limits:
+      - "max_tokens="
+      - "max_input_tokens"
+      - "max_output_tokens"
+      - "truncate_input()"
+    request_limits:
+      - "requests_per_minute"
+      - "daily_quota"
+      - "monthly_budget"
+    cost_controls:
+      - "max_cost_per_request"
+      - "budget_alert"
+      - "spending_limit"
+    timeout_controls:
+      - "request_timeout"
+      - "streaming_timeout"
+      - "total_timeout"
+
+  monitoring_patterns:
+    usage_tracking:
+      - "log_token_usage"
+      - "track_api_calls"
+      - "usage_metrics"
+    alerting:
+      - "quota_alert"
+      - "budget_warning"
+      - "rate_limit_notification"
+    billing_integration:
+      - "usage_based_billing"
+      - "cost_allocation"
+      - "per_user_tracking"
+
+  bypass_risk_indicators:
+    high_risk:
+      - "unlimited_tokens"
+      - "no_quota"
+      - "skip_rate_limit"
+      - "disable_cost_tracking"
+
+# =============================================================================
+# AI/LLM HEURISTIC HINTS
+# =============================================================================
+ai_llm_heuristic_hints:
+  checkpoint_detection_order:
+    - "1. 搜索 LLM 框架导入 (langchain, openai, anthropic, etc.)"
+    - "2. 搜索 prompt template 和 chain 定义"
+    - "3. 搜索 guardrails/moderation 库导入"
+    - "4. 搜索 tool/function 定义和权限控制"
+    - "5. 搜索 RAG 相关的向量数据库和检索逻辑"
+    - "6. 搜索 agent 框架和迭代控制"
+
+  common_missing_checks:
+    - "用户输入直接拼接到 prompt 中"
+    - "LLM 输出未经验证直接展示"
+    - "工具调用无权限检查"
+    - "RAG 检索无访问控制过滤"
+    - "Agent 无迭代限制和超时"
+    - "API 调用无 token/成本限制"
+
+  llm_framework_detection:
+    langchain:
+      - "from langchain"
+      - "LLMChain"
+      - "ConversationChain"
+      - "RetrievalQA"
+    llamaindex:
+      - "from llama_index"
+      - "VectorStoreIndex"
+      - "QueryEngine"
+    haystack:
+      - "from haystack"
+      - "Pipeline"
+      - "PromptNode"
+    semantic_kernel:
+      - "import semantic_kernel"
+      - "KernelFunction"
+      - "Kernel"
+
+  mcp_detection:
+    description: "Model Context Protocol 检测"
+    patterns:
+      - "from mcp"
+      - "MCPServer"
+      - "MCPClient"
+      - "@mcp.tool"
+      - "list_tools"
+      - "call_tool"
+    security_checkpoints:
+      - "tool authorization"
+      - "resource access control"
+      - "prompt sanitization"
+      - "response validation"

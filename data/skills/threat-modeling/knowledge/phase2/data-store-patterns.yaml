@@ -1,0 +1,752 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Data Store Detection Patterns Knowledge Base
+# Phase 2 DFD/CFD Analysis Enhancement
+# Version: 1.1
+# Source: ORM Documentation + Database Driver Source Code
+# Purpose: Help LLM identify data stores and sensitive data handling
+#
+# Changelog:
+# - v1.1 (2026-01-26): Added stride_relevance and stride_rationale to all
+#   data store types (nosql_database, cache, message_queue, object_storage)
+#   for consistency with relational_database and Phase 5 STRIDE analysis.
+#   Fixed YAML syntax in backup_and_recovery section (mixed list/dict structure).
+# - v1.0 (Initial): Base patterns for data store detection
+
+version: "1.1"
+description: "数据存储检测模式知识库 - 用于 DFD 分析中识别数据存储"
+
+# =============================================================================
+# RELATIONAL DATABASES
+# =============================================================================
+relational_database:
+  description: "关系型数据库检测"
+  stride_relevance: ["Tampering", "Information Disclosure", "Repudiation"]
+
+  config_keys:
+    environment_variables:
+      - "DATABASE_URL"
+      - "DB_HOST"
+      - "DB_PORT"
+      - "DB_NAME"
+      - "DB_USER"
+      - "DB_PASSWORD"
+      - "SQLALCHEMY_DATABASE_URI"
+      - "POSTGRES_*"
+      - "MYSQL_*"
+      - "SQL_SERVER_*"
+
+    config_file_keys:
+      - "database.host"
+      - "database.connection"
+      - "spring.datasource.url"
+      - "spring.datasource.username"
+      - "db.connectionString"
+      - "typeorm.host"
+      - "prisma.datasource"
+
+  connection_string_patterns:
+    postgresql:
+      - "postgresql://"
+      - "postgres://"
+      - "jdbc:postgresql:"
+      - "Host=*;Database=*"
+    mysql:
+      - "mysql://"
+      - "mysql2://"
+      - "jdbc:mysql:"
+      - "Server=*;Database=*"
+    sqlite:
+      - "sqlite:///"
+      - "sqlite:///path"
+      - ":memory:"
+    mssql:
+      - "mssql://"
+      - "jdbc:sqlserver:"
+      - "Server=*;Database=*;Trusted_Connection=*"
+    oracle:
+      - "oracle://"
+      - "jdbc:oracle:thin:"
+
+  orm_libraries:
+    python:
+      sqlalchemy:
+        imports: ["sqlalchemy", "flask_sqlalchemy", "sqlmodel"]
+        patterns:
+          - "create_engine()"
+          - "Session()"
+          - "sessionmaker"
+          - "declarative_base()"
+          - "Column()"
+          - "relationship()"
+        query_patterns:
+          - "session.query()"
+          - "session.execute()"
+          - "Model.query"
+      django_orm:
+        imports: ["django.db.models", "django.db"]
+        patterns:
+          - "models.Model"
+          - "objects.filter()"
+          - "objects.get()"
+          - "objects.create()"
+          - "QuerySet"
+      peewee:
+        imports: ["peewee"]
+        patterns:
+          - "Model"
+          - "CharField"
+          - "select().where()"
+      tortoise:
+        imports: ["tortoise"]
+        patterns:
+          - "Model"
+          - "fields.CharField"
+          - "await Model.filter()"
+
+    javascript:
+      sequelize:
+        imports: ["sequelize"]
+        patterns:
+          - "new Sequelize()"
+          - "Model.init()"
+          - "define()"
+          - "findAll()"
+          - "findOne()"
+      typeorm:
+        imports: ["typeorm"]
+        patterns:
+          - "@Entity()"
+          - "@Column()"
+          - "getRepository()"
+          - "createConnection()"
+          - "Repository<>"
+      prisma:
+        imports: ["@prisma/client"]
+        patterns:
+          - "PrismaClient"
+          - "prisma.model.findMany"
+          - "prisma.$queryRaw"
+        config_files: ["prisma/schema.prisma"]
+      knex:
+        imports: ["knex"]
+        patterns:
+          - "knex()"
+          - "knex.select()"
+          - "knex.insert()"
+
+    java:
+      jpa_hibernate:
+        imports:
+          - "javax.persistence"
+          - "jakarta.persistence"
+          - "org.hibernate"
+        patterns:
+          - "@Entity"
+          - "@Table"
+          - "@Column"
+          - "EntityManager"
+          - "CriteriaBuilder"
+      spring_data:
+        imports: ["org.springframework.data.jpa"]
+        patterns:
+          - "JpaRepository"
+          - "CrudRepository"
+          - "@Repository"
+          - "@Query"
+      mybatis:
+        imports: ["org.mybatis"]
+        patterns:
+          - "@Mapper"
+          - "@Select"
+          - "@Insert"
+          - "SqlSession"
+
+    go:
+      gorm:
+        imports: ["gorm.io/gorm", "gorm.io/driver/*"]
+        patterns:
+          - "gorm.Open()"
+          - "db.Create()"
+          - "db.Find()"
+          - "db.Where()"
+      sqlx:
+        imports: ["github.com/jmoiron/sqlx"]
+        patterns:
+          - "sqlx.Connect()"
+          - "db.Select()"
+          - "db.Get()"
+      database_sql:
+        imports: ["database/sql"]
+        patterns:
+          - "sql.Open()"
+          - "db.Query()"
+          - "db.Exec()"
+          - "db.Prepare()"
+
+    ruby:
+      active_record:
+        imports: ["active_record"]
+        patterns:
+          - "ApplicationRecord"
+          - "has_many"
+          - "belongs_to"
+          - "where()"
+          - "find()"
+
+    php:
+      eloquent:
+        imports: ["Illuminate\\Database"]
+        patterns:
+          - "Model"
+          - "hasMany()"
+          - "belongsTo()"
+          - "where()-get()"
+      doctrine:
+        imports: ["Doctrine\\ORM"]
+        patterns:
+          - "@ORM\\Entity"
+          - "EntityManager"
+          - "getRepository()"
+
+# =============================================================================
+# NOSQL DATABASES
+# =============================================================================
+nosql_database:
+  description: "NoSQL 数据库检测"
+  stride_relevance: ["Tampering", "Information Disclosure"]
+  stride_rationale: |
+    NoSQL databases are discovery targets for:
+    - Tampering: Schema-less nature may allow unexpected data injection
+    - Information Disclosure: Often used for user data, logs, analytics
+    Note: Repudiation less relevant as NoSQL often lacks native audit trails
+
+  mongodb:
+    config_keys:
+      - "MONGO_URI"
+      - "MONGODB_URL"
+      - "MONGO_HOST"
+      - "mongodb.uri"
+    connection_patterns:
+      - "mongodb://"
+      - "mongodb+srv://"
+    libraries:
+      python:
+        imports: ["pymongo", "motor", "mongoengine", "beanie"]
+        patterns:
+          - "MongoClient()"
+          - "client[db_name]"
+          - "collection.find()"
+          - "collection.insert_one()"
+      javascript:
+        imports: ["mongodb", "mongoose"]
+        patterns:
+          - "MongoClient.connect()"
+          - "mongoose.connect()"
+          - "mongoose.Schema"
+          - "Model.find()"
+      java:
+        imports: ["com.mongodb", "org.springframework.data.mongodb"]
+        patterns:
+          - "MongoClient"
+          - "@Document"
+          - "MongoRepository"
+      go:
+        imports: ["go.mongodb.org/mongo-driver"]
+        patterns:
+          - "mongo.Connect()"
+          - "collection.FindOne()"
+
+  redis:
+    config_keys:
+      - "REDIS_URL"
+      - "REDIS_HOST"
+      - "REDIS_PORT"
+      - "redis.host"
+    connection_patterns:
+      - "redis://"
+      - "rediss://"  # TLS
+    libraries:
+      python:
+        imports: ["redis", "aioredis", "redis-py"]
+        patterns:
+          - "Redis()"
+          - "redis.get()"
+          - "redis.set()"
+          - "redis.hget()"
+      javascript:
+        imports: ["redis", "ioredis"]
+        patterns:
+          - "createClient()"
+          - "Redis()"
+          - "client.get()"
+          - "client.set()"
+      java:
+        imports: ["redis.clients.jedis", "io.lettuce", "org.springframework.data.redis"]
+        patterns:
+          - "Jedis"
+          - "RedisTemplate"
+          - "StringRedisTemplate"
+      go:
+        imports: ["github.com/go-redis/redis", "github.com/redis/go-redis"]
+        patterns:
+          - "redis.NewClient()"
+          - "rdb.Get()"
+          - "rdb.Set()"
+
+  elasticsearch:
+    config_keys:
+      - "ELASTICSEARCH_URL"
+      - "ELASTIC_HOST"
+      - "ES_HOSTS"
+    connection_patterns:
+      - "http://localhost:9200"
+      - "https://*:9200"
+    libraries:
+      python:
+        imports: ["elasticsearch", "elasticsearch-dsl"]
+        patterns:
+          - "Elasticsearch()"
+          - "client.search()"
+          - "client.index()"
+      javascript:
+        imports: ["@elastic/elasticsearch"]
+        patterns:
+          - "Client()"
+          - "client.search()"
+          - "client.index()"
+
+  dynamodb:
+    config_keys:
+      - "DYNAMODB_TABLE"
+      - "AWS_DYNAMODB_*"
+      - "dynamodb.table"
+    libraries:
+      python:
+        imports: ["boto3", "pynamodb"]
+        patterns:
+          - "boto3.resource('dynamodb')"
+          - "table.get_item()"
+          - "table.put_item()"
+      javascript:
+        imports: ["@aws-sdk/client-dynamodb", "@aws-sdk/lib-dynamodb"]
+        patterns:
+          - "DynamoDBClient"
+          - "GetItemCommand"
+          - "PutItemCommand"
+
+  cassandra:
+    config_keys:
+      - "CASSANDRA_HOST"
+      - "CASSANDRA_KEYSPACE"
+    libraries:
+      python:
+        imports: ["cassandra-driver"]
+        patterns:
+          - "Cluster()"
+          - "session.execute()"
+      java:
+        imports: ["com.datastax.oss.driver"]
+        patterns:
+          - "CqlSession"
+          - "session.execute()"
+
+# =============================================================================
+# CACHE SYSTEMS
+# =============================================================================
+cache:
+  description: "缓存系统检测"
+  security_note: "缓存可能存储敏感数据，需注意 TTL 和访问控制"
+  stride_relevance: ["Information Disclosure", "Tampering", "Denial of Service"]
+  stride_rationale: |
+    Cache systems are discovery targets for:
+    - Information Disclosure: Cached data may expose sensitive info (sessions, tokens)
+    - Tampering: Cache poisoning can lead to serving malicious data
+    - Denial of Service: Cache exhaustion or invalidation attacks
+    Note: Often overlooked in security reviews but critical for session data
+
+  redis_cache:
+    see: "nosql_database.redis"
+
+  memcached:
+    config_keys:
+      - "MEMCACHED_SERVERS"
+      - "MEMCACHE_HOST"
+    libraries:
+      python:
+        imports: ["pymemcache", "python-memcached"]
+        patterns:
+          - "Client()"
+          - "client.get()"
+          - "client.set()"
+
+  application_cache:
+    python:
+      flask_caching:
+        imports: ["flask_caching"]
+        patterns:
+          - "Cache()"
+          - "@cache.cached()"
+          - "@cache.memoize()"
+      django_cache:
+        imports: ["django.core.cache"]
+        patterns:
+          - "cache.get()"
+          - "cache.set()"
+          - "@cache_page()"
+
+    javascript:
+      node_cache:
+        imports: ["node-cache", "lru-cache"]
+        patterns:
+          - "new NodeCache()"
+          - "cache.get()"
+          - "cache.set()"
+
+# =============================================================================
+# MESSAGE QUEUES
+# =============================================================================
+message_queue:
+  description: "消息队列检测"
+  security_note: "消息可能包含敏感数据，需加密传输"
+  stride_relevance: ["Tampering", "Denial of Service", "Information Disclosure", "Repudiation"]
+  stride_rationale: |
+    Message queues are discovery targets for:
+    - Tampering: Message injection or modification in transit
+    - Denial of Service: Queue flooding, consumer starvation
+    - Information Disclosure: Messages may contain sensitive payloads
+    - Repudiation: Without proper logging, message origin may be disputed
+    Note: Critical for async workflows, often contains business-critical data
+
+  rabbitmq:
+    config_keys:
+      - "RABBITMQ_URL"
+      - "AMQP_URL"
+      - "rabbitmq.host"
+    connection_patterns:
+      - "amqp://"
+      - "amqps://"
+    libraries:
+      python:
+        imports: ["pika", "aio-pika", "kombu"]
+        patterns:
+          - "BlockingConnection()"
+          - "channel.queue_declare()"
+          - "channel.basic_publish()"
+      javascript:
+        imports: ["amqplib"]
+        patterns:
+          - "amqp.connect()"
+          - "channel.assertQueue()"
+          - "channel.sendToQueue()"
+
+  kafka:
+    config_keys:
+      - "KAFKA_BROKERS"
+      - "KAFKA_BOOTSTRAP_SERVERS"
+      - "kafka.bootstrap.servers"
+    libraries:
+      python:
+        imports: ["kafka-python", "confluent-kafka", "aiokafka"]
+        patterns:
+          - "KafkaProducer()"
+          - "KafkaConsumer()"
+          - "producer.send()"
+      javascript:
+        imports: ["kafkajs"]
+        patterns:
+          - "Kafka()"
+          - "producer.send()"
+          - "consumer.subscribe()"
+      java:
+        imports: ["org.apache.kafka"]
+        patterns:
+          - "KafkaProducer"
+          - "KafkaConsumer"
+          - "ProducerRecord"
+
+  celery:
+    config_keys:
+      - "CELERY_BROKER_URL"
+      - "CELERY_RESULT_BACKEND"
+    libraries:
+      python:
+        imports: ["celery"]
+        patterns:
+          - "Celery()"
+          - "@app.task"
+          - "task.delay()"
+
+  sqs:
+    config_keys:
+      - "SQS_QUEUE_URL"
+      - "AWS_SQS_*"
+    libraries:
+      python:
+        imports: ["boto3"]
+        patterns:
+          - "boto3.client('sqs')"
+          - "sqs.send_message()"
+          - "sqs.receive_message()"
+
+# =============================================================================
+# OBJECT STORAGE
+# =============================================================================
+object_storage:
+  description: "对象存储检测"
+  security_note: "文件存储需注意访问控制和加密"
+  stride_relevance: ["Information Disclosure", "Tampering", "Denial of Service"]
+  stride_rationale: |
+    Object storage is a discovery target for:
+    - Information Disclosure: Misconfigured buckets are common breach source
+    - Tampering: Uploaded files may be modified or replaced
+    - Denial of Service: Storage quota exhaustion, malicious large file uploads
+    Note: Public cloud storage misconfigurations are a top breach vector
+
+  aws_s3:
+    config_keys:
+      - "AWS_S3_BUCKET"
+      - "S3_BUCKET"
+      - "AWS_ACCESS_KEY_ID"
+      - "S3_ENDPOINT"
+    libraries:
+      python:
+        imports: ["boto3"]
+        patterns:
+          - "boto3.client('s3')"
+          - "s3.upload_file()"
+          - "s3.download_file()"
+          - "s3.put_object()"
+      javascript:
+        imports: ["@aws-sdk/client-s3", "aws-sdk"]
+        patterns:
+          - "S3Client"
+          - "PutObjectCommand"
+          - "GetObjectCommand"
+
+  gcs:
+    config_keys:
+      - "GOOGLE_CLOUD_STORAGE"
+      - "GCS_BUCKET"
+      - "GOOGLE_APPLICATION_CREDENTIALS"
+    libraries:
+      python:
+        imports: ["google.cloud.storage"]
+        patterns:
+          - "storage.Client()"
+          - "bucket.blob()"
+          - "blob.upload_from_file()"
+      javascript:
+        imports: ["@google-cloud/storage"]
+        patterns:
+          - "Storage()"
+          - "bucket.upload()"
+
+  azure_blob:
+    config_keys:
+      - "AZURE_STORAGE_CONNECTION_STRING"
+      - "AZURE_BLOB_*"
+    libraries:
+      python:
+        imports: ["azure.storage.blob"]
+        patterns:
+          - "BlobServiceClient"
+          - "container_client"
+          - "blob_client.upload_blob()"
+
+  minio:
+    config_keys:
+      - "MINIO_ENDPOINT"
+      - "MINIO_ACCESS_KEY"
+      - "MINIO_SECRET_KEY"
+    libraries:
+      python:
+        imports: ["minio"]
+        patterns:
+          - "Minio()"
+          - "client.put_object()"
+          - "client.get_object()"
+
+  local_filesystem:
+    patterns:
+      - "open(file_path, 'w')"
+      - "fs.writeFile"
+      - "File.write()"
+      - "os.WriteFile()"
+    security_note: "本地文件存储需注意路径遍历攻击"
+
+# =============================================================================
+# SENSITIVE DATA DETECTION
+# =============================================================================
+sensitive_data_patterns:
+  description: "敏感数据字段检测模式"
+
+  credentials:
+    table_patterns:
+      - "users"
+      - "accounts"
+      - "credentials"
+      - "auth"
+      - "authentication"
+      - "members"
+      - "admins"
+    field_patterns:
+      high_sensitivity:
+        - "password"
+        - "password_hash"
+        - "hashed_password"
+        - "encrypted_password"
+        - "pwd"
+        - "passwd"
+      tokens:
+        - "secret"
+        - "secret_key"
+        - "api_key"
+        - "api_secret"
+        - "token"
+        - "access_token"
+        - "refresh_token"
+        - "session_token"
+        - "auth_token"
+      keys:
+        - "private_key"
+        - "encryption_key"
+        - "signing_key"
+        - "master_key"
+
+  pii:  # Personally Identifiable Information
+    high_sensitivity:
+      - "ssn"
+      - "social_security"
+      - "national_id"
+      - "passport_number"
+      - "driver_license"
+      - "tax_id"
+    contact_info:
+      - "email"
+      - "phone"
+      - "phone_number"
+      - "mobile"
+      - "address"
+      - "street_address"
+      - "zip_code"
+      - "postal_code"
+    personal_details:
+      - "date_of_birth"
+      - "dob"
+      - "birthday"
+      - "birth_date"
+      - "age"
+      - "gender"
+      - "nationality"
+
+  financial:
+    table_patterns:
+      - "transactions"
+      - "payments"
+      - "orders"
+      - "invoices"
+      - "billing"
+      - "subscriptions"
+    field_patterns:
+      - "credit_card"
+      - "card_number"
+      - "cvv"
+      - "cvc"
+      - "expiry_date"
+      - "bank_account"
+      - "account_number"
+      - "routing_number"
+      - "iban"
+      - "swift"
+
+  health:
+    table_patterns:
+      - "patients"
+      - "medical_records"
+      - "health"
+      - "diagnoses"
+    field_patterns:
+      - "diagnosis"
+      - "prescription"
+      - "blood_type"
+      - "allergies"
+      - "medical_history"
+
+# =============================================================================
+# DATA ACCESS PATTERNS
+# =============================================================================
+data_access_patterns:
+  description: "数据访问模式检测"
+
+  repository_patterns:
+    naming:
+      - "*Repository"
+      - "*Repo"
+      - "*DAO"
+      - "*DataAccess"
+      - "*Store"
+      - "*Gateway"
+    file_locations:
+      - "**/repositories/**"
+      - "**/repo/**"
+      - "**/dao/**"
+      - "**/data/**"
+      - "**/models/**"
+
+  crud_operations:
+    create: ["create", "insert", "add", "save", "store", "put"]
+    read: ["find", "get", "select", "fetch", "load", "read", "query"]
+    update: ["update", "modify", "edit", "patch", "set"]
+    delete: ["delete", "remove", "destroy", "drop"]
+
+  batch_operations:
+    patterns:
+      - "bulk_insert"
+      - "bulk_create"
+      - "insert_many"
+      - "update_many"
+      - "delete_many"
+      - "executemany"
+    security_note: "批量操作可能需要额外的授权检查"
+
+# =============================================================================
+# HEURISTIC HINTS FOR LLM
+# =============================================================================
+heuristic_hints:
+  detection_order:
+    - "1. 检查配置文件 (config.*, .env, application.yml)"
+    - "2. 搜索连接字符串模式 (postgresql://, mongodb://)"
+    - "3. 搜索 ORM/数据库库导入"
+    - "4. 搜索 Repository/DAO 模式类"
+    - "5. 搜索敏感字段命名"
+
+  common_missing_stores:
+    - "内存缓存 (未持久化但可能含敏感数据)"
+    - "会话存储 (Redis/文件)"
+    - "日志存储"
+    - "临时文件存储"
+    - "外部 API 响应缓存"
+
+  encryption_checks:
+    at_rest:
+      - "检查数据库级加密配置"
+      - "检查敏感字段加密 (密码hash, 加密存储)"
+      - "检查文件存储加密"
+    in_transit:
+      - "检查连接字符串是否使用 SSL/TLS"
+      - "检查 sslmode, tls, ssl=true 参数"
+
+  access_control_checks:
+    - "每个数据存储应有明确的访问路径"
+    - "敏感表应限制直接访问"
+    - "批量操作应有额外权限检查"
+    - "数据导出功能应有审计日志"
+
+  backup_and_recovery:
+    patterns:
+      - "BACKUP_*"
+      - "dump"
+      - "export"
+      - "replicate"
+    security_note: "备份可能未加密，需检查备份安全"

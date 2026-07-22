@@ -1,0 +1,576 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Cloud Services Threat Mapping for STRIDE Analysis
+# Covers AWS, Azure, GCP, Alibaba Cloud, Tencent Cloud
+# Version: 1.0
+
+metadata:
+  version: "1.0"
+  description: "Multi-cloud service threat mapping for STRIDE threat modeling"
+  last_updated: "2025-12-23"
+  sources:
+    - "AWS Well-Architected Security Pillar"
+    - "Azure Security Benchmark"
+    - "Google Cloud Security Best Practices"
+    - "CSA Cloud Controls Matrix (CCM)"
+
+# Cloud Service Categories
+service_categories:
+  compute:
+    description: "Virtual machines, containers, serverless compute"
+    services:
+      aws: ["EC2", "ECS", "EKS", "Lambda", "Fargate", "Batch"]
+      azure: ["Virtual Machines", "AKS", "Container Instances", "Functions", "App Service"]
+      gcp: ["Compute Engine", "GKE", "Cloud Run", "Cloud Functions", "App Engine"]
+      alibaba: ["ECS", "ACK", "Function Compute", "SAE"]
+      tencent: ["CVM", "TKE", "SCF", "Lighthouse"]
+
+  storage:
+    description: "Object storage, block storage, file systems"
+    services:
+      aws: ["S3", "EBS", "EFS", "FSx", "Glacier"]
+      azure: ["Blob Storage", "Disk Storage", "Files", "Data Lake"]
+      gcp: ["Cloud Storage", "Persistent Disk", "Filestore"]
+      alibaba: ["OSS", "NAS", "ESSD"]
+      tencent: ["COS", "CBS", "CFS"]
+
+  database:
+    description: "Relational, NoSQL, in-memory databases"
+    services:
+      aws: ["RDS", "DynamoDB", "ElastiCache", "Redshift", "DocumentDB", "Aurora"]
+      azure: ["SQL Database", "Cosmos DB", "Cache for Redis", "Synapse"]
+      gcp: ["Cloud SQL", "Firestore", "Bigtable", "Memorystore", "Spanner"]
+      alibaba: ["RDS", "PolarDB", "Tair", "AnalyticDB"]
+      tencent: ["TencentDB", "TDSQL", "Redis"]
+
+  networking:
+    description: "VPC, load balancing, DNS, CDN"
+    services:
+      aws: ["VPC", "ALB/NLB", "Route 53", "CloudFront", "API Gateway", "Transit Gateway"]
+      azure: ["VNet", "Load Balancer", "DNS", "Front Door", "API Management"]
+      gcp: ["VPC", "Cloud Load Balancing", "Cloud DNS", "Cloud CDN", "API Gateway"]
+      alibaba: ["VPC", "SLB", "DNS", "CDN", "API Gateway"]
+      tencent: ["VPC", "CLB", "DNSPod", "CDN", "API Gateway"]
+
+  identity:
+    description: "Identity and access management"
+    services:
+      aws: ["IAM", "Cognito", "SSO", "STS", "Organizations"]
+      azure: ["Entra ID", "B2C", "Managed Identities", "RBAC"]
+      gcp: ["Cloud IAM", "Identity Platform", "Workforce Identity", "Workload Identity"]
+      alibaba: ["RAM", "IDaaS", "ActionTrail"]
+      tencent: ["CAM", "SSO"]
+
+  security:
+    description: "Security services and compliance"
+    services:
+      aws: ["KMS", "Secrets Manager", "WAF", "Shield", "GuardDuty", "Security Hub", "Macie"]
+      azure: ["Key Vault", "Defender", "WAF", "DDoS Protection", "Sentinel"]
+      gcp: ["Cloud KMS", "Secret Manager", "Cloud Armor", "Security Command Center"]
+      alibaba: ["KMS", "Secrets Manager", "WAF", "Anti-DDoS", "Security Center"]
+      tencent: ["KMS", "SSM", "WAF", "Anti-DDoS", "CWPP"]
+
+  messaging:
+    description: "Message queues, event streaming, pub/sub"
+    services:
+      aws: ["SQS", "SNS", "Kinesis", "EventBridge", "MQ"]
+      azure: ["Service Bus", "Event Hubs", "Event Grid", "Queue Storage"]
+      gcp: ["Pub/Sub", "Dataflow", "Eventarc"]
+      alibaba: ["MNS", "RocketMQ", "Kafka"]
+      tencent: ["CMQ", "CKafka", "TDMQ"]
+
+  ai_ml:
+    description: "AI/ML services including LLM"
+    services:
+      aws: ["SageMaker", "Bedrock", "Rekognition", "Comprehend", "Textract"]
+      azure: ["Azure ML", "Azure OpenAI", "Cognitive Services", "Bot Service"]
+      gcp: ["Vertex AI", "AutoML", "Vision AI", "Dialogflow"]
+      alibaba: ["PAI", "Tongyi", "Vision Intelligence"]
+      tencent: ["TI Platform", "Hunyuan", "OCR"]
+
+# STRIDE Threats per Service Category
+stride_by_category:
+  compute:
+    spoofing:
+      threats:
+        - id: "CLOUD-S-COMPUTE-001"
+          name: "Instance identity spoofing"
+          description: "Attacker assumes identity of another compute instance"
+          attack_vectors:
+            - "Stolen instance credentials"
+            - "Metadata service exploitation (IMDS)"
+            - "Compromised IAM role"
+          mitigations:
+            - "Use IMDSv2 (AWS) or equivalent"
+            - "Restrict instance metadata access"
+            - "Implement workload identity"
+          cwes: ["CWE-287", "CWE-295"]
+          capec: ["CAPEC-194", "CAPEC-151"]
+
+        - id: "CLOUD-S-COMPUTE-002"
+          name: "Container image spoofing"
+          description: "Malicious container image substitution"
+          attack_vectors:
+            - "Registry poisoning"
+            - "Man-in-the-middle on image pull"
+            - "Tag mutation"
+          mitigations:
+            - "Image signing and verification"
+            - "Use immutable image digests"
+            - "Private registry with access controls"
+          cwes: ["CWE-345", "CWE-494"]
+          capec: ["CAPEC-141", "CAPEC-185"]
+
+    tampering:
+      threats:
+        - id: "CLOUD-T-COMPUTE-001"
+          name: "Runtime code injection"
+          description: "Injection of malicious code into running workloads"
+          attack_vectors:
+            - "Container escape"
+            - "Serverless function injection"
+            - "Memory corruption"
+          mitigations:
+            - "Read-only containers"
+            - "Runtime security monitoring"
+            - "Immutable infrastructure"
+          cwes: ["CWE-94", "CWE-829"]
+          capec: ["CAPEC-242", "CAPEC-17"]
+
+    information_disclosure:
+      threats:
+        - id: "CLOUD-I-COMPUTE-001"
+          name: "Instance metadata leakage"
+          description: "Sensitive data exposed via cloud metadata service"
+          attack_vectors:
+            - "SSRF to metadata endpoint"
+            - "Misconfigured metadata access"
+            - "Credential exfiltration"
+          mitigations:
+            - "Block metadata access from applications"
+            - "Use IMDSv2 with hop limit"
+            - "Network policies restricting metadata"
+          cwes: ["CWE-918", "CWE-200"]
+          capec: ["CAPEC-664"]
+
+    denial_of_service:
+      threats:
+        - id: "CLOUD-D-COMPUTE-001"
+          name: "Resource exhaustion attack"
+          description: "Consuming compute resources to cause service degradation"
+          attack_vectors:
+            - "Crypto mining malware"
+            - "Fork bombs in containers"
+            - "Infinite loops in serverless"
+          mitigations:
+            - "Resource quotas and limits"
+            - "Cost alerts and budgets"
+            - "Auto-scaling with caps"
+          cwes: ["CWE-400", "CWE-770"]
+          capec: ["CAPEC-125", "CAPEC-469"]
+
+    elevation_of_privilege:
+      threats:
+        - id: "CLOUD-E-COMPUTE-001"
+          name: "Container breakout"
+          description: "Escaping container isolation to host"
+          attack_vectors:
+            - "Kernel vulnerability exploitation"
+            - "Privileged container abuse"
+            - "Mount namespace escape"
+          mitigations:
+            - "Non-privileged containers"
+            - "Seccomp and AppArmor profiles"
+            - "Rootless containers"
+          cwes: ["CWE-250", "CWE-269"]
+          capec: ["CAPEC-122", "CAPEC-233"]
+
+  storage:
+    spoofing:
+      threats:
+        - id: "CLOUD-S-STORAGE-001"
+          name: "Storage access key theft"
+          description: "Unauthorized access using stolen storage credentials"
+          attack_vectors:
+            - "Exposed access keys in code"
+            - "Phishing for storage credentials"
+            - "Credential stuffing"
+          mitigations:
+            - "Use managed identities"
+            - "Short-lived SAS tokens"
+            - "Key rotation automation"
+          cwes: ["CWE-522", "CWE-798"]
+          capec: ["CAPEC-560"]
+
+    tampering:
+      threats:
+        - id: "CLOUD-T-STORAGE-001"
+          name: "Object tampering"
+          description: "Modification of stored objects"
+          attack_vectors:
+            - "Unauthorized write access"
+            - "Version history manipulation"
+            - "Lifecycle policy abuse"
+          mitigations:
+            - "Object lock/WORM"
+            - "Versioning with MFA delete"
+            - "Integrity verification (checksums)"
+          cwes: ["CWE-345", "CWE-494"]
+          capec: ["CAPEC-439"]
+
+    information_disclosure:
+      threats:
+        - id: "CLOUD-I-STORAGE-001"
+          name: "Public bucket exposure"
+          description: "Sensitive data in publicly accessible storage"
+          attack_vectors:
+            - "Misconfigured bucket policy"
+            - "ACL allowing public access"
+            - "Presigned URL leakage"
+          mitigations:
+            - "Block public access settings"
+            - "Bucket policies with explicit deny"
+            - "Regular permission audits"
+          cwes: ["CWE-284", "CWE-732"]
+          capec: ["CAPEC-116"]
+
+        - id: "CLOUD-I-STORAGE-002"
+          name: "Unencrypted data at rest"
+          description: "Sensitive data stored without encryption"
+          attack_vectors:
+            - "Physical media theft"
+            - "Snapshot access"
+            - "Cross-account access"
+          mitigations:
+            - "Default encryption (SSE)"
+            - "Customer managed keys (CMK)"
+            - "Client-side encryption for sensitive data"
+          cwes: ["CWE-311", "CWE-312"]
+          capec: ["CAPEC-37"]
+
+    denial_of_service:
+      threats:
+        - id: "CLOUD-D-STORAGE-001"
+          name: "Storage quota exhaustion"
+          description: "Filling storage to deny service"
+          attack_vectors:
+            - "Malicious file uploads"
+            - "Log flooding"
+            - "Backup data explosion"
+          mitigations:
+            - "Storage quotas and alerts"
+            - "Lifecycle policies for cleanup"
+            - "Input size validation"
+          cwes: ["CWE-400", "CWE-770"]
+          capec: ["CAPEC-469"]
+
+  database:
+    spoofing:
+      threats:
+        - id: "CLOUD-S-DB-001"
+          name: "Database credential compromise"
+          description: "Unauthorized database access via stolen credentials"
+          attack_vectors:
+            - "SQL injection for credential extraction"
+            - "Connection string exposure"
+            - "Weak database passwords"
+          mitigations:
+            - "IAM database authentication"
+            - "Secrets Manager integration"
+            - "Certificate-based authentication"
+          cwes: ["CWE-287", "CWE-522"]
+          capec: ["CAPEC-70"]
+
+    tampering:
+      threats:
+        - id: "CLOUD-T-DB-001"
+          name: "SQL injection"
+          description: "Malicious SQL execution via user input"
+          attack_vectors:
+            - "Form input injection"
+            - "API parameter manipulation"
+            - "Stored procedure abuse"
+          mitigations:
+            - "Parameterized queries"
+            - "Input validation"
+            - "Least privilege DB users"
+          cwes: ["CWE-89", "CWE-564"]
+          capec: ["CAPEC-66"]
+
+    information_disclosure:
+      threats:
+        - id: "CLOUD-I-DB-001"
+          name: "Database backup exposure"
+          description: "Sensitive data in unprotected backups"
+          attack_vectors:
+            - "Snapshot sharing misconfiguration"
+            - "Backup storage access"
+            - "Cross-region replication leak"
+          mitigations:
+            - "Encrypted snapshots"
+            - "Backup retention policies"
+            - "Access controls on backups"
+          cwes: ["CWE-200", "CWE-311"]
+          capec: ["CAPEC-116"]
+
+    denial_of_service:
+      threats:
+        - id: "CLOUD-D-DB-001"
+          name: "Database connection exhaustion"
+          description: "Exhausting database connections"
+          attack_vectors:
+            - "Connection flood"
+            - "Slow query attacks"
+            - "Lock contention"
+          mitigations:
+            - "Connection pooling"
+            - "Query timeouts"
+            - "Read replicas"
+          cwes: ["CWE-400", "CWE-410"]
+          capec: ["CAPEC-125"]
+
+  identity:
+    spoofing:
+      threats:
+        - id: "CLOUD-S-IAM-001"
+          name: "IAM role assumption abuse"
+          description: "Unauthorized role assumption"
+          attack_vectors:
+            - "Overly permissive trust policies"
+            - "Cross-account role confusion"
+            - "Session token theft"
+          mitigations:
+            - "External ID for cross-account"
+            - "Condition keys in policies"
+            - "Session duration limits"
+          cwes: ["CWE-287", "CWE-269"]
+          capec: ["CAPEC-194"]
+
+        - id: "CLOUD-S-IAM-002"
+          name: "Service account key exposure"
+          description: "Leaked service account credentials"
+          attack_vectors:
+            - "Keys in source code"
+            - "Keys in container images"
+            - "Phishing developers"
+          mitigations:
+            - "Workload identity"
+            - "Key rotation"
+            - "Secrets scanning"
+          cwes: ["CWE-798", "CWE-522"]
+          capec: ["CAPEC-560"]
+
+    elevation_of_privilege:
+      threats:
+        - id: "CLOUD-E-IAM-001"
+          name: "IAM privilege escalation"
+          description: "Gaining higher privileges through IAM misconfigurations"
+          attack_vectors:
+            - "iam:PassRole abuse"
+            - "Policy attachment to self"
+            - "CreateAccessKey on other users"
+          mitigations:
+            - "Permission boundaries"
+            - "SCP guardrails"
+            - "IAM Access Analyzer"
+          cwes: ["CWE-269", "CWE-250"]
+          capec: ["CAPEC-122"]
+
+  networking:
+    spoofing:
+      threats:
+        - id: "CLOUD-S-NET-001"
+          name: "DNS spoofing"
+          description: "DNS hijacking to redirect traffic"
+          attack_vectors:
+            - "DNS cache poisoning"
+            - "Route 53 account compromise"
+            - "Domain transfer theft"
+          mitigations:
+            - "DNSSEC"
+            - "Registrar lock"
+            - "DNS monitoring"
+          cwes: ["CWE-350", "CWE-290"]
+          capec: ["CAPEC-142", "CAPEC-275"]
+
+    tampering:
+      threats:
+        - id: "CLOUD-T-NET-001"
+          name: "Man-in-the-middle attack"
+          description: "Traffic interception and modification"
+          attack_vectors:
+            - "TLS downgrade"
+            - "Certificate impersonation"
+            - "VPC traffic interception"
+          mitigations:
+            - "TLS 1.3 enforcement"
+            - "Certificate pinning"
+            - "VPC flow logs monitoring"
+          cwes: ["CWE-300", "CWE-319"]
+          capec: ["CAPEC-94", "CAPEC-466"]
+
+    information_disclosure:
+      threats:
+        - id: "CLOUD-I-NET-001"
+          name: "Security group misconfiguration"
+          description: "Overly permissive network access"
+          attack_vectors:
+            - "0.0.0.0/0 ingress rules"
+            - "Open database ports"
+            - "Management port exposure"
+          mitigations:
+            - "Least privilege security groups"
+            - "Private subnets for backends"
+            - "Automated compliance checks"
+          cwes: ["CWE-284", "CWE-732"]
+          capec: ["CAPEC-560"]
+
+    denial_of_service:
+      threats:
+        - id: "CLOUD-D-NET-001"
+          name: "DDoS attack"
+          description: "Distributed denial of service"
+          attack_vectors:
+            - "Volumetric attacks"
+            - "Application layer attacks"
+            - "Protocol attacks"
+          mitigations:
+            - "DDoS protection services"
+            - "WAF rate limiting"
+            - "CDN/edge protection"
+          cwes: ["CWE-400"]
+          capec: ["CAPEC-125", "CAPEC-482"]
+
+  serverless:
+    spoofing:
+      threats:
+        - id: "CLOUD-S-SLESS-001"
+          name: "Function invocation spoofing"
+          description: "Unauthorized function triggering"
+          attack_vectors:
+            - "Public API gateway endpoints"
+            - "Stolen API keys"
+            - "Event injection"
+          mitigations:
+            - "API authentication"
+            - "Function authorization"
+            - "Event source validation"
+          cwes: ["CWE-287", "CWE-306"]
+          capec: ["CAPEC-151"]
+
+    tampering:
+      threats:
+        - id: "CLOUD-T-SLESS-001"
+          name: "Function code injection"
+          description: "Injecting malicious code into serverless functions"
+          attack_vectors:
+            - "Dependency poisoning"
+            - "Layer manipulation"
+            - "Environment variable injection"
+          mitigations:
+            - "Dependency scanning"
+            - "Signed layers"
+            - "Immutable deployments"
+          cwes: ["CWE-829", "CWE-94"]
+          capec: ["CAPEC-242"]
+
+    information_disclosure:
+      threats:
+        - id: "CLOUD-I-SLESS-001"
+          name: "Sensitive data in function logs"
+          description: "Credentials or PII leaked to logs"
+          attack_vectors:
+            - "Logging user input"
+            - "Exception stack traces"
+            - "Debug mode in production"
+          mitigations:
+            - "Log sanitization"
+            - "Structured logging"
+            - "Log encryption"
+          cwes: ["CWE-532", "CWE-209"]
+          capec: ["CAPEC-118"]
+
+    denial_of_service:
+      threats:
+        - id: "CLOUD-D-SLESS-001"
+          name: "Function concurrency exhaustion"
+          description: "Exhausting function concurrency limits"
+          attack_vectors:
+            - "Recursive invocation"
+            - "Concurrent request flood"
+            - "Long-running functions"
+          mitigations:
+            - "Reserved concurrency"
+            - "Throttling"
+            - "Timeout limits"
+          cwes: ["CWE-400", "CWE-770"]
+          capec: ["CAPEC-469"]
+
+    elevation_of_privilege:
+      threats:
+        - id: "CLOUD-E-SLESS-001"
+          name: "Overprivileged function role"
+          description: "Function with excessive permissions"
+          attack_vectors:
+            - "Broad wildcard permissions"
+            - "Admin role attached"
+            - "Cross-service abuse"
+          mitigations:
+            - "Least privilege roles"
+            - "Service-specific permissions"
+            - "Permission boundaries"
+          cwes: ["CWE-250", "CWE-269"]
+          capec: ["CAPEC-122"]
+
+# Cloud-Specific Compliance Mappings
+compliance_mappings:
+  csa_ccm:
+    - "CCM-AIS-01: Application Security"
+    - "CCM-DSI-01: Data Security & Encryption"
+    - "CCM-IAM-01: Identity & Access Management"
+    - "CCM-IVS-01: Infrastructure & Virtualization Security"
+    - "CCM-SEF-01: Security Incident Management"
+
+  cis_benchmarks:
+    aws: "CIS AWS Foundations Benchmark v3.0"
+    azure: "CIS Microsoft Azure Foundations Benchmark v2.1"
+    gcp: "CIS Google Cloud Platform Foundation Benchmark v2.0"
+
+  nist_csf:
+    - "ID.AM: Asset Management"
+    - "PR.AC: Access Control"
+    - "PR.DS: Data Security"
+    - "DE.CM: Security Continuous Monitoring"
+    - "RS.RP: Response Planning"
+
+# Quick Reference: Service to STRIDE Priority
+service_stride_priority:
+  compute:
+    high: ["spoofing", "elevation_of_privilege"]
+    medium: ["tampering", "information_disclosure"]
+    low: ["denial_of_service", "repudiation"]
+
+  storage:
+    high: ["information_disclosure", "tampering"]
+    medium: ["denial_of_service"]
+    low: ["spoofing", "repudiation", "elevation_of_privilege"]
+
+  database:
+    high: ["tampering", "information_disclosure"]
+    medium: ["spoofing", "denial_of_service"]
+    low: ["repudiation", "elevation_of_privilege"]
+
+  identity:
+    high: ["spoofing", "elevation_of_privilege"]
+    medium: ["repudiation"]
+    low: ["tampering", "information_disclosure", "denial_of_service"]
+
+  networking:
+    high: ["denial_of_service", "information_disclosure"]
+    medium: ["spoofing", "tampering"]
+    low: ["repudiation", "elevation_of_privilege"]
+
+  serverless:
+    high: ["elevation_of_privilege", "tampering"]
+    medium: ["spoofing", "information_disclosure"]
+    low: ["denial_of_service", "repudiation"]

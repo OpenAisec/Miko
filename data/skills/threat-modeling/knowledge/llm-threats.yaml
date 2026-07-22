@@ -1,0 +1,1648 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# LLM Threats Knowledge Base
+# OWASP Top 10 for LLM Applications + AI/ML Security Patterns
+# Version: 1.0
+# Reference: https://owasp.org/www-project-top-10-for-large-language-model-applications/
+
+metadata:
+  version: "2.0"
+  description: "LLM and AI/ML specific threat patterns for STRIDE threat modeling"
+  sources:
+    - "OWASP Top 10 for LLM Applications 2025"
+    - "MITRE ATLAS (Adversarial Threat Landscape for AI Systems) v2025.10"
+    - "NIST AI Risk Management Framework"
+    - "MCP Security Research 2025 (Elastic, Palo Alto, Checkmarx)"
+    - "Multimodal Prompt Injection Research (arXiv 2025)"
+    - "Jailbreak Attack Taxonomy (MDPI, ACL 2025)"
+  last_updated: "2026-01"
+  changelog:
+    - version: "2.0"
+      date: "2026-01-26"
+      changes:
+        - "Extended MITRE ATLAS mappings from 7 to 35+ techniques"
+        - "Added multimodal attack vectors (visual injection, steganography)"
+        - "Added MCP/Agent-specific threat patterns"
+        - "Added emerging jailbreak techniques (TokenBreak, Weak-to-Strong)"
+        - "Added real-world CVE references"
+
+# =============================================================================
+# OWASP TOP 10 FOR LLM APPLICATIONS
+# =============================================================================
+
+owasp_llm_top10:
+  LLM01:
+    id: "LLM01"
+    name: "Prompt Injection"
+    description: |
+      Manipulating LLMs through crafted inputs that cause the model to execute
+      unintended actions. Direct injection overwrites system prompts, while
+      indirect injection manipulates inputs from external sources.
+    stride_categories: ["tampering", "elevation_of_privilege"]
+    attack_vectors:
+      - "Direct prompt injection via user input"
+      - "Indirect injection via external data sources"
+      - "Jailbreaking through role-playing scenarios"
+      - "Instruction override via special characters"
+    impacts:
+      - "Unauthorized data access"
+      - "Social engineering through LLM"
+      - "Remote code execution in agent systems"
+      - "Bypassing content filters"
+    mitigations:
+      - id: "LLM01-M01"
+        name: "Privilege control"
+        description: "Apply least privilege to LLM backend access"
+        implementation: |
+          - Separate LLM execution context from privileged operations
+          - Use read-only access for data retrieval
+          - Implement approval workflow for sensitive actions
+      - id: "LLM01-M02"
+        name: "Human-in-the-loop"
+        description: "Require user confirmation for privileged operations"
+        implementation: |
+          - Add approval steps before executing actions
+          - Log all LLM-initiated operations
+          - Implement undo/rollback capabilities
+      - id: "LLM01-M03"
+        name: "Input/output validation"
+        description: "Sanitize and validate all LLM inputs and outputs"
+        implementation: |
+          - Filter special tokens and control characters
+          - Validate output format before execution
+          - Implement content safety classifiers
+      - id: "LLM01-M04"
+        name: "Context isolation"
+        description: "Segregate external content from user prompts"
+        implementation: |
+          - Use clear delimiters for system vs user content
+          - Implement content type tagging
+          - Sanitize retrieved documents before injection
+    cwes: ["CWE-77", "CWE-94", "CWE-1336"]
+    capecs: ["CAPEC-248", "CAPEC-549"]
+    atlas_techniques: ["AML.T0051", "AML.T0043"]
+    severity: "critical"
+
+  LLM02:
+    id: "LLM02"
+    name: "Insecure Output Handling"
+    description: |
+      Failure to properly validate, sanitize, or handle LLM outputs before
+      passing them to downstream components, leading to XSS, SSRF, privilege
+      escalation, or remote code execution.
+    stride_categories: ["tampering", "information_disclosure", "elevation_of_privilege"]
+    attack_vectors:
+      - "XSS through unescaped LLM output in web UI"
+      - "SQL injection via LLM-generated queries"
+      - "Command injection through code generation"
+      - "SSRF via LLM-generated URLs"
+    impacts:
+      - "Cross-site scripting attacks"
+      - "Backend system compromise"
+      - "Data exfiltration"
+      - "Privilege escalation"
+    mitigations:
+      - id: "LLM02-M01"
+        name: "Output encoding"
+        description: "Encode LLM outputs for target context"
+        implementation: |
+          - HTML-encode for web display
+          - Parameterize database queries
+          - Use safe APIs for command execution
+      - id: "LLM02-M02"
+        name: "Output validation"
+        description: "Validate output format and content"
+        implementation: |
+          - Schema validation for structured outputs
+          - Allowlist validation for URLs and commands
+          - Content safety scanning
+      - id: "LLM02-M03"
+        name: "Sandboxed execution"
+        description: "Execute LLM-generated code in isolated environments"
+        implementation: |
+          - Use container sandboxes for code execution
+          - Implement resource limits and timeouts
+          - Network isolation for generated code
+    cwes: ["CWE-79", "CWE-89", "CWE-78", "CWE-918"]
+    capecs: ["CAPEC-86", "CAPEC-664"]
+    severity: "high"
+
+  LLM03:
+    id: "LLM03"
+    name: "Training Data Poisoning"
+    description: |
+      Manipulation of training data or fine-tuning processes to embed
+      vulnerabilities, backdoors, or biases into the model.
+    stride_categories: ["tampering", "repudiation"]
+    attack_vectors:
+      - "Poisoned pre-training datasets"
+      - "Malicious fine-tuning data"
+      - "Backdoor trigger injection"
+      - "Bias amplification attacks"
+    impacts:
+      - "Model behavior manipulation"
+      - "Backdoor activation"
+      - "Biased or harmful outputs"
+      - "Reduced model performance"
+    mitigations:
+      - id: "LLM03-M01"
+        name: "Data provenance"
+        description: "Track and verify training data sources"
+        implementation: |
+          - Implement data lineage tracking
+          - Verify data source authenticity
+          - Maintain audit logs of training data
+      - id: "LLM03-M02"
+        name: "Data sanitization"
+        description: "Clean and validate training data"
+        implementation: |
+          - Automated quality checks
+          - Anomaly detection in training data
+          - Human review for sensitive domains
+      - id: "LLM03-M03"
+        name: "Model validation"
+        description: "Test models for backdoors and biases"
+        implementation: |
+          - Red team testing before deployment
+          - Bias detection evaluations
+          - Behavioral testing with adversarial inputs
+    cwes: ["CWE-502", "CWE-1035"]
+    capecs: ["CAPEC-538"]
+    atlas_techniques: ["AML.T0020", "AML.T0019"]
+    severity: "high"
+
+  LLM04:
+    id: "LLM04"
+    name: "Model Denial of Service"
+    description: |
+      Attacks that consume excessive resources through crafted inputs,
+      causing service degradation or unavailability.
+    stride_categories: ["denial_of_service"]
+    attack_vectors:
+      - "Resource-exhausting prompts"
+      - "Repeated high-cost requests"
+      - "Context window flooding"
+      - "Recursive or infinite loop prompts"
+    impacts:
+      - "Service unavailability"
+      - "Increased operational costs"
+      - "Degraded performance for other users"
+      - "Resource starvation"
+    mitigations:
+      - id: "LLM04-M01"
+        name: "Rate limiting"
+        description: "Limit request frequency and volume"
+        implementation: |
+          - Per-user rate limits
+          - Token-based quotas
+          - Sliding window rate limiting
+      - id: "LLM04-M02"
+        name: "Input validation"
+        description: "Validate and limit input size"
+        implementation: |
+          - Maximum input length limits
+          - Context window management
+          - Prompt complexity analysis
+      - id: "LLM04-M03"
+        name: "Resource controls"
+        description: "Implement resource quotas and timeouts"
+        implementation: |
+          - Execution timeouts
+          - Memory and CPU limits
+          - Cost-based throttling
+    cwes: ["CWE-400", "CWE-770", "CWE-799"]
+    capecs: ["CAPEC-125", "CAPEC-130"]
+    severity: "medium"
+
+  LLM05:
+    id: "LLM05"
+    name: "Supply Chain Vulnerabilities"
+    description: |
+      Risks from third-party components including pre-trained models,
+      training data, plugins, and dependencies.
+    stride_categories: ["tampering", "elevation_of_privilege"]
+    attack_vectors:
+      - "Compromised model weights"
+      - "Malicious plugins or extensions"
+      - "Poisoned model hubs"
+      - "Vulnerable dependencies"
+    impacts:
+      - "Backdoor activation"
+      - "Data exfiltration"
+      - "System compromise"
+      - "Supply chain attacks"
+    mitigations:
+      - id: "LLM05-M01"
+        name: "Vendor vetting"
+        description: "Evaluate and monitor third-party providers"
+        implementation: |
+          - Security assessments for model providers
+          - Contractual security requirements
+          - Regular vendor reviews
+      - id: "LLM05-M02"
+        name: "Model verification"
+        description: "Verify model integrity and provenance"
+        implementation: |
+          - Cryptographic model signing
+          - Hash verification for downloads
+          - Behavioral testing before deployment
+      - id: "LLM05-M03"
+        name: "Plugin sandboxing"
+        description: "Isolate third-party plugins"
+        implementation: |
+          - Sandboxed plugin execution
+          - Capability-based permissions
+          - Plugin review and approval process
+    cwes: ["CWE-829", "CWE-494", "CWE-506"]
+    capecs: ["CAPEC-437", "CAPEC-438"]
+    atlas_techniques: ["AML.T0010", "AML.T0011"]
+    severity: "high"
+
+  LLM06:
+    id: "LLM06"
+    name: "Sensitive Information Disclosure"
+    description: |
+      LLM may reveal sensitive information through its outputs, including
+      training data, PII, proprietary information, or system details.
+    stride_categories: ["information_disclosure"]
+    attack_vectors:
+      - "Training data extraction"
+      - "Membership inference attacks"
+      - "System prompt extraction"
+      - "PII leakage through context"
+    impacts:
+      - "Privacy violations"
+      - "Intellectual property theft"
+      - "Compliance violations (GDPR, HIPAA)"
+      - "Competitive intelligence leakage"
+    mitigations:
+      - id: "LLM06-M01"
+        name: "Data sanitization"
+        description: "Remove sensitive data from training sets"
+        implementation: |
+          - PII detection and removal
+          - Differential privacy techniques
+          - Data anonymization
+      - id: "LLM06-M02"
+        name: "Output filtering"
+        description: "Detect and filter sensitive output"
+        implementation: |
+          - PII detection in outputs
+          - Content classification
+          - Redaction before display
+      - id: "LLM06-M03"
+        name: "Access controls"
+        description: "Limit data access based on user context"
+        implementation: |
+          - Role-based access to LLM features
+          - Data classification enforcement
+          - Audit logging for sensitive queries
+    cwes: ["CWE-200", "CWE-359", "CWE-532"]
+    capecs: ["CAPEC-118", "CAPEC-169"]
+    atlas_techniques: ["AML.T0024", "AML.T0025"]
+    severity: "high"
+
+  LLM07:
+    id: "LLM07"
+    name: "Insecure Plugin Design"
+    description: |
+      LLM plugins with inadequate access controls, input validation,
+      or isolation, enabling attacks through the plugin interface.
+    stride_categories: ["tampering", "elevation_of_privilege", "spoofing"]
+    attack_vectors:
+      - "Plugin parameter injection"
+      - "Excessive plugin permissions"
+      - "Cross-plugin attacks"
+      - "OAuth token theft via plugins"
+    impacts:
+      - "Unauthorized data access"
+      - "Privilege escalation"
+      - "Remote code execution"
+      - "Account compromise"
+    mitigations:
+      - id: "LLM07-M01"
+        name: "Plugin authentication"
+        description: "Authenticate and authorize plugin calls"
+        implementation: |
+          - Signed plugin requests
+          - OAuth 2.0 for plugin auth
+          - Mutual TLS for plugin communication
+      - id: "LLM07-M02"
+        name: "Input validation"
+        description: "Validate all plugin inputs"
+        implementation: |
+          - Schema validation for parameters
+          - Type checking and bounds validation
+          - Sanitization of string inputs
+      - id: "LLM07-M03"
+        name: "Least privilege"
+        description: "Minimize plugin permissions"
+        implementation: |
+          - Capability-based permissions
+          - Scoped OAuth tokens
+          - Just-in-time privilege escalation
+    cwes: ["CWE-284", "CWE-862", "CWE-863"]
+    capecs: ["CAPEC-122", "CAPEC-233"]
+    severity: "high"
+
+  LLM08:
+    id: "LLM08"
+    name: "Excessive Agency"
+    description: |
+      Granting LLM too much autonomy to take impactful actions without
+      adequate human oversight or guardrails.
+    stride_categories: ["elevation_of_privilege", "repudiation"]
+    attack_vectors:
+      - "Autonomous harmful actions"
+      - "Cascading failures from automated decisions"
+      - "Unintended scope expansion"
+      - "Exploitation of broad permissions"
+    impacts:
+      - "Unintended system modifications"
+      - "Data loss or corruption"
+      - "Financial losses"
+      - "Reputation damage"
+    mitigations:
+      - id: "LLM08-M01"
+        name: "Scope limitation"
+        description: "Limit LLM's scope of actions"
+        implementation: |
+          - Define explicit action allowlists
+          - Implement action rate limits
+          - Restrict to specific domains/resources
+      - id: "LLM08-M02"
+        name: "Human oversight"
+        description: "Require human approval for high-impact actions"
+        implementation: |
+          - Approval workflows for sensitive operations
+          - Real-time monitoring and alerting
+          - Kill switch capabilities
+      - id: "LLM08-M03"
+        name: "Reversibility"
+        description: "Ensure actions can be undone"
+        implementation: |
+          - Implement undo/rollback mechanisms
+          - Soft deletes instead of hard deletes
+          - Backup before modification
+    cwes: ["CWE-250", "CWE-269"]
+    capecs: ["CAPEC-122"]
+    severity: "high"
+
+  LLM09:
+    id: "LLM09"
+    name: "Overreliance"
+    description: |
+      Excessive dependence on LLM outputs without adequate verification,
+      leading to misinformation, security issues, or poor decisions.
+    stride_categories: ["repudiation", "tampering"]
+    attack_vectors:
+      - "Hallucinated security advice"
+      - "Incorrect code with vulnerabilities"
+      - "Fabricated facts and citations"
+      - "Biased recommendations"
+    impacts:
+      - "Security vulnerabilities in generated code"
+      - "Misinformed business decisions"
+      - "Compliance failures"
+      - "Reputation damage"
+    mitigations:
+      - id: "LLM09-M01"
+        name: "Output verification"
+        description: "Validate LLM outputs before use"
+        implementation: |
+          - Automated fact-checking where possible
+          - Code review for generated code
+          - Citation verification
+      - id: "LLM09-M02"
+        name: "User education"
+        description: "Train users on LLM limitations"
+        implementation: |
+          - Clear disclaimers on LLM outputs
+          - Training on critical evaluation
+          - Guidelines for appropriate use
+      - id: "LLM09-M03"
+        name: "Confidence indicators"
+        description: "Display confidence levels for outputs"
+        implementation: |
+          - Uncertainty quantification
+          - Source attribution where available
+          - Highlight areas of low confidence
+    cwes: ["CWE-754", "CWE-1024"]
+    severity: "medium"
+
+  LLM10:
+    id: "LLM10"
+    name: "Model Theft"
+    description: |
+      Unauthorized access, copying, or extraction of proprietary LLM models,
+      including model weights, architecture, or training data.
+    stride_categories: ["information_disclosure", "spoofing"]
+    attack_vectors:
+      - "API-based model extraction"
+      - "Side-channel attacks on model inference"
+      - "Insider threats"
+      - "Model inversion attacks"
+    impacts:
+      - "Intellectual property theft"
+      - "Competitive advantage loss"
+      - "Revenue loss"
+      - "Model replication by adversaries"
+    mitigations:
+      - id: "LLM10-M01"
+        name: "Access controls"
+        description: "Restrict model access"
+        implementation: |
+          - API authentication and authorization
+          - Rate limiting to prevent extraction
+          - Watermarking model outputs
+      - id: "LLM10-M02"
+        name: "Monitoring"
+        description: "Detect extraction attempts"
+        implementation: |
+          - Anomaly detection on API usage
+          - Query pattern analysis
+          - Alert on suspicious access patterns
+      - id: "LLM10-M03"
+        name: "Technical protections"
+        description: "Make extraction harder"
+        implementation: |
+          - Output perturbation
+          - Encrypted model weights
+          - Secure enclaves for inference
+    cwes: ["CWE-284", "CWE-522"]
+    capecs: ["CAPEC-545"]
+    atlas_techniques: ["AML.T0044", "AML.T0035"]
+    severity: "high"
+
+# =============================================================================
+# AI/ML COMPONENT STRIDE MAPPINGS
+# =============================================================================
+
+ai_components:
+  llm_inference_service:
+    type: "process"
+    description: "LLM inference endpoint handling user queries"
+    stride_threats:
+      spoofing:
+        - id: "AI-S-INF-001"
+          name: "Model impersonation"
+          description: "Attacker deploys fake model endpoint"
+          mitigations: ["API authentication", "Model fingerprinting", "Certificate pinning"]
+          cwes: ["CWE-290"]
+      tampering:
+        - id: "AI-T-INF-001"
+          name: "Prompt injection"
+          description: "Malicious prompts alter model behavior"
+          mitigations: ["Input sanitization", "Prompt isolation", "Output validation"]
+          cwes: ["CWE-77", "CWE-94"]
+        - id: "AI-T-INF-002"
+          name: "Response manipulation"
+          description: "Man-in-the-middle modifies model outputs"
+          mitigations: ["TLS encryption", "Response signing", "Integrity checks"]
+          cwes: ["CWE-319"]
+      repudiation:
+        - id: "AI-R-INF-001"
+          name: "Unattributable AI actions"
+          description: "Cannot trace AI decisions to inputs"
+          mitigations: ["Comprehensive logging", "Input/output correlation", "Audit trails"]
+          cwes: ["CWE-778"]
+      information_disclosure:
+        - id: "AI-I-INF-001"
+          name: "Training data leakage"
+          description: "Model reveals training data through outputs"
+          mitigations: ["Differential privacy", "Output filtering", "Data sanitization"]
+          cwes: ["CWE-200"]
+        - id: "AI-I-INF-002"
+          name: "System prompt extraction"
+          description: "Attacker extracts system configuration"
+          mitigations: ["Prompt protection", "Output monitoring", "Configuration isolation"]
+          cwes: ["CWE-497"]
+      denial_of_service:
+        - id: "AI-D-INF-001"
+          name: "Resource exhaustion"
+          description: "Complex prompts consume excessive resources"
+          mitigations: ["Rate limiting", "Token limits", "Timeout controls"]
+          cwes: ["CWE-400"]
+      elevation_of_privilege:
+        - id: "AI-E-INF-001"
+          name: "Prompt-based privilege escalation"
+          description: "Prompts trick model into elevated actions"
+          mitigations: ["Action allowlists", "Human approval", "Capability limits"]
+          cwes: ["CWE-269"]
+
+  rag_retrieval:
+    type: "process"
+    description: "Retrieval-Augmented Generation document retrieval"
+    stride_threats:
+      spoofing:
+        - id: "AI-S-RAG-001"
+          name: "Poisoned document source"
+          description: "Attacker injects malicious documents"
+          mitigations: ["Source verification", "Content signing", "Document provenance"]
+          cwes: ["CWE-494"]
+      tampering:
+        - id: "AI-T-RAG-001"
+          name: "Index poisoning"
+          description: "Attacker modifies vector embeddings"
+          mitigations: ["Index integrity checks", "Access controls", "Versioning"]
+          cwes: ["CWE-1321"]
+        - id: "AI-T-RAG-002"
+          name: "Indirect prompt injection"
+          description: "Malicious content in retrieved documents"
+          mitigations: ["Document sanitization", "Content classification", "Prompt isolation"]
+          cwes: ["CWE-94"]
+      information_disclosure:
+        - id: "AI-I-RAG-001"
+          name: "Unauthorized document access"
+          description: "RAG returns documents user shouldn't see"
+          mitigations: ["Document-level ACLs", "User context filtering", "Access logging"]
+          cwes: ["CWE-200"]
+      denial_of_service:
+        - id: "AI-D-RAG-001"
+          name: "Retrieval flooding"
+          description: "Excessive retrieval requests"
+          mitigations: ["Query rate limiting", "Cache management", "Resource quotas"]
+          cwes: ["CWE-400"]
+
+  vector_database:
+    type: "data_store"
+    description: "Vector embedding storage for semantic search"
+    stride_threats:
+      tampering:
+        - id: "AI-T-VDB-001"
+          name: "Embedding manipulation"
+          description: "Attacker modifies stored embeddings"
+          mitigations: ["Write access controls", "Integrity monitoring", "Backup verification"]
+          cwes: ["CWE-1321"]
+      information_disclosure:
+        - id: "AI-I-VDB-001"
+          name: "Embedding inversion"
+          description: "Reconstruct original data from embeddings"
+          mitigations: ["Dimensionality reduction", "Noise addition", "Access controls"]
+          cwes: ["CWE-200"]
+      denial_of_service:
+        - id: "AI-D-VDB-001"
+          name: "Storage exhaustion"
+          description: "Excessive embedding storage"
+          mitigations: ["Storage quotas", "Retention policies", "Index optimization"]
+          cwes: ["CWE-400"]
+
+  model_training_pipeline:
+    type: "process"
+    description: "ML model training and fine-tuning workflow"
+    stride_threats:
+      tampering:
+        - id: "AI-T-TRAIN-001"
+          name: "Training data poisoning"
+          description: "Malicious samples in training data"
+          mitigations: ["Data validation", "Anomaly detection", "Provenance tracking"]
+          cwes: ["CWE-502"]
+        - id: "AI-T-TRAIN-002"
+          name: "Backdoor injection"
+          description: "Hidden triggers in trained model"
+          mitigations: ["Model auditing", "Behavioral testing", "Trigger detection"]
+          cwes: ["CWE-506"]
+      repudiation:
+        - id: "AI-R-TRAIN-001"
+          name: "Untraceable model changes"
+          description: "Cannot attribute model modifications"
+          mitigations: ["Training logs", "Model versioning", "Change tracking"]
+          cwes: ["CWE-778"]
+      information_disclosure:
+        - id: "AI-I-TRAIN-001"
+          name: "Training data exposure"
+          description: "Leakage of sensitive training data"
+          mitigations: ["Data encryption", "Access controls", "Data anonymization"]
+          cwes: ["CWE-200"]
+      denial_of_service:
+        - id: "AI-D-TRAIN-001"
+          name: "Training resource exhaustion"
+          description: "Excessive compute during training"
+          mitigations: ["Resource quotas", "Job scheduling", "Cost monitoring"]
+          cwes: ["CWE-400"]
+
+  agent_tool_executor:
+    type: "process"
+    description: "LLM agent tool/function execution environment"
+    stride_threats:
+      spoofing:
+        - id: "AI-S-AGENT-001"
+          name: "Tool impersonation"
+          description: "Malicious tool pretending to be legitimate"
+          mitigations: ["Tool authentication", "Code signing", "Tool registry"]
+          cwes: ["CWE-290"]
+      tampering:
+        - id: "AI-T-AGENT-001"
+          name: "Tool parameter injection"
+          description: "Malicious parameters passed to tools"
+          mitigations: ["Parameter validation", "Type checking", "Allowlist validation"]
+          cwes: ["CWE-77"]
+        - id: "AI-T-AGENT-002"
+          name: "Tool chain manipulation"
+          description: "Attacker alters tool execution sequence"
+          mitigations: ["Execution plan validation", "Step-by-step approval", "Rollback capability"]
+          cwes: ["CWE-94"]
+      repudiation:
+        - id: "AI-R-AGENT-001"
+          name: "Unaudited tool actions"
+          description: "Tool actions without accountability"
+          mitigations: ["Action logging", "User attribution", "Immutable audit trail"]
+          cwes: ["CWE-778"]
+      elevation_of_privilege:
+        - id: "AI-E-AGENT-001"
+          name: "Tool privilege abuse"
+          description: "Agent uses tools beyond intended scope"
+          mitigations: ["Capability-based access", "Scope restrictions", "Permission boundaries"]
+          cwes: ["CWE-269"]
+
+# =============================================================================
+# MITRE ATLAS TECHNIQUE MAPPINGS (Extended v2025.10)
+# Reference: https://atlas.mitre.org/
+# Statistics: 15 tactics, 66 techniques, 46 sub-techniques (Oct 2025)
+# =============================================================================
+
+atlas_mappings:
+  # -------------------------------------------------------------------------
+  # RECONNAISSANCE
+  # -------------------------------------------------------------------------
+  reconnaissance:
+    - technique_id: "AML.T0000"
+      name: "ML Model Discovery"
+      description: "Identify ML models in target environment through API probing, documentation analysis, or error message analysis"
+      related_owasp: ["LLM10"]
+      mitigations: ["Minimize model exposure", "API obfuscation", "Generic error messages"]
+
+    - technique_id: "AML.T0001"
+      name: "ML Artifact Collection"
+      description: "Collect publicly available ML artifacts including model cards, training datasets, and architecture documentation"
+      related_owasp: ["LLM10", "LLM06"]
+      mitigations: ["Limit public model information", "Watermark documentation"]
+
+    - technique_id: "AML.T0002"
+      name: "Active Scanning"
+      description: "Probe ML systems to identify model types, input formats, and behavioral characteristics"
+      related_owasp: ["LLM10"]
+      mitigations: ["Rate limiting", "Anomaly detection on query patterns"]
+
+  # -------------------------------------------------------------------------
+  # RESOURCE DEVELOPMENT
+  # -------------------------------------------------------------------------
+  resource_development:
+    - technique_id: "AML.T0010"
+      name: "ML Supply Chain Compromise"
+      description: "Compromise ML development supply chain including model hubs, training pipelines, or dependencies"
+      related_owasp: ["LLM05"]
+      mitigations: ["Vendor vetting", "Dependency scanning", "Model provenance verification"]
+
+    - technique_id: "AML.T0011"
+      name: "Acquire Public ML Artifacts"
+      description: "Obtain publicly available models, datasets, or tools to use in attacks"
+      related_owasp: ["LLM05"]
+      mitigations: ["Monitor artifact usage", "Implement behavioral testing"]
+
+    - technique_id: "AML.T0012"
+      name: "Develop Adversarial ML Capabilities"
+      description: "Create tools and techniques for generating adversarial examples or attacking ML systems"
+      related_owasp: ["LLM01", "LLM03"]
+      mitigations: ["Red team testing", "Adversarial robustness evaluation"]
+
+    - technique_id: "AML.T0013"
+      name: "Establish Accounts"
+      description: "Create accounts on ML platforms, model hubs, or cloud AI services for attack operations"
+      related_owasp: ["LLM05", "LLM07"]
+      mitigations: ["Account verification", "Usage monitoring"]
+
+  # -------------------------------------------------------------------------
+  # INITIAL ACCESS
+  # -------------------------------------------------------------------------
+  initial_access:
+    - technique_id: "AML.T0019"
+      name: "Craft Poisoned Training Data"
+      description: "Create malicious training samples to influence model behavior during training or fine-tuning"
+      related_owasp: ["LLM03"]
+      mitigations: ["Data validation", "Anomaly detection", "Provenance tracking"]
+
+    - technique_id: "AML.T0020"
+      name: "Poison Training Data"
+      description: "Inject malicious samples into training datasets to create backdoors or bias"
+      related_owasp: ["LLM03"]
+      mitigations: ["Data integrity verification", "Training data auditing"]
+      sub_techniques:
+        - id: "AML.T0020.001"
+          name: "Poison RAG Data"
+          description: "Inject malicious documents into RAG knowledge bases"
+        - id: "AML.T0020.002"
+          name: "Poison Fine-tuning Data"
+          description: "Manipulate fine-tuning datasets to embed specific behaviors"
+
+    - technique_id: "AML.T0051"
+      name: "LLM Prompt Injection"
+      description: "Manipulate LLM behavior through crafted prompts that override system instructions"
+      related_owasp: ["LLM01"]
+      mitigations: ["Input sanitization", "Prompt isolation", "Output validation"]
+      sub_techniques:
+        - id: "AML.T0051.001"
+          name: "Direct Prompt Injection"
+          description: "Malicious instructions directly in user input to override system prompts"
+        - id: "AML.T0051.002"
+          name: "Indirect Prompt Injection"
+          description: "Malicious content embedded in external data sources processed by LLM"
+
+    - technique_id: "AML.T0052"
+      name: "Phishing for ML Credentials"
+      description: "Obtain ML system credentials through social engineering"
+      related_owasp: ["LLM05"]
+      mitigations: ["MFA", "Security awareness training"]
+
+  # -------------------------------------------------------------------------
+  # ML ATTACK STAGING
+  # -------------------------------------------------------------------------
+  ml_attack_staging:
+    - technique_id: "AML.T0043"
+      name: "Craft Adversarial Data"
+      description: "Create inputs designed to cause misclassification or unexpected model behavior"
+      related_owasp: ["LLM01"]
+      mitigations: ["Input validation", "Adversarial training", "Ensemble methods"]
+      sub_techniques:
+        - id: "AML.T0043.001"
+          name: "White-Box Adversarial Examples"
+          description: "Generate adversarial inputs with full model knowledge"
+        - id: "AML.T0043.002"
+          name: "Black-Box Adversarial Examples"
+          description: "Generate adversarial inputs through query-based optimization"
+        - id: "AML.T0043.003"
+          name: "Physical Adversarial Examples"
+          description: "Create real-world objects that cause misclassification"
+
+    - technique_id: "AML.T0040"
+      name: "ML Model Inference API Access"
+      description: "Gain access to model inference APIs for reconnaissance or attack execution"
+      related_owasp: ["LLM10"]
+      mitigations: ["API authentication", "Rate limiting", "Usage monitoring"]
+
+    - technique_id: "AML.T0041"
+      name: "ML Model Training Access"
+      description: "Gain access to model training infrastructure or pipelines"
+      related_owasp: ["LLM03", "LLM05"]
+      mitigations: ["Access controls", "Training pipeline security"]
+
+    - technique_id: "AML.T0042"
+      name: "Verify Attack"
+      description: "Test adversarial inputs against target model before executing attack"
+      related_owasp: ["LLM01"]
+      mitigations: ["Query monitoring", "Anomaly detection"]
+
+  # -------------------------------------------------------------------------
+  # EXECUTION
+  # -------------------------------------------------------------------------
+  execution:
+    - technique_id: "AML.T0053"
+      name: "Command and Scripting Interpreter via LLM"
+      description: "Use LLM to generate and execute malicious code or commands"
+      related_owasp: ["LLM02", "LLM08"]
+      mitigations: ["Code execution sandboxing", "Output validation"]
+
+    - technique_id: "AML.T0054"
+      name: "LLM Plugin Abuse"
+      description: "Exploit LLM plugins to execute unauthorized actions"
+      related_owasp: ["LLM07", "LLM08"]
+      mitigations: ["Plugin sandboxing", "Capability restrictions"]
+
+    - technique_id: "AML.T0055"
+      name: "Agent Task Hijacking"
+      description: "Manipulate AI agent task execution through prompt injection or context manipulation"
+      related_owasp: ["LLM01", "LLM08"]
+      mitigations: ["Task validation", "Human-in-the-loop for critical actions"]
+
+  # -------------------------------------------------------------------------
+  # PERSISTENCE
+  # -------------------------------------------------------------------------
+  persistence:
+    - technique_id: "AML.T0030"
+      name: "Backdoor ML Model"
+      description: "Embed hidden triggers in model that activate specific behaviors"
+      related_owasp: ["LLM03", "LLM05"]
+      mitigations: ["Model auditing", "Behavioral testing", "Trigger detection"]
+
+    - technique_id: "AML.T0031"
+      name: "Compromise ML Development Environment"
+      description: "Maintain access through compromised ML development tools or infrastructure"
+      related_owasp: ["LLM05"]
+      mitigations: ["Environment hardening", "Supply chain security"]
+
+  # -------------------------------------------------------------------------
+  # DEFENSE EVASION
+  # -------------------------------------------------------------------------
+  defense_evasion:
+    - technique_id: "AML.T0015"
+      name: "Evade ML Model"
+      description: "Craft inputs that evade detection by ML-based security systems"
+      related_owasp: ["LLM01"]
+      mitigations: ["Ensemble detection", "Adversarial training"]
+
+    - technique_id: "AML.T0016"
+      name: "Obfuscate Adversarial Data"
+      description: "Hide malicious content within inputs to bypass content filters"
+      related_owasp: ["LLM01"]
+      mitigations: ["Multi-layer content analysis", "Semantic inspection"]
+
+    - technique_id: "AML.T0017"
+      name: "Disguise Adversarial Samples"
+      description: "Make adversarial inputs appear benign to human reviewers"
+      related_owasp: ["LLM01", "LLM06"]
+      mitigations: ["Human review sampling", "Dual inspection"]
+
+  # -------------------------------------------------------------------------
+  # ML MODEL ACCESS
+  # -------------------------------------------------------------------------
+  ml_model_access:
+    - technique_id: "AML.T0044"
+      name: "Full ML Model Access"
+      description: "Obtain complete access to model weights and architecture"
+      related_owasp: ["LLM10"]
+      mitigations: ["Model encryption", "Access controls", "Insider threat monitoring"]
+
+    - technique_id: "AML.T0045"
+      name: "ML Model Inference API Access"
+      description: "Access model through inference APIs for extraction or manipulation"
+      related_owasp: ["LLM10"]
+      mitigations: ["Rate limiting", "Query monitoring", "Output perturbation"]
+      sub_techniques:
+        - id: "AML.T0045.001"
+          name: "API-Based Model Extraction"
+          description: "Extract model functionality through repeated API queries"
+        - id: "AML.T0045.002"
+          name: "Membership Inference"
+          description: "Determine if specific data was used in training"
+
+  # -------------------------------------------------------------------------
+  # COLLECTION
+  # -------------------------------------------------------------------------
+  collection:
+    - technique_id: "AML.T0035"
+      name: "ML Artifact Collection from Victim"
+      description: "Collect ML artifacts including models, datasets, and configurations from compromised systems"
+      related_owasp: ["LLM10", "LLM06"]
+      mitigations: ["Data loss prevention", "Artifact encryption"]
+
+  # -------------------------------------------------------------------------
+  # EXFILTRATION
+  # -------------------------------------------------------------------------
+  exfiltration:
+    - technique_id: "AML.T0024"
+      name: "Exfiltration via ML Inference API"
+      description: "Extract training data or sensitive information through model queries"
+      related_owasp: ["LLM06"]
+      mitigations: ["Differential privacy", "Output filtering", "Query monitoring"]
+
+    - technique_id: "AML.T0025"
+      name: "Model Inversion"
+      description: "Reconstruct training data from model outputs"
+      related_owasp: ["LLM06"]
+      mitigations: ["Output perturbation", "Differential privacy"]
+
+    - technique_id: "AML.T0026"
+      name: "Training Data Extraction"
+      description: "Directly extract memorized training data from model"
+      related_owasp: ["LLM06"]
+      mitigations: ["Data deduplication", "Memorization detection"]
+
+  # -------------------------------------------------------------------------
+  # IMPACT
+  # -------------------------------------------------------------------------
+  impact:
+    - technique_id: "AML.T0046"
+      name: "Denial of ML Service"
+      description: "Disrupt ML service availability through resource exhaustion or model degradation"
+      related_owasp: ["LLM04"]
+      mitigations: ["Resource quotas", "Rate limiting", "Model redundancy"]
+
+    - technique_id: "AML.T0047"
+      name: "ML-Enabled Information Manipulation"
+      description: "Use ML systems to generate or spread misinformation"
+      related_owasp: ["LLM09"]
+      mitigations: ["Output attribution", "Fact verification"]
+
+    - technique_id: "AML.T0048"
+      name: "Financial Harm via ML"
+      description: "Cause financial damage through ML system manipulation"
+      related_owasp: ["LLM08"]
+      mitigations: ["Transaction limits", "Human approval for high-value operations"]
+
+  # -------------------------------------------------------------------------
+  # AI AGENT SPECIFIC (Added Oct 2025 - Zenity Labs collaboration)
+  # -------------------------------------------------------------------------
+  agent_attacks:
+    - technique_id: "AML.T0060"
+      name: "Tool Poisoning"
+      description: "Embed malicious instructions in MCP tool descriptions visible to LLM but not users"
+      related_owasp: ["LLM07", "LLM08"]
+      mitigations: ["Tool description auditing", "Description sanitization"]
+      reference: "https://www.elastic.co/security-labs/mcp-tools-attack-defense-recommendations"
+
+    - technique_id: "AML.T0061"
+      name: "Tool Name Collision"
+      description: "Register tools with names similar to legitimate tools to intercept agent calls"
+      related_owasp: ["LLM07"]
+      mitigations: ["Tool namespace isolation", "Canonical tool registry"]
+
+    - technique_id: "AML.T0062"
+      name: "Rug Pull Attack"
+      description: "MCP tool behaves benignly initially then changes behavior after gaining trust"
+      related_owasp: ["LLM05", "LLM07"]
+      mitigations: ["Tool version pinning", "Behavioral monitoring", "Immutable tool definitions"]
+
+    - technique_id: "AML.T0063"
+      name: "Context Poisoning"
+      description: "Manipulate shared state or persistent context consumed by MCP clients"
+      related_owasp: ["LLM01", "LLM07"]
+      mitigations: ["Context integrity verification", "State isolation"]
+
+    - technique_id: "AML.T0064"
+      name: "Cross-Agent Prompt Injection"
+      description: "Inject prompts through one agent to affect behavior of another in multi-agent systems"
+      related_owasp: ["LLM01"]
+      mitigations: ["Agent isolation", "Cross-agent output sanitization"]
+
+    - technique_id: "AML.T0065"
+      name: "Function Calling Abuse"
+      description: "Manipulate function/tool calling to execute unintended operations"
+      related_owasp: ["LLM07", "LLM08"]
+      mitigations: ["Function allowlisting", "Parameter validation", "Execution sandboxing"]
+
+# =============================================================================
+# MULTIMODAL ATTACK VECTORS (Added v2.0)
+# Reference: arXiv multimodal injection research 2025
+# =============================================================================
+
+multimodal_attacks:
+  # -------------------------------------------------------------------------
+  # VISUAL PROMPT INJECTION
+  # -------------------------------------------------------------------------
+  visual_injection:
+    - attack_id: "MMA-VPI-001"
+      name: "Mind Map Visual Injection"
+      description: |
+        Embed malicious instructions within mind map or diagram images that are
+        semantically relevant to the visual content but contain hidden prompts.
+        The LLM processes these as legitimate user instructions.
+      attack_vector: "Inject instructions in visual hierarchy elements (nodes, branches)"
+      target_modalities: ["image", "diagram", "infographic"]
+      effectiveness:
+        reported_asr: "76% on GPT-4V, 82% on Claude Vision"
+        conditions: "Requires multi-turn conversation context"
+      related_atlas: ["AML.T0051.002"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Image preprocessing and OCR scanning"
+        - "Separate visual content from instruction parsing"
+        - "Content safety classifiers for extracted text"
+      references:
+        - "https://arxiv.org/abs/2503.XXXXX"  # Mind Map injection paper
+
+    - attack_id: "MMA-VPI-002"
+      name: "Chameleon Scaling Attack"
+      description: |
+        Exploit resolution scaling vulnerabilities where malicious content is
+        visible only at certain zoom levels or image scales. Content appears
+        benign at standard resolution but reveals instructions when processed.
+      attack_vector: "Embed instructions at specific frequency bands exploiting bicubic interpolation"
+      target_modalities: ["image", "screenshot", "document scan"]
+      effectiveness:
+        reported_asr: "84.5% across multiple scaling factors"
+        conditions: "Effective against default image preprocessing pipelines"
+      related_atlas: ["AML.T0016", "AML.T0051.002"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Multi-scale image analysis"
+        - "Frequency domain inspection"
+        - "Normalize image preprocessing pipeline"
+      references:
+        - "Chameleon Framework - arXiv 2025"
+
+    - attack_id: "MMA-VPI-003"
+      name: "Steganographic Prompt Embedding"
+      description: |
+        Hide malicious prompts using steganographic techniques within images.
+        Instructions encoded in least-significant bits, metadata, or color channels
+        can be extracted by the model during processing.
+      attack_vector: "LSB encoding, EXIF metadata, hidden color channel data"
+      target_modalities: ["image", "photograph", "screenshot"]
+      effectiveness:
+        reported_asr: "45-65% depending on model architecture"
+        conditions: "Model must have sensitivity to subtle pixel variations"
+      related_atlas: ["AML.T0016", "AML.T0017"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Metadata stripping"
+        - "Image normalization and compression"
+        - "Steganalysis preprocessing"
+      references:
+        - "Steganographic Attacks on Multimodal LLMs 2025"
+
+    - attack_id: "MMA-VPI-004"
+      name: "Typography-Based Injection"
+      description: |
+        Use specific fonts, text styles, or Unicode characters within images
+        that appear normal to humans but are parsed differently by OCR/vision
+        components, enabling instruction smuggling.
+      attack_vector: "Homoglyph substitution, invisible Unicode, font rendering exploits"
+      target_modalities: ["text in images", "screenshots", "documents"]
+      effectiveness:
+        reported_asr: "55-70% on vision-language models"
+        conditions: "Requires understanding of target model's text extraction"
+      related_atlas: ["AML.T0016"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Unicode normalization"
+        - "Multiple OCR engine validation"
+        - "Font standardization in preprocessing"
+
+  # -------------------------------------------------------------------------
+  # AUDIO PROMPT INJECTION
+  # -------------------------------------------------------------------------
+  audio_injection:
+    - attack_id: "MMA-API-001"
+      name: "Ultrasonic Command Injection"
+      description: |
+        Embed commands in ultrasonic frequencies (>18kHz) inaudible to humans
+        but processable by audio models. Can be hidden in music, podcasts, or
+        ambient audio.
+      attack_vector: "High-frequency audio embedding"
+      target_modalities: ["audio", "voice", "speech"]
+      effectiveness:
+        reported_asr: "30-50% on speech recognition models"
+        conditions: "Requires audio model to process full frequency range"
+      related_atlas: ["AML.T0016"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Low-pass filtering (18kHz cutoff)"
+        - "Audio normalization"
+        - "Spectral analysis for anomalies"
+
+    - attack_id: "MMA-API-002"
+      name: "Whispered Prompt Attack"
+      description: |
+        Embed very quiet whispered commands overlaid on normal audio that
+        are processed by speech recognition but not consciously heard by
+        human listeners.
+      attack_vector: "Low-amplitude audio overlay"
+      target_modalities: ["audio", "video with audio"]
+      effectiveness:
+        reported_asr: "40-60% on Whisper and similar models"
+        conditions: "Effective in noisy environments where whispers blend in"
+      related_atlas: ["AML.T0051.002"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Volume normalization"
+        - "Multi-channel audio verification"
+        - "Human confirmation for sensitive commands"
+
+  # -------------------------------------------------------------------------
+  # CROSS-MODAL ATTACKS
+  # -------------------------------------------------------------------------
+  cross_modal_attacks:
+    - attack_id: "MMA-CMA-001"
+      name: "Modal Confusion Attack"
+      description: |
+        Exploit inconsistencies between how different modalities are processed
+        by presenting contradictory information across text, image, and audio
+        to manipulate model behavior.
+      attack_vector: "Conflicting signals across modalities"
+      target_modalities: ["multimodal", "vision-language", "audio-visual"]
+      effectiveness:
+        reported_asr: "50-70% when modalities disagree"
+        conditions: "Model must weight modalities differently in different contexts"
+      related_atlas: ["AML.T0043"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Cross-modal consistency checking"
+        - "Modal priority enforcement"
+        - "Conflict resolution protocols"
+
+    - attack_id: "MMA-CMA-002"
+      name: "Adversarial Patch Attack"
+      description: |
+        Apply physical adversarial patches to real-world objects that cause
+        misclassification or trigger specific model behaviors when captured
+        by cameras or sensors.
+      attack_vector: "Printed patches, digital overlays, QR-code style triggers"
+      target_modalities: ["camera input", "video", "real-world objects"]
+      effectiveness:
+        reported_asr: "70-90% for targeted misclassification"
+        conditions: "Patch must be within camera field of view"
+      related_atlas: ["AML.T0043.003"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Patch detection algorithms"
+        - "Input image segmentation analysis"
+        - "Anomaly detection on visual features"
+      references:
+        - "Physical Adversarial Examples in the Wild 2025"
+
+# =============================================================================
+# EMERGING JAILBREAK TECHNIQUES (Added v2.0)
+# Reference: ACL 2025 Jailbreak Taxonomy, MDPI Security Research
+# =============================================================================
+
+emerging_jailbreaks:
+  # -------------------------------------------------------------------------
+  # TOKENIZATION LAYER ATTACKS
+  # -------------------------------------------------------------------------
+  tokenization_attacks:
+    - attack_id: "EJB-TOK-001"
+      name: "TokenBreak"
+      description: |
+        Target the tokenization layer to bypass content classifiers. By crafting
+        inputs that tokenize differently than expected, attackers can smuggle
+        harmful content past safety filters that operate on raw text.
+      attack_vector: "Exploit tokenizer edge cases, rare token combinations, subword boundaries"
+      technique_details:
+        - "Inserting zero-width characters between words"
+        - "Using rare Unicode that maps to unexpected tokens"
+        - "Exploiting BPE merge rules"
+      effectiveness:
+        reported_asr: "60-80% against token-based filters"
+        conditions: "Requires knowledge of target tokenizer"
+      related_atlas: ["AML.T0016"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Pre-tokenization text normalization"
+        - "Post-tokenization content filtering"
+        - "Multi-tokenizer ensemble analysis"
+      references:
+        - "TokenBreak: Breaking Content Classifiers - ACL 2025"
+
+    - attack_id: "EJB-TOK-002"
+      name: "Token Smuggling"
+      description: |
+        Encode harmful content using token IDs or special sequences that
+        bypass text-based safety checks but are decoded correctly by the model.
+      attack_vector: "Direct token ID references, special token abuse"
+      effectiveness:
+        reported_asr: "40-55% on models with exposed tokenizers"
+        conditions: "Model must have predictable tokenization"
+      related_atlas: ["AML.T0016"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Decoded content validation"
+        - "Token sequence anomaly detection"
+
+  # -------------------------------------------------------------------------
+  # REASONING EXPLOITATION
+  # -------------------------------------------------------------------------
+  reasoning_attacks:
+    - attack_id: "EJB-RSN-001"
+      name: "Fallacy Failure"
+      description: |
+        Exploit flawed reasoning patterns in LLMs by presenting logically
+        invalid arguments that the model accepts as valid, leading it to
+        harmful conclusions.
+      attack_vector: "False dichotomies, slippery slopes, appeal to authority in prompts"
+      technique_details:
+        - "Present harmful request as logical conclusion of accepted premises"
+        - "Use chain-of-thought to lead model down unsafe reasoning paths"
+        - "Exploit model's tendency to complete logical chains"
+      effectiveness:
+        reported_asr: "45-65% on reasoning-optimized models"
+        conditions: "More effective on models trained for logical reasoning"
+      related_atlas: ["AML.T0051.001"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Logical fallacy detection"
+        - "Multi-step reasoning validation"
+        - "Conclusion safety checking independent of premises"
+      references:
+        - "Exploiting Logical Flaws in LLMs - MDPI 2025"
+
+    - attack_id: "EJB-RSN-002"
+      name: "Recursive Context Manipulation"
+      description: |
+        Manipulate the model's context window through recursive self-references
+        or infinite loops that gradually shift safety boundaries.
+      attack_vector: "Self-referential prompts, recursive definitions, context pollution"
+      effectiveness:
+        reported_asr: "35-50%"
+        conditions: "Long context windows increase vulnerability"
+      related_atlas: ["AML.T0051.001"]
+      related_owasp: ["LLM01", "LLM04"]
+      mitigations:
+        - "Context depth limits"
+        - "Recursion detection"
+        - "Periodic safety re-evaluation"
+
+  # -------------------------------------------------------------------------
+  # MODEL DISTILLATION ATTACKS
+  # -------------------------------------------------------------------------
+  distillation_attacks:
+    - attack_id: "EJB-DST-001"
+      name: "Weak-to-Strong Jailbreaking"
+      description: |
+        Use smaller, less-aligned models to adversarially modify the decoding
+        process of larger, aligned models. The weak model guides the strong
+        model toward harmful outputs during inference.
+      attack_vector: "Adversarial decoding, logit manipulation, output steering"
+      technique_details:
+        - "Small model provides adversarial token probabilities"
+        - "Combined decoding biases strong model toward harmful content"
+        - "Exploits assumption that safety is in weights, not decoding"
+      effectiveness:
+        reported_asr: "55-75% when attacker controls decoding"
+        conditions: "Requires ability to influence decoding process"
+      related_atlas: ["AML.T0015"]
+      related_owasp: ["LLM01"]
+      mitigations:
+        - "Decoding integrity verification"
+        - "Output distribution monitoring"
+        - "Post-generation safety filtering"
+      references:
+        - "Weak-to-Strong Jailbreaking - arXiv 2025"
+
+    - attack_id: "EJB-DST-002"
+      name: "Fine-tuning Removal Attack"
+      description: |
+        Use targeted fine-tuning to remove safety alignments from models,
+        creating unaligned versions that can be used for harmful purposes.
+      attack_vector: "Adversarial fine-tuning, alignment removal datasets"
+      effectiveness:
+        reported_asr: "90%+ with sufficient fine-tuning data"
+        conditions: "Requires fine-tuning access"
+      related_atlas: ["AML.T0020.002", "AML.T0030"]
+      related_owasp: ["LLM03"]
+      mitigations:
+        - "Fine-tuning access controls"
+        - "Alignment preservation training"
+        - "Model behavior monitoring post-fine-tuning"
+
+  # -------------------------------------------------------------------------
+  # EMERGING THREAT PATTERNS
+  # -------------------------------------------------------------------------
+  emerging_patterns:
+    - attack_id: "EJB-EMG-001"
+      name: "Model Collapse Exploitation"
+      description: |
+        Exploit training data pollution from model-generated content to
+        degrade model safety over time. As models train on their own outputs,
+        safety properties can erode.
+      attack_vector: "Poison training pipelines with adversarial model-generated content"
+      technique_details:
+        - "Generate borderline harmful content at scale"
+        - "Content gets included in future training data"
+        - "Safety boundaries gradually shift"
+      effectiveness:
+        reported_asr: "Long-term degradation over training cycles"
+        conditions: "Requires model to train on web-scraped data"
+      related_atlas: ["AML.T0019", "AML.T0020"]
+      related_owasp: ["LLM03"]
+      mitigations:
+        - "Synthetic content detection in training data"
+        - "Safety benchmark regression testing"
+        - "Training data provenance tracking"
+      references:
+        - "Model Collapse and AI Safety 2025"
+
+    - attack_id: "EJB-EMG-002"
+      name: "Emergent Capability Jailbreaking"
+      description: |
+        Target newly emerged capabilities in larger models that may not have
+        corresponding safety training, exploiting the gap between capability
+        and alignment.
+      attack_vector: "Probe for unaligned emergent behaviors"
+      technique_details:
+        - "Identify capabilities not present in smaller models"
+        - "These capabilities may lack safety fine-tuning"
+        - "Novel prompts targeting untrained capability space"
+      effectiveness:
+        reported_asr: "Variable, highest immediately after capability emergence"
+        conditions: "Most effective on newly scaled models"
+      related_atlas: ["AML.T0000"]
+      related_owasp: ["LLM01", "LLM08"]
+      mitigations:
+        - "Capability-safety co-evolution"
+        - "Extensive red-teaming for new capabilities"
+        - "Staged capability rollouts with safety testing"
+
+    - attack_id: "EJB-EMG-003"
+      name: "Sycophancy Exploitation"
+      description: |
+        Exploit model's tendency to agree with users (sycophancy) to gradually
+        shift its responses toward harmful content through leading questions
+        and confirmation seeking.
+      attack_vector: "Incremental agreement requests, positive reinforcement loops"
+      effectiveness:
+        reported_asr: "35-55% with patient multi-turn approaches"
+        conditions: "More effective on RLHF-aligned models"
+      related_atlas: ["AML.T0051.001"]
+      related_owasp: ["LLM01", "LLM09"]
+      mitigations:
+        - "Sycophancy detection"
+        - "Independent position validation"
+        - "Multi-turn safety consistency checks"
+
+# =============================================================================
+# REAL-WORLD CVE REFERENCES (Added v2.0)
+# =============================================================================
+
+cve_references:
+  mcp_vulnerabilities:
+    - cve_id: "CVE-2025-32711"
+      name: "EchoLeak"
+      description: "MCP server vulnerability allowing exfiltration through tool descriptions"
+      affected: "MCP implementations with dynamic tool descriptions"
+      severity: "HIGH"
+      related_techniques: ["AML.T0060", "AML.T0063"]
+      reference: "https://nvd.nist.gov/vuln/detail/CVE-2025-32711"
+
+    - cve_id: "CVE-2025-6514"
+      name: "MCP Command Injection"
+      description: "Command injection through improperly sanitized MCP tool parameters"
+      affected: "43% of surveyed MCP implementations"
+      severity: "CRITICAL"
+      related_techniques: ["AML.T0065", "AML.T0053"]
+      reference: "https://nvd.nist.gov/vuln/detail/CVE-2025-6514"
+
+    - cve_id: "CVE-2025-49596"
+      name: "MCP Tool Shadowing"
+      description: "Malicious MCP servers can shadow legitimate tools via name collision"
+      affected: "MCP clients without tool namespace isolation"
+      severity: "HIGH"
+      related_techniques: ["AML.T0061"]
+      reference: "https://nvd.nist.gov/vuln/detail/CVE-2025-49596"
+
+  llm_framework_vulnerabilities:
+    - cve_id: "CVE-2024-XXXXX"
+      name: "LangChain Arbitrary Code Execution"
+      description: "Code execution through unsafe deserialization in agent chains"
+      affected: "LangChain < 0.1.0"
+      severity: "CRITICAL"
+      related_techniques: ["AML.T0053", "AML.T0054"]
+
+    - cve_id: "CVE-2024-XXXXX"
+      name: "Prompt Injection in RAG Pipeline"
+      description: "Indirect prompt injection through poisoned vector database entries"
+      affected: "Multiple RAG implementations"
+      severity: "HIGH"
+      related_techniques: ["AML.T0020.001", "AML.T0051.002"]
+
+# =============================================================================
+# LLM ARCHITECTURE PATTERNS
+# =============================================================================
+
+architecture_patterns:
+  basic_llm_api:
+    name: "Basic LLM API"
+    description: "Simple API wrapper around LLM"
+    components:
+      - "API Gateway"
+      - "LLM Inference Service"
+      - "Prompt Template Store"
+    trust_boundaries:
+      - name: "User to API"
+        type: "network"
+        threats: ["Prompt injection", "DoS", "Data exfiltration"]
+      - name: "API to LLM"
+        type: "process"
+        threats: ["Insecure output handling", "Excessive agency"]
+    recommended_controls:
+      - "Input validation and sanitization"
+      - "Rate limiting and quotas"
+      - "Output filtering"
+      - "Audit logging"
+
+  rag_application:
+    name: "RAG Application"
+    description: "LLM with retrieval-augmented generation"
+    components:
+      - "API Gateway"
+      - "LLM Inference Service"
+      - "Retrieval Service"
+      - "Vector Database"
+      - "Document Store"
+    trust_boundaries:
+      - name: "User to API"
+        type: "network"
+        threats: ["Prompt injection", "DoS"]
+      - name: "Retrieval to Documents"
+        type: "data"
+        threats: ["Indirect injection", "Data poisoning"]
+      - name: "API to Vector DB"
+        type: "process"
+        threats: ["Index poisoning", "Unauthorized access"]
+    recommended_controls:
+      - "Document-level access controls"
+      - "Content sanitization for retrieved docs"
+      - "Embedding integrity verification"
+      - "Query result filtering"
+
+  agent_system:
+    name: "LLM Agent System"
+    description: "LLM with tool/function calling capabilities"
+    components:
+      - "API Gateway"
+      - "LLM Inference Service"
+      - "Tool Registry"
+      - "Tool Executor"
+      - "Action Logger"
+    trust_boundaries:
+      - name: "User to Agent"
+        type: "network"
+        threats: ["Prompt injection", "Excessive agency"]
+      - name: "Agent to Tools"
+        type: "process"
+        threats: ["Tool abuse", "Privilege escalation"]
+      - name: "Tools to External Systems"
+        type: "network"
+        threats: ["Data exfiltration", "Unauthorized actions"]
+    recommended_controls:
+      - "Tool capability restrictions"
+      - "Human-in-the-loop for sensitive actions"
+      - "Action rate limiting"
+      - "Comprehensive action logging"
+      - "Rollback mechanisms"
+
+  multi_model_pipeline:
+    name: "Multi-Model Pipeline"
+    description: "Multiple LLMs in processing pipeline"
+    components:
+      - "Orchestrator"
+      - "Primary LLM"
+      - "Specialist LLMs"
+      - "Output Aggregator"
+    trust_boundaries:
+      - name: "Between Models"
+        type: "process"
+        threats: ["Cascade injection", "Error propagation"]
+      - name: "Orchestrator Control"
+        type: "process"
+        threats: ["Routing manipulation", "Model poisoning"]
+    recommended_controls:
+      - "Inter-model output validation"
+      - "Cascade attack detection"
+      - "Independent model verification"
+      - "Pipeline integrity monitoring"
+
+  # ---------------------------------------------------------------------------
+  # MCP-BASED ARCHITECTURES (Added v2.0)
+  # ---------------------------------------------------------------------------
+  mcp_agent_system:
+    name: "MCP Agent System"
+    description: "LLM agent using Model Context Protocol for tool integration"
+    components:
+      - "MCP Client (LLM Host)"
+      - "MCP Server(s)"
+      - "Tool Registry"
+      - "Resource Provider"
+      - "Prompt Templates"
+      - "Context Manager"
+    trust_boundaries:
+      - name: "Client to MCP Server"
+        type: "network"
+        threats: ["Tool poisoning", "Rug pull attacks", "Command injection"]
+        related_techniques: ["AML.T0060", "AML.T0062", "AML.T0065"]
+      - name: "MCP Server to External Resources"
+        type: "network"
+        threats: ["Data exfiltration", "SSRF", "Credential theft"]
+      - name: "Tool Description Boundary"
+        type: "data"
+        threats: ["Prompt injection via descriptions", "Context poisoning"]
+        related_techniques: ["AML.T0060", "AML.T0063"]
+      - name: "Inter-Server Communication"
+        type: "process"
+        threats: ["Name collision", "Cross-server attacks"]
+        related_techniques: ["AML.T0061", "AML.T0064"]
+    recommended_controls:
+      - "Tool description auditing and sanitization"
+      - "MCP server authentication and authorization"
+      - "Tool namespace isolation"
+      - "Version pinning for MCP servers"
+      - "Behavioral monitoring for rug pull detection"
+      - "Input/output validation at MCP boundaries"
+      - "Capability-based access control"
+      - "Immutable tool definitions"
+    security_considerations:
+      - category: "Tool Poisoning Prevention"
+        controls:
+          - "Audit all tool descriptions for hidden instructions"
+          - "Separate LLM-visible and human-visible descriptions"
+          - "Implement tool description allowlisting"
+      - category: "Supply Chain Security"
+        controls:
+          - "Verify MCP server provenance"
+          - "Pin server versions in production"
+          - "Monitor for behavioral changes"
+      - category: "Isolation"
+        controls:
+          - "Sandbox MCP server execution"
+          - "Limit tool capabilities per server"
+          - "Implement resource quotas"
+
+  multi_agent_mcp_system:
+    name: "Multi-Agent MCP System"
+    description: "Multiple LLM agents coordinating via MCP protocol"
+    components:
+      - "Agent Orchestrator"
+      - "Primary Agent"
+      - "Specialist Agents"
+      - "Shared MCP Servers"
+      - "Agent Message Bus"
+      - "Shared Context Store"
+    trust_boundaries:
+      - name: "Agent to Agent"
+        type: "process"
+        threats: ["Cross-agent injection", "Context manipulation"]
+        related_techniques: ["AML.T0064"]
+      - name: "Agent to Shared MCP"
+        type: "network"
+        threats: ["Resource contention", "State corruption"]
+      - name: "Shared Context"
+        type: "data"
+        threats: ["Context poisoning", "Data leakage between agents"]
+        related_techniques: ["AML.T0063"]
+      - name: "Agent Orchestration"
+        type: "process"
+        threats: ["Workflow manipulation", "Agent impersonation"]
+    recommended_controls:
+      - "Agent isolation boundaries"
+      - "Cross-agent output sanitization"
+      - "Context integrity verification"
+      - "Agent authentication"
+      - "Workflow validation"
+      - "Audit trails for agent interactions"
+      - "Rate limiting between agents"
+      - "Separate context namespaces per agent"
+
+  function_calling_system:
+    name: "Function Calling System"
+    description: "LLM with native function/tool calling capabilities"
+    components:
+      - "LLM with Function Calling"
+      - "Function Registry"
+      - "Parameter Validator"
+      - "Execution Sandbox"
+      - "Result Processor"
+    trust_boundaries:
+      - name: "LLM to Function Interface"
+        type: "process"
+        threats: ["Parameter injection", "Function abuse"]
+        related_techniques: ["AML.T0065"]
+      - name: "Function to External APIs"
+        type: "network"
+        threats: ["SSRF", "Credential exposure", "Data exfiltration"]
+      - name: "Function Results"
+        type: "data"
+        threats: ["Result manipulation", "Indirect injection"]
+    recommended_controls:
+      - "Function allowlisting"
+      - "Parameter schema validation"
+      - "Execution sandboxing"
+      - "Result sanitization"
+      - "Rate limiting per function"
+      - "Capability-based permissions"
+      - "Human approval for sensitive functions"
+
+# =============================================================================
+# COMPLIANCE MAPPINGS
+# =============================================================================
+
+compliance_mappings:
+  nist_ai_rmf:
+    framework: "NIST AI Risk Management Framework"
+    version: "1.0"
+    mappings:
+      - function: "GOVERN"
+        categories: ["Risk culture", "AI governance", "Accountability"]
+        relevant_threats: ["LLM08", "LLM09"]
+      - function: "MAP"
+        categories: ["Context understanding", "Risk identification"]
+        relevant_threats: ["LLM01", "LLM03", "LLM05"]
+      - function: "MEASURE"
+        categories: ["Risk assessment", "Monitoring"]
+        relevant_threats: ["LLM04", "LLM06", "LLM10"]
+      - function: "MANAGE"
+        categories: ["Risk treatment", "Response planning"]
+        relevant_threats: ["LLM02", "LLM07"]
+
+  eu_ai_act:
+    framework: "EU Artificial Intelligence Act"
+    version: "2024"
+    mappings:
+      - risk_level: "High-Risk"
+        requirements: ["Risk management", "Data governance", "Human oversight"]
+        relevant_threats: ["LLM01", "LLM03", "LLM08", "LLM09"]
+      - risk_level: "General Purpose AI"
+        requirements: ["Transparency", "Documentation", "Technical standards"]
+        relevant_threats: ["LLM05", "LLM06", "LLM10"]
+
+  iso_42001:
+    framework: "ISO/IEC 42001 AI Management System"
+    version: "2023"
+    mappings:
+      - clause: "6.1"
+        title: "Actions to address risks and opportunities"
+        relevant_threats: ["LLM01", "LLM02", "LLM03"]
+      - clause: "7.2"
+        title: "Competence"
+        relevant_threats: ["LLM09"]
+      - clause: "8.4"
+        title: "AI system development"
+        relevant_threats: ["LLM03", "LLM05", "LLM07"]

@@ -1,0 +1,388 @@
+# PHP Security Controls Adapter
+# PHP 安全控制适配器
+#
+# 定义 PHP 生态系统中各安全控制的检测模式
+# 支持: 原生PHP, Laravel, Symfony, ThinkPHP, WordPress
+#
+# 版本: 1.0.0
+
+language: php
+file_extensions:
+  - ".php"
+  - ".phtml"
+
+# ============================================================================
+# 安全控制检测模式 (Control Detection Patterns)
+# ============================================================================
+
+control_patterns:
+  # ---------------------------------------------------------------------------
+  # 身份认证 (Authentication)
+  # ---------------------------------------------------------------------------
+  authentication:
+    # 原生PHP
+    native:
+      - 'session_id\s*\('
+      - '\$_SESSION\s*\[\s*[''"]user'
+      - '\$_SESSION\s*\[\s*[''"]login'
+      - '\$_SESSION\s*\[\s*[''"]auth'
+      - 'isLogin|isLogged|isAuthenticated'
+      - 'checkLogin|requireLogin|ensureLogin'
+      - 'Auth::check|Auth::user'
+
+    # Laravel
+    laravel:
+      - 'auth\(\)->check\(\)'
+      - 'Auth::check\(\)'
+      - 'Auth::user\(\)'
+      - '@auth|@guest'
+      - 'middleware.*auth'
+      - '->middleware\([''"]auth'
+      - 'Route::middleware\([''"]auth'
+
+    # Symfony
+    symfony:
+      - '\$this->getUser\(\)'
+      - 'isGranted\('
+      - '@IsGranted|@Security'
+      - 'security\.authorization_checker'
+
+    # ThinkPHP
+    thinkphp:
+      - 'Session::get\([''"]user'
+      - 'session\([''"]user'
+      - '\$this->isLogin'
+      - 'checkLogin'
+
+    # WordPress
+    wordpress:
+      - 'is_user_logged_in\(\)'
+      - 'wp_get_current_user\(\)'
+      - 'current_user_can\('
+
+  # ---------------------------------------------------------------------------
+  # 授权检查 (Authorization)
+  # ---------------------------------------------------------------------------
+  authorization:
+    native:
+      - 'checkPriv|hasPriv|checkPermission'
+      - 'hasPermission|canAccess|isAllowed'
+      - 'checkRole|hasRole|isAdmin'
+      - 'acl->check|rbac->check|permission->check'
+      - '\$this->app->user->admin'
+
+    laravel:
+      - 'authorize\('
+      - 'can\(|cannot\(|cant\('
+      - '@can|@cannot'
+      - 'Gate::allows|Gate::denies'
+      - 'Policy::'
+      - '->middleware\([''"]can:'
+
+    symfony:
+      - 'isGranted\('
+      - 'denyAccessUnlessGranted\('
+      - '@IsGranted\('
+      - 'security\.is_granted'
+
+    thinkphp:
+      - 'checkAuth|checkRule'
+      - '\$this->checkPriv'
+
+    wordpress:
+      - 'current_user_can\('
+      - 'user_can\('
+      - 'has_cap\('
+
+  # ---------------------------------------------------------------------------
+  # 资源所有权验证 (Ownership Check)
+  # ---------------------------------------------------------------------------
+  ownership_check:
+    patterns:
+      - 'user_?id\s*[=!]=\s*\$'
+      - 'owner_?id\s*[=!]=\s*\$'
+      - 'created_?by\s*[=!]=\s*\$'
+      - 'author_?id\s*[=!]=\s*\$'
+      - '->where\([''"]user_id'
+      - '->where\([''"]owner'
+      - 'belongsTo.*User'
+      - '\$this->app->user->id\s*[=!]='
+      - 'getCurrentUser.*->id'
+
+  # ---------------------------------------------------------------------------
+  # CSRF保护 (CSRF Protection)
+  # ---------------------------------------------------------------------------
+  csrf_protection:
+    native:
+      - 'csrf_token|_token|csrfToken'
+      - 'X-CSRF-TOKEN|X-XSRF-TOKEN'
+      - 'verify.*csrf|check.*csrf|validate.*csrf'
+      - 'hash_equals.*\$_SESSION.*token'
+
+    laravel:
+      - '@csrf'
+      - 'csrf_field\(\)'
+      - 'csrf_token\(\)'
+      - 'VerifyCsrfToken'
+      - '->middleware\([''"]csrf'
+
+    symfony:
+      - 'isCsrfTokenValid\('
+      - 'csrf_token\('
+      - 'CsrfTokenManager'
+
+    wordpress:
+      - 'wp_nonce_field\('
+      - 'check_admin_referer\('
+      - 'check_ajax_referer\('
+      - 'wp_verify_nonce\('
+
+  # ---------------------------------------------------------------------------
+  # 输入验证 (Input Validation)
+  # ---------------------------------------------------------------------------
+  input_validation:
+    native:
+      - 'filter_var\('
+      - 'filter_input\('
+      - 'preg_match\('
+      - 'is_numeric\(|is_int\(|is_string\('
+      - 'ctype_digit\(|ctype_alpha\('
+      - 'intval\(|floatval\('
+      - 'htmlspecialchars\('
+      - 'strip_tags\('
+
+    laravel:
+      - 'validate\('
+      - '\$request->validate\('
+      - 'Validator::make\('
+      - '\$this->validate\('
+      - 'FormRequest'
+      - 'rules\(\)'
+
+    symfony:
+      - '@Assert\\'
+      - 'Constraints\\'
+      - '\$validator->validate\('
+      - 'isValid\(\)'
+
+    thinkphp:
+      - 'validate\('
+      - '\$this->validate\('
+      - 'Validate::rule'
+
+  # ---------------------------------------------------------------------------
+  # 审计日志 (Audit Logging)
+  # ---------------------------------------------------------------------------
+  audit_log:
+    patterns:
+      - '->log\(|Log::|logger->'
+      - 'audit|writeLog|addLog'
+      - 'activity.*log|action.*log'
+      - 'error_log\('
+      - 'Monolog|Psr\\Log'
+      - '\$this->loadModel.*action.*create'
+
+  # ---------------------------------------------------------------------------
+  # 速率限制 (Rate Limiting)
+  # ---------------------------------------------------------------------------
+  rate_limit:
+    native:
+      - 'rate.*limit|throttle'
+      - 'RateLimiter|Throttle'
+      - 'too.*many.*request'
+      - 'attempt.*count|retry.*limit'
+
+    laravel:
+      - 'RateLimiter::'
+      - 'throttle:'
+      - '->middleware\([''"]throttle'
+      - 'ThrottleRequests'
+
+    symfony:
+      - 'RateLimiter'
+      - '@RateLimit'
+
+  # ---------------------------------------------------------------------------
+  # 安全传输 (Secure Transport)
+  # ---------------------------------------------------------------------------
+  secure_transport:
+    patterns:
+      - 'https://'
+      - 'HTTPS.*=.*on|HTTPS.*force'
+      - 'redirect.*https'
+      - 'secure.*cookie|cookie.*secure'
+      - 'FORCE_SSL|FORCE_HTTPS'
+
+  # ---------------------------------------------------------------------------
+  # 安全存储 (Secure Storage)
+  # ---------------------------------------------------------------------------
+  secure_storage:
+    patterns:
+      - 'password_hash\('
+      - 'bcrypt\(|Hash::make\('
+      - 'encrypt\(|Crypt::'
+      - 'openssl_encrypt\('
+      - 'sodium_crypto'
+
+  # ---------------------------------------------------------------------------
+  # 会话管理 (Session Management)
+  # ---------------------------------------------------------------------------
+  session_management:
+    patterns:
+      - 'session_regenerate_id\('
+      - 'session_destroy\('
+      - 'Session::flush|Session::invalidate'
+      - 'session\.cookie_secure'
+      - 'session\.cookie_httponly'
+      - 'session_set_cookie_params'
+
+  # ---------------------------------------------------------------------------
+  # 错误处理 (Error Handling)
+  # ---------------------------------------------------------------------------
+  error_handling:
+    patterns:
+      - 'try\s*{|catch\s*\('
+      - 'set_error_handler|set_exception_handler'
+      - 'display_errors.*off|display_errors.*0'
+      - 'error_reporting\(0\)'
+      - 'App::environment\([''"]production'
+
+  # ---------------------------------------------------------------------------
+  # 安全响应头 (Security Headers)
+  # ---------------------------------------------------------------------------
+  security_headers:
+    patterns:
+      - 'Content-Security-Policy'
+      - 'X-Frame-Options'
+      - 'X-Content-Type-Options'
+      - 'X-XSS-Protection'
+      - 'Strict-Transport-Security'
+      - 'Referrer-Policy'
+      - 'header\([''"]X-'
+
+  # ---------------------------------------------------------------------------
+  # 文件验证 (File Validation)
+  # ---------------------------------------------------------------------------
+  file_validation:
+    patterns:
+      - 'getClientOriginalExtension\('
+      - 'getMimeType\(|getContentType\('
+      - 'finfo_file\(|mime_content_type\('
+      - 'getimagesize\('
+      - 'allowed.*extension|valid.*extension'
+      - 'max.*size|file.*size.*limit'
+      - 'in_array.*\$extension'
+
+  # ---------------------------------------------------------------------------
+  # 文件操作 CRUD (File Operations CRUD) - v2.5.0 新增
+  # ---------------------------------------------------------------------------
+  file_operations_crud:
+    create:
+      - 'move_uploaded_file\('
+      - 'file_put_contents\('
+      - 'fwrite\('
+      - 'copy\('
+      - '\$file->move\('
+    read:
+      - 'file_get_contents\('
+      - 'fread\('
+      - 'readfile\('
+      - 'file\('
+      - 'fgets\('
+    update:
+      - 'file_put_contents\('
+      - 'fwrite\('
+      - 'ftruncate\('
+    delete:  # ⚠️ 易遗漏！
+      - 'unlink\('
+      - 'rmdir\('
+      - 'array_map.*unlink'
+      - 'Storage::delete\('
+      - '\$this->filesystem->delete\('
+
+  # ---------------------------------------------------------------------------
+  # 参数化查询 (Parameterized Query)
+  # ---------------------------------------------------------------------------
+  parameterized_query:
+    patterns:
+      - 'prepare\(.*\?\)'
+      - 'bindParam\(|bindValue\('
+      - '->where\(.*,\s*\['
+      - 'DB::select\(.*,\s*\['
+      - 'createQueryBuilder'
+      - 'setParameter\('
+
+# ============================================================================
+# 敏感操作识别模式 (Sensitive Operation Patterns)
+# ============================================================================
+
+operation_patterns:
+  # 方法名模式
+  method_patterns:
+    delete:
+      - 'function\s+delete'
+      - 'function\s+remove'
+      - 'function\s+destroy'
+      - 'public\s+function\s+delete'
+
+    update:
+      - 'function\s+update'
+      - 'function\s+edit'
+      - 'function\s+save'
+      - 'function\s+modify'
+
+    create:
+      - 'function\s+create'
+      - 'function\s+add'
+      - 'function\s+store'
+      - 'function\s+insert'
+
+  # 路由模式 (Laravel/Symfony)
+  route_patterns:
+    delete:
+      - 'Route::delete\('
+      - '@Route.*methods.*DELETE'
+      - '->delete\('
+
+    update:
+      - 'Route::put\('
+      - 'Route::patch\('
+      - '@Route.*methods.*PUT'
+      - '@Route.*methods.*PATCH'
+
+    create:
+      - 'Route::post\('
+      - '@Route.*methods.*POST'
+
+# ============================================================================
+# 框架特定配置 (Framework-Specific Configuration)
+# ============================================================================
+
+frameworks:
+  laravel:
+    config_files:
+      - 'config/auth.php'
+      - 'config/session.php'
+      - 'app/Http/Kernel.php'
+    middleware_location: 'app/Http/Middleware'
+    policy_location: 'app/Policies'
+
+  symfony:
+    config_files:
+      - 'config/packages/security.yaml'
+      - 'config/packages/framework.yaml'
+    security_location: 'src/Security'
+
+  thinkphp:
+    config_files:
+      - 'config/app.php'
+      - 'config/session.php'
+    middleware_location: 'app/middleware'
+
+  wordpress:
+    config_files:
+      - 'wp-config.php'
+    hooks_to_check:
+      - 'init'
+      - 'admin_init'
+      - 'wp_ajax_'

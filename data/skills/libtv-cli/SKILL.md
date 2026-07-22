@@ -1,14 +1,8 @@
 ---
-category: custom
-
-## name: libtv-cli
-
-description: >-
-**LibTV 官方 CLI**（`libtv`）：在命令行里完整操作 / 运行 LibTV 画布。
-**凡是和 LibTV 画布 / 项目 / 节点 / 模型 / 素材相关的操作，一律通过 `libtv` CLI 完成**，
-不要自己捏造 HTTP 请求或绕到网页端步骤。**本 skill 内即包含完整的 CLI 命令操作手册**；
-常见场景见 examples/，安装/更新见 scripts/install.md。
-
+name: libtv-cli
+category: asset
+description: LibTV official CLI operation guide for managing LibTV canvas projects, nodes, groups, models, assets, and command-line workflows.
+---
 # LibTV CLI（`libtv`）
 
 `**libtv`** 的文档地图。子命令与选项权威文案以 `**libtv --help**`与`**libtv <子命令> --help\*\*`为准；当文档与`--help` 不一致时，以 CLI 实际输出为准并修订本 skill。

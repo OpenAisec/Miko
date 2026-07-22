@@ -1,0 +1,41 @@
+{
+  "skill_name": "game-hacking",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我想做一个游戏辅助，用CE扫描血量地址后，怎么用C++写一个自动读取和修改血量的程序？",
+      "expected_output": "提供完整的C++代码，包含进程查找、模块基址获取、指针链读写、ReadProcessMemory/WriteProcessMemory的使用",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我要分析一个Unity手游的网络协议，用Frida hook它的发送和接收函数，怎么写脚本？",
+      "expected_output": "提供Frida脚本，hook send/recv或Unity网络层函数，打印协议数据",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "帮我写一个DLL注入器，能把我的hook DLL注入到游戏进程中，然后用MinHook hook DirectX的EndScene函数绘制ESP",
+      "expected_output": "提供注入器代码和DLL代码，包含CreateRemoteThread注入、MinHook初始化、EndScene Hook、ImGui绘制",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "我有一个手游，想用Frida hook它的Java层方法修改伤害值，怎么写？",
+      "expected_output": "提供Frida脚本，Java.perform中hook游戏类方法，修改返回值或参数",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "帮我写一个Python脚本，用OpenCV做模板匹配，在游戏屏幕上找到怪物并自动点击攻击",
+      "expected_output": "提供Python代码，使用cv2.matchTemplate做图像识别，结合pyautogui自动点击",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "我想写一个WDF内核驱动，实现跨进程内存读写，然后通过IOCTL和用户态程序通信",
+      "expected_output": "提供WDF驱动框架代码，包含IOCTL处理、MmCopyVirtualMemory读写、用户态通信代码",
+      "files": []
+    }
+  ]
+}

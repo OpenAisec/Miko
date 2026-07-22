@@ -1,0 +1,123 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+# Machine-readable tool availability matrix for runtime discovery.
+# Used by phase_data.py --tools (future) and referenced by references/tool-integration-guide.md.
+
+schema_version: "3.2.0"
+
+tools:
+  luoshu:
+    transport: mcp
+    mcp_prefix: "mcp__luoshu__"
+    tool_count: 14
+    health_check: "luoshu_status"
+    capabilities:
+      - dfd_generation
+      - cfg_analysis
+      - dfg_analysis
+      - call_chain_tracing
+      - symbol_search
+      - binary_recon
+      - codeql_integration
+      - mermaid_export
+    phase_mapping:
+      P1: [luoshu_query_dfd, luoshu_diagnose, luoshu_auto_binary]
+      P2: [luoshu_query_dfd, luoshu_query_flow, luoshu_query_chain, luoshu_export]
+      P4: [luoshu_auto_codeql]
+      P5: [luoshu_query_chain]
+      P6: [luoshu_query_chain, luoshu_auto_binary]
+      P8: [luoshu_export]
+
+  ghidra:
+    transport: mcp
+    mcp_prefix: "mcp__ghidra__"
+    tool_count: 18
+    health_check: "list_project_binaries"
+    capabilities:
+      - decompilation
+      - call_graph
+      - cross_references
+      - semantic_code_search
+      - binary_import
+      - symbol_search
+      - string_search
+    phase_mapping:
+      P1: [import_binary, list_exports, list_imports]
+      P2: [gen_callgraph, list_xrefs]
+      P5: [search_code, search_strings]
+      P6: [decompile_function, gen_callgraph, list_xrefs, search_code]
+      P8: [gen_callgraph]
+
+  cgc:
+    transport: mcp
+    mcp_prefix: "mcp__codegraphcontext__"
+    tool_count: 24
+    health_check: "list_indexed_repositories"
+    capabilities:
+      - dead_code_detection
+      - cyclomatic_complexity
+      - class_hierarchy
+      - module_dependencies
+      - relationship_analysis
+    phase_mapping:
+      P1: [analyze_code_relationships, get_repository_stats]
+      P2: [analyze_code_relationships, find_dead_code]
+      P4: [find_most_complex_functions, find_dead_code, calculate_cyclomatic_complexity]
+
+  ql_mcp:
+    transport: mcp
+    mcp_prefix: "mcp__ql-mcp__"
+    tool_count: 65
+    health_check: "codeql_resolve_languages"
+    capabilities:
+      - security_query_suites
+      - custom_ql_queries
+      - sarif_analysis
+      - audit_tracking
+    phase_mapping:
+      P4: [codeql_database_analyze, sarif_list_rules, sarif_extract_rule]
+      P5: [codeql_query_run]
+      P6: [audit_store_findings, audit_add_notes]
+
+  joern:
+    transport: cli
+    cli_binary: "joern-parse"
+    tool_count: 7
+    cwe_queries: 15
+    capabilities:
+      - cpg_taint_analysis
+      - interprocedural_flow
+      - cwe_vulnerability_detection
+      - multi_language_support
+    cwe_catalog:
+      - CWE-78
+      - CWE-89
+      - CWE-120
+      - CWE-121
+      - CWE-122
+      - CWE-125
+      - CWE-134
+      - CWE-190
+      - CWE-367
+      - CWE-401
+      - CWE-415
+      - CWE-416
+      - CWE-476
+      - CWE-787
+      - CWE-798
+    phase_mapping:
+      P5: [run_cwe_queries, joern_repl_taint]
+      P6: [joern_repl_taint]
+
+  claude_mem:
+    transport: mcp
+    mcp_prefix: "mcp__claude-mem__"
+    tool_count: 13
+    health_check: "__IMPORTANT"
+    capabilities:
+      - ast_aware_search
+      - structural_outline
+      - symbol_expansion
+      - knowledge_corpus
+    phase_mapping:
+      P1: [smart_outline, smart_unfold]
+      P2: [smart_search]

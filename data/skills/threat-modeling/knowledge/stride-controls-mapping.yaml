@@ -1,0 +1,211 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Maps STRIDE threat categories to security control sets and mitigation patterns
+# Source: Security control sets (knowledge/security-controls/) + auth-implementation-patterns
+
+stride_to_controls:
+  spoofing:
+    code: S
+    security_property: Authentication
+    description: "Attacker pretends to be someone or something else"
+    primary_controls:
+      - control-set-01-authentication.md
+      - control-set-ext-01_02-auth-patterns.md
+    secondary_controls:
+      - control-set-06-cryptography.md
+    mitigation_patterns:
+      - name: "JWT Authentication"
+        description: "Short-lived access tokens with refresh token rotation"
+        reference: "auth-implementation-patterns: JWT Implementation"
+      - name: "MFA (WebAuthn/TOTP)"
+        description: "Phishing-resistant multi-factor authentication"
+        reference: "control-set-01-authentication: MFA section"
+      - name: "OAuth2/OIDC"
+        description: "Authorization Code + PKCE for public clients"
+        reference: "control-set-01-authentication: Federation section"
+    test_patterns:
+      - "Credential stuffing resistance"
+      - "Token replay prevention"
+      - "Session hijacking prevention"
+
+  tampering:
+    code: T
+    security_property: Integrity
+    description: "Attacker modifies data in transit or at rest"
+    primary_controls:
+      - control-set-03-input-validation.md
+      - control-set-06-cryptography.md
+    secondary_controls:
+      - control-set-09-api-security.md
+    mitigation_patterns:
+      - name: "Input Validation"
+        description: "Syntactic + semantic validation at trust boundaries"
+        reference: "control-set-03-input-validation: Validation Playbook"
+      - name: "Parameterized Queries"
+        description: "100% parameterization for SQL/LDAP/commands"
+        reference: "control-set-03-input-validation: SQL Injection Prevention"
+      - name: "Digital Signatures"
+        description: "Sign data to detect tampering"
+        reference: "control-set-06-cryptography: Digital Signatures"
+    test_patterns:
+      - "SQL/LDAP/OS injection fuzzing"
+      - "Mass assignment prevention"
+      - "Prototype pollution tests"
+
+  repudiation:
+    code: R
+    security_property: Non-repudiation
+    description: "Attacker denies performing an action"
+    primary_controls:
+      - control-set-07-logging.md
+    secondary_controls:
+      - control-set-06-cryptography.md
+      - control-set-01-authentication.md
+    mitigation_patterns:
+      - name: "Structured Logging"
+        description: "Immutable audit logs with correlation IDs"
+        reference: "control-set-07-logging"
+      - name: "Transaction Authorization"
+        description: "Step-up auth for sensitive operations"
+        reference: "control-set-02-authorization: Transaction Authorization"
+      - name: "Digital Signatures"
+        description: "Sign transactions for non-repudiation"
+        reference: "control-set-06-cryptography"
+    test_patterns:
+      - "Audit log completeness"
+      - "Log tampering prevention"
+      - "Transaction traceability"
+
+  information_disclosure:
+    code: I
+    security_property: Confidentiality
+    description: "Attacker accesses data they shouldn't"
+    primary_controls:
+      - control-set-ext-10-hardcoded-credentials.md
+      - control-set-10-data-protection.md
+    secondary_controls:
+      - control-set-09-api-security.md
+      - control-set-06-cryptography.md
+    mitigation_patterns:
+      - name: "Secrets Management"
+        description: "Never hardcode credentials, use KMS/HSM"
+        reference: "control-set-ext-10-hardcoded-credentials"
+      - name: "Encryption at Rest"
+        description: "Encrypt sensitive data in storage"
+        reference: "control-set-10-data-protection"
+      - name: "TLS/mTLS"
+        description: "Encrypt data in transit"
+        reference: "control-set-09-api-security: Transport and TLS"
+      - name: "IDOR Prevention"
+        description: "User-scoped queries, non-enumerable IDs"
+        reference: "control-set-02-authorization: Preventing IDOR"
+    test_patterns:
+      - "Credential scanning"
+      - "IDOR/BOLA testing"
+      - "Information leakage in errors"
+
+  denial_of_service:
+    code: D
+    security_property: Availability
+    description: "Attacker prevents legitimate access"
+    primary_controls:
+      - control-set-09-api-security.md
+    secondary_controls:
+      - control-set-03-input-validation.md
+    mitigation_patterns:
+      - name: "Rate Limiting"
+        description: "Per-IP/user/client limits with circuit breakers"
+        reference: "control-set-09-api-security: Rate Limiting and DoS"
+      - name: "Input Size Limits"
+        description: "Reject oversize payloads and set timeouts"
+        reference: "control-set-09-api-security: Input and Content Handling"
+      - name: "GraphQL Limits"
+        description: "Query depth, complexity limits, pagination"
+        reference: "control-set-09-api-security: GraphQL-Specific Controls"
+      - name: "Resource Quotas"
+        description: "Database connection limits, queue limits"
+        reference: "control-set-10-data-protection"
+    test_patterns:
+      - "Stress testing"
+      - "Slowloris/connection exhaustion"
+      - "Query complexity bombs"
+
+  elevation_of_privilege:
+    code: E
+    security_property: Authorization
+    description: "Attacker gains unauthorized capabilities"
+    primary_controls:
+      - control-set-02-authorization.md
+    secondary_controls:
+      - control-set-01-authentication.md
+      - control-set-09-api-security.md
+    mitigation_patterns:
+      - name: "RBAC/ABAC"
+        description: "Role/Attribute-based access control with deny-by-default"
+        reference: "control-set-02-authorization: Core Principles"
+      - name: "Least Privilege"
+        description: "Minimum permissions required"
+        reference: "control-set-02-authorization: Core Principles"
+      - name: "Mass Assignment Prevention"
+        description: "DTOs and allow-lists for bindable fields"
+        reference: "control-set-02-authorization: Preventing Mass Assignment"
+      - name: "Step-Up Authorization"
+        description: "Second factor for sensitive operations"
+        reference: "control-set-02-authorization: Transaction Authorization"
+    test_patterns:
+      - "Privilege escalation testing"
+      - "Authorization bypass attempts"
+      - "Role confusion testing"
+
+# Element type to applicable STRIDE categories (per Microsoft TMT)
+element_stride_matrix:
+  process:
+    applicable: [S, T, R, I, D, E]
+    description: "All STRIDE categories apply to processes"
+  data_store:
+    applicable: [T, R, I, D]
+    description: "Processes handle authentication/authorization"
+  data_flow:
+    applicable: [T, I, D]
+    description: "Data in transit vulnerabilities"
+  external_interactor:
+    applicable: [S, R]
+    description: "As source of interaction"
+
+# Language-specific security rule applicability (from security control sets)
+language_rules:
+  python:
+    - control-set-03-input-validation.md
+    - control-set-01-authentication.md
+    - control-set-02-authorization.md
+    - control-set-09-api-security.md
+    - control-set-ext-01_02-auth-patterns.md
+  javascript:
+    - control-set-03-input-validation.md
+    - control-set-01-authentication.md
+    - control-set-02-authorization.md
+    - control-set-05-client-side.md
+    - control-set-09-api-security.md
+  typescript:
+    - control-set-03-input-validation.md
+    - control-set-01-authentication.md
+    - control-set-02-authorization.md
+    - control-set-05-client-side.md
+    - control-set-09-api-security.md
+  go:
+    - control-set-03-input-validation.md
+    - control-set-01-authentication.md
+    - control-set-02-authorization.md
+    - control-set-09-api-security.md
+  java:
+    - control-set-03-input-validation.md
+    - control-set-01-authentication.md
+    - control-set-02-authorization.md
+    - control-set-09-api-security.md
+
+# Always-apply rules (checked on every code operation)
+always_apply_rules:
+  - rule: control-set-ext-10-hardcoded-credentials.md
+    description: "Never hardcode secrets, passwords, API keys, tokens"
+  - rule: control-set-06-cryptography.md
+    description: "Use only modern, secure cryptographic algorithms"

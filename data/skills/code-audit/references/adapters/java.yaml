@@ -1,0 +1,321 @@
+# Java Security Controls Adapter
+# Java 安全控制适配器
+#
+# 定义 Java 生态系统中各安全控制的检测模式
+# 支持: 原生Java, Spring Boot, Spring Security, Shiro
+#
+# 版本: 1.0.0
+
+language: java
+file_extensions:
+  - ".java"
+
+# ============================================================================
+# 安全控制检测模式 (Control Detection Patterns)
+# ============================================================================
+
+control_patterns:
+  # ---------------------------------------------------------------------------
+  # 身份认证 (Authentication)
+  # ---------------------------------------------------------------------------
+  authentication:
+    spring_security:
+      - '@PreAuthorize.*isAuthenticated'
+      - '@Secured'
+      - 'SecurityContextHolder\.getContext\(\)\.getAuthentication\(\)'
+      - 'Principal\s+principal'
+      - '@AuthenticationPrincipal'
+      - 'httpSecurity.*authenticated\(\)'
+      - '\.authenticated\(\)'
+
+    shiro:
+      - 'SecurityUtils\.getSubject\(\)'
+      - 'subject\.isAuthenticated\(\)'
+      - '@RequiresAuthentication'
+      - 'Subject\s+subject'
+
+    jwt:
+      - 'JwtAuthenticationFilter'
+      - '@JwtToken'
+      - 'parseToken|validateToken'
+      - 'JwtUtils|JwtProvider'
+
+  # ---------------------------------------------------------------------------
+  # 授权检查 (Authorization)
+  # ---------------------------------------------------------------------------
+  authorization:
+    spring_security:
+      - '@PreAuthorize'
+      - '@PostAuthorize'
+      - '@Secured\([''"]ROLE_'
+      - '@RolesAllowed'
+      - 'hasRole\(|hasAuthority\('
+      - 'hasPermission\('
+      - '@EnableGlobalMethodSecurity'
+
+    shiro:
+      - '@RequiresRoles'
+      - '@RequiresPermissions'
+      - 'subject\.isPermitted\('
+      - 'subject\.hasRole\('
+      - 'checkPermission\('
+
+    custom:
+      - 'checkPrivilege|hasPrivilege'
+      - 'checkPermission|hasPermission'
+      - 'isAdmin\(|isManager\('
+      - 'accessControl|aclCheck'
+
+  # ---------------------------------------------------------------------------
+  # 资源所有权验证 (Ownership Check)
+  # ---------------------------------------------------------------------------
+  ownership_check:
+    patterns:
+      - 'getUserId\(\)\.equals\('
+      - 'getOwnerId\(\)\.equals\('
+      - 'userId\s*==\s*'
+      - 'ownerId\s*==\s*'
+      - '\.getCreatedBy\(\)\.equals\('
+      - 'belongsToUser\('
+      - 'isOwner\('
+      - 'repository\.findByIdAndUserId\('
+      - 'WHERE.*user_id\s*=\s*:'
+
+  # ---------------------------------------------------------------------------
+  # CSRF保护 (CSRF Protection)
+  # ---------------------------------------------------------------------------
+  csrf_protection:
+    spring:
+      - 'csrf\(\)\.disable\(\)'  # 反向检测 - 不应该存在
+      - 'CsrfToken'
+      - '_csrf'
+      - 'X-CSRF-TOKEN'
+      - 'csrf\.csrfTokenRepository'
+
+    custom:
+      - 'CsrfFilter'
+      - 'verifyCsrf|validateCsrf'
+      - 'csrfToken|antiCsrf'
+
+  # ---------------------------------------------------------------------------
+  # 输入验证 (Input Validation)
+  # ---------------------------------------------------------------------------
+  input_validation:
+    java_validation:
+      - '@Valid'
+      - '@Validated'
+      - '@NotNull|@NotEmpty|@NotBlank'
+      - '@Size|@Min|@Max'
+      - '@Pattern'
+      - '@Email'
+      - 'BindingResult'
+      - 'Validator\.validate'
+
+    custom:
+      - 'StringUtils\.isBlank'
+      - 'validate\w*\('
+      - 'sanitize\('
+      - 'Pattern\.matches\('
+
+  # ---------------------------------------------------------------------------
+  # 审计日志 (Audit Logging)
+  # ---------------------------------------------------------------------------
+  audit_log:
+    patterns:
+      - 'Logger\.|log\.'
+      - '@Slf4j|@Log4j'
+      - 'AuditLog|AuditEvent'
+      - 'auditService\.'
+      - 'logAction|logActivity'
+      - 'ApplicationEventPublisher'
+      - '@AuditableAction'
+
+  # ---------------------------------------------------------------------------
+  # 速率限制 (Rate Limiting)
+  # ---------------------------------------------------------------------------
+  rate_limit:
+    patterns:
+      - 'RateLimiter'
+      - '@RateLimit'
+      - 'Bucket4j|RateLimitJ'
+      - 'throttle|RateLimit'
+      - 'TooManyRequestsException'
+      - 'redis.*incr.*expire'  # Redis计数器限流
+
+  # ---------------------------------------------------------------------------
+  # 安全传输 (Secure Transport)
+  # ---------------------------------------------------------------------------
+  secure_transport:
+    patterns:
+      - 'requiresSecure\(\)'
+      - 'https://'
+      - 'server\.ssl\.enabled.*true'
+      - 'security\.require-ssl.*true'
+      - 'HttpsURLConnection'
+
+  # ---------------------------------------------------------------------------
+  # 安全存储 (Secure Storage)
+  # ---------------------------------------------------------------------------
+  secure_storage:
+    patterns:
+      - 'BCryptPasswordEncoder'
+      - 'PasswordEncoder'
+      - 'Pbkdf2PasswordEncoder'
+      - 'SCryptPasswordEncoder'
+      - 'Cipher\.getInstance'
+      - 'SecretKeySpec'
+      - 'encrypt\(|decrypt\('
+
+  # ---------------------------------------------------------------------------
+  # 会话管理 (Session Management)
+  # ---------------------------------------------------------------------------
+  session_management:
+    patterns:
+      - 'sessionManagement\(\)'
+      - 'maximumSessions\('
+      - 'sessionFixation\(\)'
+      - 'invalidateSession'
+      - 'session\.invalidate\(\)'
+      - 'sessionCreationPolicy'
+      - 'HttpSession'
+
+  # ---------------------------------------------------------------------------
+  # 错误处理 (Error Handling)
+  # ---------------------------------------------------------------------------
+  error_handling:
+    patterns:
+      - '@ExceptionHandler'
+      - '@ControllerAdvice'
+      - 'try\s*\{|catch\s*\('
+      - 'GlobalExceptionHandler'
+      - 'ResponseEntityExceptionHandler'
+      - 'ErrorController'
+
+  # ---------------------------------------------------------------------------
+  # 安全响应头 (Security Headers)
+  # ---------------------------------------------------------------------------
+  security_headers:
+    patterns:
+      - 'headers\(\)\.'
+      - 'contentSecurityPolicy\('
+      - 'frameOptions\(\)'
+      - 'xssProtection\(\)'
+      - 'X-Frame-Options'
+      - 'X-Content-Type-Options'
+      - 'Strict-Transport-Security'
+
+  # ---------------------------------------------------------------------------
+  # 文件验证 (File Validation)
+  # ---------------------------------------------------------------------------
+  file_validation:
+    patterns:
+      - 'getContentType\(\)'
+      - 'getOriginalFilename\(\)'
+      - 'FilenameUtils\.getExtension'
+      - 'allowedExtensions|validExtensions'
+      - 'maxFileSize|fileSizeLimit'
+      - 'MultipartFile'
+      - 'Files\.probeContentType'
+
+  # ---------------------------------------------------------------------------
+  # 文件操作 CRUD (File Operations CRUD) - v2.5.0 新增
+  # ---------------------------------------------------------------------------
+  file_operations_crud:
+    create:
+      - 'MultipartFile'
+      - '\.transferTo\('
+      - 'Files\.write\('
+      - 'Files\.copy\('
+      - 'FileOutputStream'
+      - 'FileUtils\.write'
+    read:
+      - 'FileInputStream'
+      - 'Files\.read'
+      - 'Files\.lines'
+      - 'FileUtils\.read'
+      - 'BufferedReader.*FileReader'
+    update:
+      - 'Files\.write.*TRUNCATE'
+      - 'FileWriter'
+      - 'RandomAccessFile'
+    delete:  # ⚠️ 易遗漏！
+      - 'Files\.delete\('
+      - 'Files\.deleteIfExists\('
+      - 'FileUtils\.delete'
+      - 'FileUtils\.forceDelete'
+      - '\.delete\(\)'
+      - 'File.*\.delete\('
+
+  # ---------------------------------------------------------------------------
+  # 参数化查询 (Parameterized Query)
+  # ---------------------------------------------------------------------------
+  parameterized_query:
+    patterns:
+      - 'PreparedStatement'
+      - '\?\s*,|:\w+'  # 占位符
+      - '@Param\('
+      - 'createQuery.*setParameter'
+      - 'JdbcTemplate.*\?'
+      - 'NamedParameterJdbcTemplate'
+      - 'CriteriaBuilder'
+
+# ============================================================================
+# 敏感操作识别模式 (Sensitive Operation Patterns)
+# ============================================================================
+
+operation_patterns:
+  method_patterns:
+    delete:
+      - 'public.*void\s+delete'
+      - 'public.*\s+delete\w*\('
+      - '@DeleteMapping'
+      - '@RequestMapping.*DELETE'
+
+    update:
+      - 'public.*void\s+update'
+      - 'public.*\s+update\w*\('
+      - 'public.*\s+edit\w*\('
+      - '@PutMapping|@PatchMapping'
+      - '@RequestMapping.*PUT'
+
+    create:
+      - 'public.*void\s+create'
+      - 'public.*\s+create\w*\('
+      - 'public.*\s+add\w*\('
+      - 'public.*\s+save\w*\('
+      - '@PostMapping'
+
+  route_patterns:
+    delete:
+      - '@DeleteMapping'
+      - '@RequestMapping.*method.*DELETE'
+
+    update:
+      - '@PutMapping'
+      - '@PatchMapping'
+      - '@RequestMapping.*method.*PUT'
+
+    create:
+      - '@PostMapping'
+      - '@RequestMapping.*method.*POST'
+
+# ============================================================================
+# 框架特定配置 (Framework-Specific Configuration)
+# ============================================================================
+
+frameworks:
+  spring_boot:
+    config_files:
+      - 'application.yml'
+      - 'application.properties'
+      - 'SecurityConfig.java'
+    security_location: '**/security/**'
+    controller_location: '**/controller/**'
+
+  spring_security:
+    config_class_pattern: '@EnableWebSecurity|WebSecurityConfigurerAdapter|SecurityFilterChain'
+
+  shiro:
+    config_files:
+      - 'shiro.ini'
+      - 'ShiroConfig.java'

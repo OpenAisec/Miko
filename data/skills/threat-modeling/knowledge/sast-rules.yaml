@@ -1,0 +1,237 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# SAST Rules Knowledge Base
+# Purpose: Provide SAST tool configurations and rules for LLM decision making
+# Usage: Referenced by Phase 6 (Risk Validation) and optional SAST validation workflows
+#
+# NOTE: This file provides KNOWLEDGE for LLM reasoning.
+# LLM decides whether to apply these rules, script does NOT auto-execute.
+
+schema_version: "1.0.0"
+description: |
+  SAST (Static Application Security Testing) rules knowledge base.
+  Used in Phase 6 for risk validation via tool-assisted verification.
+
+# =============================================================================
+# Semgrep Configuration
+# =============================================================================
+semgrep:
+  description: "Framework-native route and security pattern detection"
+  documentation: "https://semgrep.dev/docs/"
+
+  # Rule categories relevant to threat modeling
+  rule_categories:
+    route_discovery:
+      description: "Discover API routes and endpoints"
+      configs:
+        - "p/python-flask"
+        - "p/python-django"
+        - "p/javascript-express"
+        - "p/java-spring"
+        - "p/go-gin"
+      purpose: "P1 module discovery enhancement"
+
+    security_audit:
+      description: "General security vulnerability patterns"
+      configs:
+        - "p/security-audit"
+        - "p/owasp-top-ten"
+      purpose: "P6 risk validation"
+
+    injection_detection:
+      description: "Injection vulnerability patterns"
+      configs:
+        - "p/sql-injection"
+        - "p/command-injection"
+        - "p/xss"
+      purpose: "P6 POC validation for T-* threats"
+
+    secrets_detection:
+      description: "Hardcoded secrets and credentials"
+      configs:
+        - "p/secrets"
+        - "p/generic-secrets"
+      purpose: "P4 security design review"
+
+  # Command templates for LLM to execute
+  command_templates:
+    basic_scan: "semgrep --config auto --json --output {output_file} {project_path}"
+    security_scan: "semgrep --config p/security-audit --json --output {output_file} {project_path}"
+    owasp_scan: "semgrep --config p/owasp-top-ten --json --output {output_file} {project_path}"
+    targeted_scan: "semgrep --config {rule_config} --json --output {output_file} {project_path}"
+
+# =============================================================================
+# OWASP Noir Configuration
+# =============================================================================
+noir:
+  description: "LLM-enhanced API endpoint discovery"
+  documentation: "https://github.com/owasp-noir/noir"
+
+  # Supported frameworks
+  supported_frameworks:
+    - python_flask
+    - python_django
+    - python_fastapi
+    - javascript_express
+    - java_spring
+    - go_gin
+    - ruby_rails
+
+  # Command templates
+  command_templates:
+    endpoint_discovery: "noir -b {project_path} -f json -o {output_file}"
+    with_techs: "noir -b {project_path} -t {tech_stack} -f json -o {output_file}"
+
+# =============================================================================
+# CodeQL Configuration
+# =============================================================================
+codeql:
+  description: "Deep dataflow and taint analysis"
+  documentation: "https://codeql.github.com/docs/"
+
+  # Analysis categories
+  analysis_categories:
+    dataflow:
+      description: "Trace data flow through application"
+      queries:
+        - "codeql/python-queries:Security/CWE-089"  # SQL Injection
+        - "codeql/python-queries:Security/CWE-078"  # Command Injection
+        - "codeql/python-queries:Security/CWE-079"  # XSS
+      purpose: "P6 attack path validation"
+
+    authentication:
+      description: "Authentication and authorization issues"
+      queries:
+        - "codeql/python-queries:Security/CWE-287"  # Auth bypass
+        - "codeql/python-queries:Security/CWE-306"  # Missing auth
+      purpose: "P6 STRIDE-S/E validation"
+
+  # Command templates
+  command_templates:
+    create_db: "codeql database create {db_path} --language={language} --source-root={project_path}"
+    analyze: "codeql database analyze {db_path} --format=json --output={output_file} {queries}"
+
+# =============================================================================
+# STRIDE to SAST Rule Mapping
+# =============================================================================
+stride_sast_mapping:
+  S:  # Spoofing
+    description: "Authentication bypass, identity spoofing"
+    semgrep_rules:
+      - "p/jwt-security"
+      - "p/owasp-top-ten"  # A07:2021-Identification and Authentication Failures
+    codeql_queries:
+      - "Security/CWE-287"
+      - "Security/CWE-290"
+    validation_focus:
+      - "JWT token handling"
+      - "Session management"
+      - "OAuth implementation"
+
+  T:  # Tampering
+    description: "Data modification, injection attacks"
+    semgrep_rules:
+      - "p/sql-injection"
+      - "p/command-injection"
+      - "p/xss"
+    codeql_queries:
+      - "Security/CWE-089"
+      - "Security/CWE-078"
+      - "Security/CWE-079"
+    validation_focus:
+      - "Input validation"
+      - "Parameterized queries"
+      - "Output encoding"
+
+  R:  # Repudiation
+    description: "Logging, audit trail issues"
+    semgrep_rules:
+      - "p/security-audit"
+    validation_focus:
+      - "Logging configuration"
+      - "Audit trail completeness"
+      - "Log injection prevention"
+
+  I:  # Information Disclosure
+    description: "Data leakage, sensitive information exposure"
+    semgrep_rules:
+      - "p/secrets"
+      - "p/generic-secrets"
+      - "p/security-audit"
+    codeql_queries:
+      - "Security/CWE-200"
+      - "Security/CWE-532"
+    validation_focus:
+      - "Error message content"
+      - "Hardcoded secrets"
+      - "Debug mode exposure"
+
+  D:  # Denial of Service
+    description: "Resource exhaustion, availability issues"
+    semgrep_rules:
+      - "p/security-audit"
+    validation_focus:
+      - "Rate limiting"
+      - "Resource limits"
+      - "Regex DoS patterns"
+
+  E:  # Elevation of Privilege
+    description: "Authorization bypass, privilege escalation"
+    semgrep_rules:
+      - "p/owasp-top-ten"  # A01:2021-Broken Access Control
+    codeql_queries:
+      - "Security/CWE-269"
+      - "Security/CWE-284"
+    validation_focus:
+      - "RBAC implementation"
+      - "IDOR patterns"
+      - "Path traversal"
+
+# =============================================================================
+# Phase Integration Points
+# =============================================================================
+phase_integration:
+  P1:
+    tools: ["semgrep", "noir"]
+    purpose: "Enhanced module and endpoint discovery"
+    trigger: "When enhanced_tools._summary.llm_action_required == true"
+    output: "Merge into entry_point_inventory"
+
+  P4:
+    tools: ["semgrep"]
+    purpose: "Security design gap detection"
+    trigger: "During security controls review"
+    output: "Add to security_gaps findings"
+
+  P6:
+    tools: ["semgrep", "codeql"]
+    purpose: "Risk validation and POC assistance"
+    trigger: "When validating Critical/High threats"
+    output: "Add to poc_details with tool evidence"
+
+  P7:
+    tools: ["semgrep"]
+    purpose: "Mitigation verification"
+    trigger: "After mitigation implementation"
+    output: "Verify fixes, update mitigation status"
+
+# =============================================================================
+# LLM Decision Guidance
+# =============================================================================
+llm_guidance:
+  when_to_use_sast:
+    - "Validating injection-type threats (T-T-*)"
+    - "Confirming authentication/authorization issues (T-S-*, T-E-*)"
+    - "Searching for hardcoded secrets (T-I-*)"
+    - "Generating POC evidence for high-severity risks"
+
+  when_not_to_use_sast:
+    - "Theoretical threats without code patterns"
+    - "Configuration-only issues (network, infrastructure)"
+    - "Social engineering or physical security threats"
+
+  interpretation_notes:
+    - "SAST findings are evidence, not conclusions"
+    - "False positives common, require LLM judgment"
+    - "Combine with manual code review for accuracy"
+    - "Use for supporting POC, not as sole validation"

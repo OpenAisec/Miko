@@ -157,12 +157,29 @@ $skillsDst = Join-Path $portableData 'skills'
 $skillExclude = @('code-audit-workspace', 'php-deep-audit-workspace')
 New-Item -ItemType Directory -Force -Path $skillsDst | Out-Null
 Write-Step 'Preseeding skills...'
-if (Test-Path $skillsSrc) {
-  Get-ChildItem -LiteralPath $skillsSrc -Directory | ForEach-Object {
-    if ($skillExclude -notcontains $_.Name) {
-      Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $skillsDst $_.Name) -Recurse -Force
-    }
+if (-not (Test-Path $skillsSrc)) {
+  throw "[build-portable] source skills dir missing: $skillsSrc"
+}
+
+Get-ChildItem -LiteralPath $skillsSrc -Directory | ForEach-Object {
+  if ($skillExclude -notcontains $_.Name) {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $skillsDst $_.Name) -Recurse -Force
   }
+}
+
+$copiedSkillDirs = @(Get-ChildItem -LiteralPath $skillsDst -Directory -ErrorAction SilentlyContinue)
+if ($copiedSkillDirs.Count -eq 0) {
+  throw "[build-portable] no skills were copied from $skillsSrc"
+}
+
+$invalidSkillDirs = @(
+  $copiedSkillDirs | Where-Object {
+    -not (Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md'))
+  }
+)
+if ($invalidSkillDirs.Count -gt 0) {
+  $names = ($invalidSkillDirs | ForEach-Object { $_.Name }) -join ', '
+  throw "[build-portable] copied skill directories missing SKILL.md: $names"
 }
 
 # tools：整目录拷（yaml + bin 二进制），便携态走同一份可写 data/tools。

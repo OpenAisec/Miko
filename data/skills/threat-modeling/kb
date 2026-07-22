@@ -1,0 +1,16 @@
+#!/bin/bash
+# Knowledge Base Query Wrapper - can be called from anywhere
+# Usage: ./kb --stride spoofing
+#        ./kb --full-chain CWE-89
+#
+# Works from any directory by auto-detecting skill path
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+KB_SCRIPT="$SCRIPT_DIR/scripts/unified_kb_query.py"
+
+if [ ! -f "$KB_SCRIPT" ]; then
+    echo "Error: unified_kb_query.py not found at $KB_SCRIPT" >&2
+    exit 1
+fi
+
+exec python "$KB_SCRIPT" "$@"

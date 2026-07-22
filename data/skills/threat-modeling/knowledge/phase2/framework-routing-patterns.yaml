@@ -1,0 +1,1366 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Framework Routing Patterns Knowledge Base
+# Phase 2 DFD/CFD Analysis Enhancement
+# Version: 1.1
+# Source: Official Framework Documentation + Source Code Analysis
+# Purpose: Provide LLM with deterministic routing pattern knowledge
+#
+# Changelog:
+#   v1.1 (2026-01-26): Added AI/LLM Application Frameworks section
+#     - MCP (Model Context Protocol)
+#     - LangChain / LangGraph
+#     - LlamaIndex
+#     - CrewAI
+#     - Microsoft AutoGen
+#     - Microsoft Semantic Kernel
+#     - OpenAI Agents SDK
+#     - Anthropic Claude Agent SDK
+#     - Vercel AI SDK
+#     - Dify
+#   v1.0 (2026-01-26): Initial release with 16+ web frameworks
+
+version: "1.1"
+description: "Web 框架 + AI/LLM 应用框架路由模式知识库 - 确定性知识源"
+certainty_scale: "1.0 = 官方规范, 0.9 = 框架源码, 0.8 = 最佳实践"
+
+# =============================================================================
+# COMMON PATTERNS (All Frameworks)
+# =============================================================================
+common:
+  route_types:
+    static: "/api/users"                    # 静态路由
+    parameterized: "/api/users/{id}"        # 参数化路由
+    regex: "/api/users/\\d+"                # 正则路由
+    wildcard: "/api/*"                      # 通配符路由
+    optional: "/api/users/{id?}"            # 可选参数
+
+  http_methods: [GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD]
+
+  common_prefixes:
+    api: ["/api", "/v1", "/v2", "/v3", "/rest", "/graphql"]
+    auth: ["/auth", "/login", "/logout", "/oauth", "/sso", "/callback"]
+    admin: ["/admin", "/manage", "/dashboard", "/console", "/backstage"]
+    internal: ["/internal", "/_", "/debug", "/actuator", "/metrics"]
+    docs: ["/docs", "/swagger", "/openapi", "/redoc", "/api-docs"]
+    health: ["/health", "/ready", "/live", "/status", "/ping"]
+    websocket: ["/ws", "/wss", "/socket.io", "/sockjs"]
+
+  file_patterns:
+    route_files:
+      - "**/routes/**"
+      - "**/router/**"
+      - "**/api/**"
+      - "**/controllers/**"
+      - "**/handlers/**"
+      - "**/views/**"
+      - "**/endpoints/**"
+
+# =============================================================================
+# PYTHON FRAMEWORKS
+# =============================================================================
+python:
+  flask:
+    certainty: 0.98
+    source: "Flask 3.0 Official Documentation (flask.palletsprojects.com)"
+    min_version: "2.0"
+
+    decorators:
+      route:
+        pattern: "@app.route(path, methods=[...])"
+        example: "@app.route('/users', methods=['GET', 'POST'])"
+      blueprint:
+        pattern: "@blueprint.route(path)"
+        example: "@api_bp.route('/items/<int:id>')"
+      method_shortcuts:
+        - "@app.get(path)"      # Flask 2.0+
+        - "@app.post(path)"
+        - "@app.put(path)"
+        - "@app.delete(path)"
+        - "@app.patch(path)"
+
+    class_views:
+      method_view:
+        pattern: "class ClassName(MethodView)"
+        methods: "get(), post(), put(), delete(), patch()"
+        registration: "app.add_url_rule(path, view_func=View.as_view('name'))"
+      pluggable_views:
+        pattern: "class ClassName(View)"
+
+    dynamic_registration:
+      - "app.add_url_rule(rule, endpoint, view_func, **options)"
+      - "app.register_blueprint(blueprint, url_prefix=prefix)"
+
+    parameter_syntax:
+      string: "<name>"              # any string (default)
+      int: "<int:name>"            # integer
+      float: "<float:name>"        # float
+      path: "<path:name>"          # string with slashes
+      uuid: "<uuid:name>"          # UUID format
+      any: "<any(a,b,c):name>"     # enum values
+
+    detection_files:
+      - "app.py"
+      - "**/app/__init__.py"
+      - "**/create_app.py"
+      - "**/factory.py"
+
+  fastapi:
+    certainty: 0.99
+    source: "FastAPI 0.100+ Official Documentation (fastapi.tiangolo.com)"
+    min_version: "0.68"
+
+    decorators:
+      app_methods:
+        - "@app.get(path, **kwargs)"
+        - "@app.post(path, **kwargs)"
+        - "@app.put(path, **kwargs)"
+        - "@app.delete(path, **kwargs)"
+        - "@app.patch(path, **kwargs)"
+        - "@app.options(path)"
+        - "@app.head(path)"
+      router_methods:
+        - "@router.get(path)"
+        - "@router.post(path)"
+        - "@router.api_route(path, methods=[...])"
+
+    parameter_syntax:
+      path_params:
+        basic: "{name}"
+        typed: "{name:int}"         # int, float, path
+        example: "/users/{user_id:int}/posts/{post_id}"
+      query_params:
+        annotation: "def func(param: Type)"
+        with_query: "def func(param: Type = Query(...))"
+      body_params:
+        pydantic: "def func(body: PydanticModel)"
+        raw: "def func(body: Body(...))"
+      header_params:
+        annotation: "def func(x_token: str = Header(...))"
+
+    dependency_injection:
+      pattern: "Depends(callable)"
+      security_patterns:
+        - "Depends(get_current_user)"
+        - "Depends(verify_token)"
+        - "Security(oauth2_scheme)"
+      example: "def protected(current_user: User = Depends(get_current_user))"
+
+    router_inclusion:
+      pattern: "app.include_router(router, prefix=prefix, tags=[tags])"
+
+    detection_files:
+      - "main.py"
+      - "**/main.py"
+      - "**/app.py"
+      - "**/api/**/*.py"
+
+  django:
+    certainty: 0.98
+    source: "Django 4.2+ Official Documentation (docs.djangoproject.com)"
+    min_version: "3.0"
+
+    url_patterns:
+      path_function:
+        pattern: "path(route, view, kwargs, name)"
+        example: "path('articles/<int:year>/', views.year_archive)"
+      re_path:
+        pattern: "re_path(route_regex, view, kwargs, name)"
+        example: "re_path(r'^articles/(?P<year>[0-9]{4})/$', views.year_archive)"
+      include:
+        pattern: "path('prefix/', include('app.urls'))"
+
+    parameter_syntax:
+      str: "<str:name>"            # any non-empty string (default)
+      int: "<int:name>"            # positive integer
+      slug: "<slug:name>"          # slug format
+      uuid: "<uuid:name>"          # UUID
+      path: "<path:name>"          # any string including slashes
+
+    class_views:
+      generic:
+        - "ListView"
+        - "DetailView"
+        - "CreateView"
+        - "UpdateView"
+        - "DeleteView"
+      api:
+        - "APIView"                # Django REST Framework
+        - "ViewSet"
+        - "ModelViewSet"
+        - "GenericViewSet"
+
+    drf_patterns:  # Django REST Framework
+      router:
+        pattern: "router.register(prefix, viewset, basename)"
+        example: "router.register('users', UserViewSet)"
+      actions:
+        - "@action(detail=True, methods=['post'])"
+        - "@action(detail=False, methods=['get'])"
+
+    detection_files:
+      - "urls.py"
+      - "**/urls.py"
+      - "manage.py"
+      - "settings.py"
+
+# =============================================================================
+# JAVASCRIPT/TYPESCRIPT FRAMEWORKS
+# =============================================================================
+javascript:
+  express:
+    certainty: 0.98
+    source: "Express.js 4.x Official Documentation (expressjs.com)"
+    min_version: "4.0"
+
+    route_methods:
+      basic:
+        - "app.get(path, ...handlers)"
+        - "app.post(path, ...handlers)"
+        - "app.put(path, ...handlers)"
+        - "app.delete(path, ...handlers)"
+        - "app.patch(path, ...handlers)"
+        - "app.all(path, ...handlers)"
+      router:
+        - "router.get(path, handler)"
+        - "router.route(path).get(h1).post(h2)"
+
+    parameter_syntax:
+      basic: ":name"               # /users/:id
+      optional: ":name?"           # /users/:id?
+      regex: ":name(\\d+)"         # /users/:id(\\d+)
+      wildcard: "*"                # /users/*
+
+    router_usage:
+      create: "const router = express.Router()"
+      mount: "app.use('/api', router)"
+
+    middleware_chain:
+      pattern: "app.use([path], middleware)"
+      example: "app.use('/api', authMiddleware, router)"
+
+    detection_files:
+      - "app.js"
+      - "server.js"
+      - "index.js"
+      - "**/routes/**/*.js"
+      - "**/routes/**/*.ts"
+
+  nestjs:
+    certainty: 0.97
+    source: "NestJS Official Documentation (docs.nestjs.com)"
+    min_version: "8.0"
+
+    decorators:
+      controller:
+        pattern: "@Controller(prefix)"
+        example: "@Controller('users')"
+      methods:
+        - "@Get(path?)"
+        - "@Post(path?)"
+        - "@Put(path?)"
+        - "@Delete(path?)"
+        - "@Patch(path?)"
+        - "@Options(path?)"
+        - "@Head(path?)"
+        - "@All(path?)"
+
+    parameter_decorators:
+      - "@Param(key?)"             # path parameter
+      - "@Query(key?)"             # query parameter
+      - "@Body()"                  # request body
+      - "@Headers(key?)"           # headers
+      - "@Req()"                   # request object
+      - "@Res()"                   # response object
+
+    guards_and_interceptors:
+      guards:
+        - "@UseGuards(AuthGuard)"
+        - "@UseGuards(RolesGuard)"
+      interceptors:
+        - "@UseInterceptors(LoggingInterceptor)"
+
+    module_pattern:
+      controller_registration: "@Module({ controllers: [Controller] })"
+      global_prefix: "app.setGlobalPrefix('api')"
+
+    detection_files:
+      - "nest-cli.json"
+      - "*.controller.ts"
+      - "*.module.ts"
+      - "main.ts"
+
+  koa:
+    certainty: 0.95
+    source: "Koa.js Official Documentation (koajs.com)"
+
+    router_pattern:
+      library: "@koa/router or koa-router"
+      methods:
+        - "router.get(path, middleware)"
+        - "router.post(path, middleware)"
+        - "router.allowedMethods()"
+
+    parameter_syntax:
+      basic: ":name"
+      access: "ctx.params.name"
+
+    detection_files:
+      - "app.js"
+      - "**/routes/**/*.js"
+
+# =============================================================================
+# JAVA FRAMEWORKS
+# =============================================================================
+java:
+  spring:
+    certainty: 0.99
+    source: "Spring Framework 6.x / Spring Boot 3.x Documentation"
+    min_version: "Spring Boot 2.0"
+
+    annotations:
+      controller:
+        - "@RestController"
+        - "@Controller"
+      request_mapping:
+        class_level: "@RequestMapping(path)"
+        method_level:
+          - "@GetMapping(path)"
+          - "@PostMapping(path)"
+          - "@PutMapping(path)"
+          - "@DeleteMapping(path)"
+          - "@PatchMapping(path)"
+          - "@RequestMapping(value=path, method=RequestMethod.GET)"
+
+    parameter_annotations:
+      - "@PathVariable(name)"
+      - "@RequestParam(name)"
+      - "@RequestBody"
+      - "@RequestHeader(name)"
+      - "@CookieValue(name)"
+      - "@ModelAttribute"
+
+    path_variable_syntax:
+      basic: "{name}"
+      regex: "{name:[a-z]+}"
+      example: "/users/{id}/posts/{postId:[0-9]+}"
+
+    security_annotations:
+      - "@PreAuthorize(expression)"
+      - "@PostAuthorize(expression)"
+      - "@Secured(roles)"
+      - "@RolesAllowed(roles)"
+
+    detection_files:
+      - "pom.xml"
+      - "build.gradle"
+      - "**/Application.java"
+      - "**/*Controller.java"
+      - "application.properties"
+      - "application.yml"
+
+  micronaut:
+    certainty: 0.90
+    source: "Micronaut Official Documentation"
+
+    annotations:
+      controller: "@Controller(path)"
+      methods:
+        - "@Get(uri)"
+        - "@Post(uri)"
+        - "@Put(uri)"
+        - "@Delete(uri)"
+
+    detection_files:
+      - "micronaut-cli.yml"
+      - "**/Application.java"
+
+# =============================================================================
+# GO FRAMEWORKS
+# =============================================================================
+go:
+  gin:
+    certainty: 0.98
+    source: "Gin Web Framework (gin-gonic.com)"
+    min_version: "1.7"
+
+    route_methods:
+      - "r.GET(path, handlers...)"
+      - "r.POST(path, handlers...)"
+      - "r.PUT(path, handlers...)"
+      - "r.DELETE(path, handlers...)"
+      - "r.PATCH(path, handlers...)"
+      - "r.Any(path, handlers...)"
+      - "r.Handle(method, path, handlers...)"
+
+    parameter_syntax:
+      basic: ":name"               # /users/:id
+      wildcard: "*name"            # /files/*filepath
+      access: "c.Param(\"name\")"
+
+    router_group:
+      create: "group := r.Group(\"/api\")"
+      nested: "v1 := group.Group(\"/v1\")"
+
+    middleware:
+      global: "r.Use(middleware)"
+      group: "group.Use(middleware)"
+      route: "r.GET(path, middleware, handler)"
+
+    detection_files:
+      - "go.mod"  # with gin-gonic/gin
+      - "main.go"
+      - "**/router.go"
+      - "**/routes.go"
+
+  echo:
+    certainty: 0.97
+    source: "Echo Framework (echo.labstack.com)"
+
+    route_methods:
+      - "e.GET(path, handler, middlewares...)"
+      - "e.POST(path, handler)"
+      - "e.PUT(path, handler)"
+      - "e.DELETE(path, handler)"
+      - "e.Any(path, handler)"
+
+    parameter_syntax:
+      basic: ":name"
+      access: "c.Param(\"name\")"
+
+    group_pattern:
+      create: "g := e.Group(\"/api\")"
+      with_middleware: "g := e.Group(\"/api\", middleware)"
+
+    detection_files:
+      - "go.mod"  # with labstack/echo
+
+  fiber:
+    certainty: 0.95
+    source: "Fiber Framework (gofiber.io)"
+
+    route_methods:
+      - "app.Get(path, handlers...)"
+      - "app.Post(path, handlers...)"
+      - "app.Put(path, handlers...)"
+      - "app.Delete(path, handlers...)"
+
+    parameter_syntax:
+      basic: ":name"
+      optional: ":name?"
+      wildcard: "*"
+      plus: "+"
+
+    detection_files:
+      - "go.mod"  # with gofiber/fiber
+
+# =============================================================================
+# RUBY FRAMEWORKS
+# =============================================================================
+ruby:
+  rails:
+    certainty: 0.98
+    source: "Ruby on Rails Guides (guides.rubyonrails.org)"
+    min_version: "6.0"
+
+    routes_dsl:
+      basic:
+        - "get 'path', to: 'controller#action'"
+        - "post 'path', to: 'controller#action'"
+        - "put 'path', to: 'controller#action'"
+        - "delete 'path', to: 'controller#action'"
+        - "patch 'path', to: 'controller#action'"
+      resources:
+        - "resources :users"
+        - "resources :users, only: [:index, :show]"
+        - "resources :users, except: [:destroy]"
+      nested:
+        pattern: "resources :parent { resources :child }"
+
+    parameter_syntax:
+      segment: ":name"
+      glob: "*name"
+      optional: "(:name)"
+
+    namespace_and_scope:
+      namespace: "namespace :api { resources :users }"
+      scope: "scope '/api' { resources :users }"
+
+    constraints:
+      pattern: "constraints: { id: /[0-9]+/ }"
+
+    detection_files:
+      - "config/routes.rb"
+      - "Gemfile"
+      - "Rakefile"
+      - "app/controllers/**/*_controller.rb"
+
+# =============================================================================
+# PHP FRAMEWORKS
+# =============================================================================
+php:
+  laravel:
+    certainty: 0.98
+    source: "Laravel Official Documentation (laravel.com/docs)"
+    min_version: "8.0"
+
+    route_methods:
+      basic:
+        - "Route::get(uri, action)"
+        - "Route::post(uri, action)"
+        - "Route::put(uri, action)"
+        - "Route::delete(uri, action)"
+        - "Route::patch(uri, action)"
+        - "Route::any(uri, action)"
+        - "Route::match(['get', 'post'], uri, action)"
+      resource:
+        - "Route::resource(name, controller)"
+        - "Route::apiResource(name, controller)"
+
+    parameter_syntax:
+      required: "{name}"
+      optional: "{name?}"
+      regex: "{name} where('name', '[A-Za-z]+')"
+
+    groups_and_middleware:
+      group: "Route::group(attributes, callback)"
+      middleware: "Route::middleware(['auth'])->group(callback)"
+      prefix: "Route::prefix('api')->group(callback)"
+
+    controller_routes:
+      invokable: "Route::get('/', InvokableController::class)"
+      action: "Route::get('/', [Controller::class, 'method'])"
+
+    detection_files:
+      - "routes/web.php"
+      - "routes/api.php"
+      - "composer.json"
+      - "artisan"
+      - "app/Http/Controllers/**/*.php"
+
+  symfony:
+    certainty: 0.95
+    source: "Symfony Official Documentation"
+
+    routing:
+      annotation:
+        - "@Route(path, name, methods)"
+      yaml:
+        pattern: "route_name: { path: /path, controller: Controller::method }"
+      attribute:  # PHP 8+
+        - "#[Route('/path', name: 'name', methods: ['GET'])]"
+
+    parameter_syntax:
+      required: "{name}"
+      default: "{name<default>}"
+      regex: "{name<\\d+>}"
+
+    detection_files:
+      - "config/routes.yaml"
+      - "composer.json"  # with symfony/
+      - "bin/console"
+
+# =============================================================================
+# C# / .NET FRAMEWORKS
+# =============================================================================
+dotnet:
+  aspnet_core:
+    certainty: 0.98
+    source: "ASP.NET Core Documentation (docs.microsoft.com)"
+    min_version: "3.1"
+
+    attribute_routing:
+      controller:
+        - "[Route(\"api/[controller]\")]"
+        - "[ApiController]"
+      methods:
+        - "[HttpGet]"
+        - "[HttpGet(\"{id}\")]"
+        - "[HttpPost]"
+        - "[HttpPut(\"{id}\")]"
+        - "[HttpDelete(\"{id}\")]"
+
+    parameter_syntax:
+      basic: "{name}"
+      constraint: "{name:int}"
+      optional: "{name?}"
+      default: "{name=default}"
+
+    constraints:
+      - "{id:int}"
+      - "{name:alpha}"
+      - "{name:length(12)}"
+      - "{name:minlength(4)}"
+      - "{name:regex(^[a-z]+$)}"
+
+    minimal_api:  # .NET 6+
+      pattern: "app.MapGet(\"/path\", handler)"
+      methods:
+        - "app.MapGet()"
+        - "app.MapPost()"
+        - "app.MapPut()"
+        - "app.MapDelete()"
+
+    detection_files:
+      - "*.csproj"
+      - "Program.cs"
+      - "Startup.cs"
+      - "**/Controllers/**/*.cs"
+
+# =============================================================================
+# RUST FRAMEWORKS
+# =============================================================================
+rust:
+  actix_web:
+    certainty: 0.95
+    source: "Actix Web Documentation (actix.rs)"
+
+    route_macros:
+      - "#[get(\"/path\")]"
+      - "#[post(\"/path\")]"
+      - "#[put(\"/path\")]"
+      - "#[delete(\"/path\")]"
+
+    manual_routing:
+      pattern: "web::resource(\"/path\").route(web::get().to(handler))"
+
+    parameter_syntax:
+      path: "{name}"
+      access: "path.into_inner()"
+
+    detection_files:
+      - "Cargo.toml"  # with actix-web
+
+  axum:
+    certainty: 0.93
+    source: "Axum Documentation"
+
+    router_pattern:
+      create: "Router::new()"
+      route: ".route(\"/path\", get(handler))"
+      nest: ".nest(\"/api\", api_routes)"
+
+    detection_files:
+      - "Cargo.toml"  # with axum
+
+# =============================================================================
+# AI/LLM APPLICATION FRAMEWORKS
+# =============================================================================
+ai_llm:
+  # ---------------------------------------------------------------------------
+  # MCP (Model Context Protocol) - Anthropic
+  # ---------------------------------------------------------------------------
+  mcp:
+    certainty: 0.97
+    source: "Model Context Protocol Specification 2025-11 (modelcontextprotocol.io)"
+    description: "AI工具集成协议标准，用于 LLM 与外部工具/数据源的安全连接"
+
+    protocol_type: "JSON-RPC 2.0"
+
+    architecture:
+      client: "AI 应用 (Claude, ChatGPT, Gemini)"
+      server: "工具/数据提供者"
+      transport: ["stdio", "HTTP+SSE", "WebSocket"]
+
+    server_definition:
+      config_files:
+        - "mcp.json"
+        - "mcp-config.json"
+        - ".mcp/config.json"
+        - "claude_desktop_config.json"
+      structure: |
+        {
+          "mcpServers": {
+            "server_name": {
+              "command": "executable",
+              "args": ["arg1", "arg2"],
+              "env": { "KEY": "value" }
+            }
+          }
+        }
+
+    capabilities:
+      tools:
+        description: "可执行工具/函数"
+        schema: |
+          {
+            "name": "tool_name",
+            "description": "Tool description",
+            "inputSchema": { "type": "object", "properties": {...} }
+          }
+        invocation: "tools/call"
+      resources:
+        description: "可读取数据资源"
+        schema: |
+          {
+            "uri": "file:///path/to/resource",
+            "name": "Resource name",
+            "mimeType": "text/plain"
+          }
+        invocation: "resources/read"
+      prompts:
+        description: "预定义提示模板"
+        invocation: "prompts/get"
+
+    security_concerns:
+      stride_relevance: ["Spoofing", "Tampering", "Information Disclosure", "Elevation of Privilege"]
+      attack_vectors:
+        - "prompt_injection: 通过工具输出注入恶意指令"
+        - "tool_poisoning: 恶意工具替换可信工具"
+        - "token_exfiltration: 通过恶意服务器窃取访问令牌"
+        - "privilege_escalation: 工具组合导致权限提升"
+        - "data_exfiltration: 通过工具读取并泄露敏感数据"
+      mitigations:
+        - "OAuth Resource Server 模式 (RFC 8707)"
+        - "工具权限白名单"
+        - "输入输出验证"
+
+    sdk_languages:
+      python:
+        package: "@anthropics/mcp-sdk"
+        imports: ["from mcp import Server", "from mcp.types import Tool"]
+      typescript:
+        package: "@modelcontextprotocol/sdk"
+        imports: ["import { Server } from '@modelcontextprotocol/sdk'"]
+
+    detection_files:
+      - "mcp.json"
+      - "mcp-config.json"
+      - ".mcp/**"
+      - "claude_desktop_config.json"
+      - "**/mcp_server.py"
+      - "**/mcp-server/**"
+
+    detection_patterns:
+      imports:
+        python:
+          - "from mcp import"
+          - "from mcp.server import"
+          - "import mcp"
+        typescript:
+          - "from '@modelcontextprotocol/sdk'"
+          - "import { Server } from '@modelcontextprotocol'"
+      config_keys:
+        - "mcpServers"
+        - "tools/list"
+        - "resources/list"
+        - "prompts/list"
+
+  # ---------------------------------------------------------------------------
+  # LangChain / LangGraph
+  # ---------------------------------------------------------------------------
+  langchain:
+    certainty: 0.96
+    source: "LangChain 0.3+ / LangGraph Official Documentation (python.langchain.com)"
+    description: "最广泛采用的 LLM 应用开发框架"
+
+    core_concepts:
+      chains: "线性处理流水线"
+      agents: "自主决策代理"
+      tools: "可调用外部功能"
+      memory: "对话历史管理"
+      retrieval: "RAG 检索增强"
+
+    routing_patterns:
+      agent_definition:
+        pattern: |
+          from langchain.agents import create_openai_functions_agent
+          agent = create_openai_functions_agent(llm, tools, prompt)
+      tool_definition:
+        pattern: |
+          @tool
+          def tool_name(input: str) -> str:
+              """Tool description"""
+              return result
+        structured: |
+          class MyTool(BaseTool):
+              name = "tool_name"
+              description = "Tool description"
+              def _run(self, query: str) -> str:
+                  return result
+      chain_routing:
+        pattern: |
+          chain = prompt | llm | output_parser
+          result = chain.invoke({"input": "query"})
+
+    langgraph_patterns:
+      graph_definition:
+        pattern: |
+          from langgraph.graph import StateGraph
+          graph = StateGraph(State)
+          graph.add_node("node_name", node_function)
+          graph.add_edge("node1", "node2")
+      conditional_routing:
+        pattern: |
+          graph.add_conditional_edges("node", routing_function, {"condition1": "target1"})
+
+    security_concerns:
+      stride_relevance: ["Tampering", "Information Disclosure", "Elevation of Privilege", "Denial of Service"]
+      attack_vectors:
+        - "prompt_injection: 通过用户输入操控 Agent 行为"
+        - "tool_abuse: Agent 调用敏感工具"
+        - "memory_poisoning: 污染对话记忆"
+        - "rag_poisoning: 注入恶意检索内容"
+      asvs_reference: "V13.4 (GraphQL, WebSocket), V5 (Validation)"
+
+    detection_files:
+      - "**/langchain*"
+      - "**/langgraph*"
+      - "**/*_agent.py"
+      - "**/*_chain.py"
+
+    detection_patterns:
+      imports:
+        - "from langchain"
+        - "from langchain_core"
+        - "from langchain_community"
+        - "from langgraph"
+        - "import langchain"
+      keywords:
+        - "create_openai_functions_agent"
+        - "AgentExecutor"
+        - "StateGraph"
+        - "@tool"
+        - "BaseTool"
+
+  # ---------------------------------------------------------------------------
+  # LlamaIndex
+  # ---------------------------------------------------------------------------
+  llamaindex:
+    certainty: 0.94
+    source: "LlamaIndex Official Documentation (docs.llamaindex.ai)"
+    description: "以 RAG 为核心的 LLM 数据框架"
+
+    core_concepts:
+      index: "数据索引结构"
+      query_engine: "查询引擎"
+      retriever: "检索器"
+      agent: "代理 (基于 ReAct)"
+      tools: "可调用工具"
+
+    routing_patterns:
+      agent_definition:
+        pattern: |
+          from llama_index.core.agent import ReActAgent
+          agent = ReActAgent.from_tools(tools, llm=llm)
+      tool_definition:
+        pattern: |
+          from llama_index.core.tools import FunctionTool
+          tool = FunctionTool.from_defaults(fn=my_function, name="tool_name")
+        query_engine_tool: |
+          from llama_index.core.tools import QueryEngineTool
+          tool = QueryEngineTool.from_defaults(query_engine=engine)
+      index_creation:
+        pattern: |
+          from llama_index.core import VectorStoreIndex
+          index = VectorStoreIndex.from_documents(documents)
+          query_engine = index.as_query_engine()
+
+    security_concerns:
+      stride_relevance: ["Tampering", "Information Disclosure", "Denial of Service"]
+      attack_vectors:
+        - "rag_poisoning: 索引数据被注入恶意内容"
+        - "data_leakage: 索引包含敏感数据"
+        - "resource_exhaustion: 大量查询导致资源耗尽"
+
+    detection_files:
+      - "**/llama_index*"
+      - "**/llamaindex*"
+      - "**/*_index.py"
+      - "**/*_retriever.py"
+
+    detection_patterns:
+      imports:
+        - "from llama_index"
+        - "from llama_index.core"
+        - "import llama_index"
+      keywords:
+        - "VectorStoreIndex"
+        - "QueryEngine"
+        - "ReActAgent"
+        - "FunctionTool"
+
+  # ---------------------------------------------------------------------------
+  # CrewAI
+  # ---------------------------------------------------------------------------
+  crewai:
+    certainty: 0.93
+    source: "CrewAI Official Documentation (docs.crewai.com)"
+    description: "多代理协作框架，模拟团队组织结构"
+
+    core_concepts:
+      crew: "代理团队"
+      agent: "专业化代理角色"
+      task: "分配任务"
+      tool: "代理可用工具"
+      process: "执行流程 (sequential/hierarchical)"
+
+    routing_patterns:
+      crew_definition:
+        pattern: |
+          from crewai import Crew, Agent, Task
+          crew = Crew(
+              agents=[agent1, agent2],
+              tasks=[task1, task2],
+              process=Process.sequential
+          )
+      agent_definition:
+        pattern: |
+          agent = Agent(
+              role="Role Name",
+              goal="Agent goal",
+              backstory="Agent backstory",
+              tools=[tool1, tool2],
+              llm=llm
+          )
+      task_definition:
+        pattern: |
+          task = Task(
+              description="Task description",
+              expected_output="Expected output format",
+              agent=assigned_agent
+          )
+
+    security_concerns:
+      stride_relevance: ["Spoofing", "Tampering", "Elevation of Privilege"]
+      attack_vectors:
+        - "agent_impersonation: 恶意指令冒充其他代理"
+        - "task_hijacking: 劫持任务目标"
+        - "tool_abuse: 代理滥用工具权限"
+        - "backstory_injection: 通过 backstory 注入恶意指令"
+
+    detection_files:
+      - "**/crewai*"
+      - "**/*_crew.py"
+      - "**/*_agents.py"
+
+    detection_patterns:
+      imports:
+        - "from crewai"
+        - "import crewai"
+      keywords:
+        - "Crew("
+        - "Agent("
+        - "Task("
+        - "Process.sequential"
+        - "Process.hierarchical"
+
+  # ---------------------------------------------------------------------------
+  # Microsoft AutoGen
+  # ---------------------------------------------------------------------------
+  autogen:
+    certainty: 0.92
+    source: "Microsoft AutoGen Documentation (microsoft.github.io/autogen)"
+    description: "微软多代理对话框架"
+
+    core_concepts:
+      conversable_agent: "可对话代理"
+      assistant_agent: "助手代理"
+      user_proxy: "用户代理"
+      group_chat: "群组对话"
+      code_executor: "代码执行器"
+
+    routing_patterns:
+      agent_definition:
+        pattern: |
+          from autogen import AssistantAgent, UserProxyAgent
+          assistant = AssistantAgent(
+              name="assistant",
+              llm_config=llm_config,
+              system_message="System prompt"
+          )
+          user_proxy = UserProxyAgent(
+              name="user_proxy",
+              human_input_mode="NEVER",
+              code_execution_config={"work_dir": "coding"}
+          )
+      group_chat:
+        pattern: |
+          from autogen import GroupChat, GroupChatManager
+          group_chat = GroupChat(agents=[agent1, agent2], messages=[])
+          manager = GroupChatManager(groupchat=group_chat)
+      conversation:
+        pattern: |
+          user_proxy.initiate_chat(assistant, message="Task description")
+
+    security_concerns:
+      stride_relevance: ["Tampering", "Elevation of Privilege", "Denial of Service"]
+      attack_vectors:
+        - "code_execution: 代理生成并执行恶意代码"
+        - "agent_manipulation: 操控代理对话"
+        - "resource_abuse: 无限对话循环"
+      critical_config:
+        - "code_execution_config: 代码执行沙箱配置"
+        - "human_input_mode: 人类介入模式"
+
+    detection_files:
+      - "**/autogen*"
+      - "**/*_autogen.py"
+      - "**/multi_agent*"
+
+    detection_patterns:
+      imports:
+        - "from autogen"
+        - "import autogen"
+        - "from autogen.agentchat"
+      keywords:
+        - "AssistantAgent"
+        - "UserProxyAgent"
+        - "GroupChat"
+        - "ConversableAgent"
+        - "code_execution_config"
+
+  # ---------------------------------------------------------------------------
+  # Microsoft Semantic Kernel
+  # ---------------------------------------------------------------------------
+  semantic_kernel:
+    certainty: 0.91
+    source: "Microsoft Semantic Kernel Documentation"
+    description: "微软企业级 AI 应用 SDK"
+
+    core_concepts:
+      kernel: "核心运行时"
+      plugins: "功能插件"
+      functions: "原子功能单元"
+      planner: "任务规划器"
+      memory: "语义记忆"
+
+    routing_patterns:
+      kernel_setup:
+        pattern: |
+          from semantic_kernel import Kernel
+          kernel = Kernel()
+          kernel.add_service(AzureChatCompletion(...))
+      plugin_definition:
+        pattern: |
+          class MyPlugin:
+              @kernel_function(description="Function description")
+              def my_function(self, input: str) -> str:
+                  return result
+      function_invocation:
+        pattern: |
+          result = await kernel.invoke(plugin_name, function_name, arguments)
+
+    detection_files:
+      - "**/semantic_kernel*"
+      - "**/*_kernel.py"
+      - "**/sk_*"
+
+    detection_patterns:
+      imports:
+        - "from semantic_kernel"
+        - "import semantic_kernel"
+      keywords:
+        - "Kernel("
+        - "@kernel_function"
+        - "add_plugin"
+        - "add_service"
+
+  # ---------------------------------------------------------------------------
+  # OpenAI Agents SDK
+  # ---------------------------------------------------------------------------
+  openai_agents:
+    certainty: 0.95
+    source: "OpenAI Agents SDK Documentation (platform.openai.com)"
+    description: "OpenAI 官方 Agent 开发框架"
+
+    core_concepts:
+      agent: "代理定义"
+      tool: "可调用工具"
+      handoff: "代理间交接"
+      guardrails: "安全护栏"
+      runner: "执行运行时"
+
+    routing_patterns:
+      agent_definition:
+        pattern: |
+          from openai_agents import Agent, Tool
+          agent = Agent(
+              name="agent_name",
+              instructions="System instructions",
+              tools=[tool1, tool2]
+          )
+      tool_definition:
+        pattern: |
+          @tool
+          def my_tool(param: str) -> str:
+              """Tool description"""
+              return result
+      handoff:
+        pattern: |
+          agent.add_handoff(target_agent, condition="when to handoff")
+
+    security_concerns:
+      stride_relevance: ["Spoofing", "Tampering", "Elevation of Privilege"]
+      attack_vectors:
+        - "instruction_injection: 覆盖系统指令"
+        - "tool_misuse: 工具滥用"
+        - "handoff_hijacking: 劫持代理交接"
+
+    detection_files:
+      - "**/openai_agents*"
+      - "**/agents_sdk*"
+
+    detection_patterns:
+      imports:
+        - "from openai_agents"
+        - "from agents"
+      keywords:
+        - "Agent("
+        - "@tool"
+        - "add_handoff"
+        - "Runner"
+
+  # ---------------------------------------------------------------------------
+  # Anthropic Claude Agent SDK
+  # ---------------------------------------------------------------------------
+  claude_agents:
+    certainty: 0.94
+    source: "Anthropic Claude Agent SDK Documentation"
+    description: "Anthropic 官方 Claude Agent 开发框架"
+
+    core_concepts:
+      agent: "Claude 代理"
+      tool: "工具定义"
+      computer_use: "计算机使用能力"
+      thinking: "扩展思考"
+
+    routing_patterns:
+      agent_definition:
+        pattern: |
+          import anthropic
+          client = anthropic.Anthropic()
+          response = client.messages.create(
+              model="claude-sonnet-4-20250514",
+              tools=[tool_definition],
+              messages=[{"role": "user", "content": "..."}]
+          )
+      tool_definition:
+        pattern: |
+          tool = {
+              "name": "tool_name",
+              "description": "Tool description",
+              "input_schema": {
+                  "type": "object",
+                  "properties": {...}
+              }
+          }
+
+    security_concerns:
+      stride_relevance: ["Tampering", "Information Disclosure", "Elevation of Privilege"]
+      attack_vectors:
+        - "computer_use_abuse: 计算机使用功能滥用"
+        - "tool_injection: 工具注入"
+
+    detection_files:
+      - "**/anthropic*"
+      - "**/claude*"
+
+    detection_patterns:
+      imports:
+        - "import anthropic"
+        - "from anthropic"
+      keywords:
+        - "anthropic.Anthropic()"
+        - "computer_use"
+        - "tool_use"
+
+  # ---------------------------------------------------------------------------
+  # Vercel AI SDK
+  # ---------------------------------------------------------------------------
+  vercel_ai:
+    certainty: 0.90
+    source: "Vercel AI SDK Documentation (sdk.vercel.ai)"
+    description: "Vercel 前端 AI 集成 SDK"
+
+    core_concepts:
+      useChat: "聊天 Hook"
+      useCompletion: "补全 Hook"
+      streamText: "流式文本生成"
+      generateText: "文本生成"
+      tool: "工具调用"
+
+    routing_patterns:
+      api_route:
+        pattern: |
+          // app/api/chat/route.ts
+          import { streamText } from 'ai';
+          export async function POST(req: Request) {
+              const { messages } = await req.json();
+              const result = await streamText({
+                  model: openai('gpt-4'),
+                  messages,
+                  tools: { ... }
+              });
+              return result.toDataStreamResponse();
+          }
+      client_usage:
+        pattern: |
+          import { useChat } from 'ai/react';
+          const { messages, input, handleSubmit } = useChat();
+
+    detection_files:
+      - "app/api/chat/**"
+      - "**/ai/react"
+
+    detection_patterns:
+      imports:
+        - "from 'ai'"
+        - "from 'ai/react'"
+        - "import { useChat }"
+        - "import { streamText }"
+      keywords:
+        - "useChat"
+        - "useCompletion"
+        - "streamText"
+        - "generateText"
+        - "toDataStreamResponse"
+
+  # ---------------------------------------------------------------------------
+  # Dify
+  # ---------------------------------------------------------------------------
+  dify:
+    certainty: 0.88
+    source: "Dify Official Documentation (docs.dify.ai)"
+    description: "开源 LLM 应用开发平台"
+
+    core_concepts:
+      app: "应用定义"
+      workflow: "工作流编排"
+      agent: "Agent 模式"
+      knowledge: "知识库"
+      tools: "工具集成"
+
+    deployment_patterns:
+      docker_compose: "docker-compose.yaml"
+      api_endpoint: "/v1/chat-messages"
+      workflow_endpoint: "/v1/workflows/run"
+
+    detection_files:
+      - "docker-compose.yaml"  # with dify
+      - "dify.yaml"
+      - ".dify/**"
+
+    detection_patterns:
+      config_keys:
+        - "DIFY_"
+        - "dify_api_key"
+      api_patterns:
+        - "/v1/chat-messages"
+        - "/v1/workflows"
+
+# =============================================================================
+# HEURISTIC HINTS FOR LLM
+# =============================================================================
+heuristic_hints:
+  discovery_order:
+    - "1. 检查 API 规范文件 (openapi.yaml, swagger.json, *.proto)"
+    - "2. 检查路由定义文件 (routes.*, urls.py, router.*)"
+    - "3. 搜索路由装饰器/注解模式"
+    - "4. 检查动态路由注册 (add_url_rule, include_router)"
+    - "5. 检查类视图和资源控制器"
+    - "6. 检查 AI/LLM 框架配置 (mcp.json, langchain, crewai)"
+
+  common_missing_routes:
+    - "健康检查: /health, /ready, /live, /ping"
+    - "文档: /docs, /swagger, /openapi.json"
+    - "调试: /debug, /_debug, /actuator"
+    - "管理: /admin, /manage, /console"
+    - "WebSocket: /ws, /socket.io, /sockjs"
+    - "OAuth 回调: /callback, /oauth/callback"
+    - "内部 API: /internal/*, /_*"
+    - "AI/LLM: /v1/chat, /v1/completions, /v1/embeddings"
+
+  dynamic_route_patterns:
+    - "循环注册: for route in routes: app.add_route(route)"
+    - "配置驱动: routes = config.get('routes')"
+    - "插件系统: plugin.register_routes(app)"
+    - "自动发现: scan_controllers(package)"
+
+  class_view_hints:
+    - "检查继承自 View/ViewSet/MethodView 的类"
+    - "检查 as_view() 或 as_viewset() 调用"
+    - "检查 @action 装饰器 (DRF)"
+
+  version_patterns:
+    - "/v1/*, /v2/*, /api/v1/*"
+    - "Accept-Version header routing"
+    - "URL prefix versioning"
+
+  # ---------------------------------------------------------------------------
+  # AI/LLM Framework Discovery Hints
+  # ---------------------------------------------------------------------------
+  ai_llm_discovery:
+    detection_priority:
+      - "1. 检查 MCP 配置 (mcp.json, claude_desktop_config.json)"
+      - "2. 检查 LangChain/LangGraph 导入"
+      - "3. 检查 LlamaIndex 索引定义"
+      - "4. 检查多代理框架 (CrewAI, AutoGen)"
+      - "5. 检查 AI SDK 集成 (Vercel AI, OpenAI Agents)"
+
+    common_ai_endpoints:
+      openai_compatible:
+        - "/v1/chat/completions"
+        - "/v1/completions"
+        - "/v1/embeddings"
+        - "/v1/models"
+      custom:
+        - "/api/chat"
+        - "/api/generate"
+        - "/api/query"
+        - "/api/agent"
+        - "/api/workflow"
+
+    tool_interface_patterns:
+      - "@tool 装饰器 (LangChain, OpenAI Agents)"
+      - "BaseTool 类继承"
+      - "FunctionTool.from_defaults()"
+      - "MCP tools/call 协议"
+      - "@kernel_function (Semantic Kernel)"
+
+    agent_definition_patterns:
+      - "Agent(name=, instructions=)"
+      - "AssistantAgent(), UserProxyAgent()"
+      - "Crew(agents=, tasks=)"
+      - "ReActAgent.from_tools()"
+      - "StateGraph() (LangGraph)"
+
+    security_checkpoints:
+      mcp_security:
+        - "检查 mcpServers 配置中的权限"
+        - "验证工具输入输出边界"
+        - "检查 OAuth/Token 配置"
+      agent_security:
+        - "检查 human_input_mode 配置"
+        - "验证 code_execution_config 沙箱"
+        - "检查工具权限白名单"
+        - "验证 guardrails 配置"
+      rag_security:
+        - "检查索引数据来源"
+        - "验证检索结果过滤"
+        - "检查敏感数据脱敏"
+
+    stride_focus_areas:
+      spoofing:
+        - "Agent 身份冒充"
+        - "工具来源伪造"
+        - "MCP 服务器欺骗"
+      tampering:
+        - "提示注入攻击"
+        - "记忆/上下文污染"
+        - "RAG 数据投毒"
+        - "工具输出篡改"
+      information_disclosure:
+        - "系统提示泄露"
+        - "索引数据泄露"
+        - "工具调用日志暴露"
+        - "Token/API Key 泄露"
+      elevation_of_privilege:
+        - "工具权限提升"
+        - "代码执行逃逸"
+        - "Agent 越权操作"
+        - "MCP 工具组合攻击"
+      denial_of_service:
+        - "无限循环对话"
+        - "资源耗尽攻击"
+        - "大量嵌入请求"

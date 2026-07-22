@@ -1,0 +1,2549 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Data Model Contract
+# Version: 3.2.0 (20260512a)
+# Purpose: Define all entity schemas and relationships for threat modeling
+
+# =============================================================================
+# ENTITY REGISTRY (All entity types defined in this file)
+# =============================================================================
+# | Entity           | ID Format              | Introduced | Description           |
+# |------------------|------------------------|------------|-----------------------|
+# | Finding          | F-P{N}-{Seq:03d}       | P1-P3      | Security observations |
+# | Module           | M-{Seq:03d}            | P1         | Code modules          |
+# | EntryPoint       | EP-{Type}-{Seq:03d}    | P1         | API/UI/System entries |
+# | ExternalInteractor| EI-{Seq:03d}          | P2         | External actors       |
+# | Process          | P-{Seq:03d}            | P2         | DFD processes         |
+# | DataStore        | DS-{Seq:03d}           | P2         | Data storage points   |
+# | DataFlow         | DF-{Seq:03d}           | P2         | Data flow edges       |
+# | TrustBoundary    | TB-{Seq:03d}           | P3         | Security boundaries   |
+# | Interface        | IF-{Seq:03d}           | P3         | Cross-boundary IFs    |
+# | DataNode         | DN-{Seq:03d}           | P3         | Sensitive data nodes  |
+# | SecurityGap      | GAP-{Seq:03d}          | P4         | Control deficiencies  |
+# | Threat           | T-{STRIDE}-{Elem}-{Seq}| P5         | STRIDE threats        |
+# | ValidatedRisk    | VR-{Seq:03d}           | P6         | Verified risks        |
+# | POC              | POC-{Seq:03d}          | P6         | Proof of concept      |
+# | AttackPath       | AP-{Seq:03d}           | P6         | Single attack vectors |
+# | AttackChain      | AC-{Seq:03d}           | P6         | Multi-step sequences  |
+# | Mitigation       | MIT-{Seq:03d}          | P7         | Remediation measures  |
+# | TestCase         | TC-{Seq:03d}           | P8         | Penetration tests     |
+# | DetailedRiskRpt  | (uses VR-{Seq:03d})    | P8R        | Per-VR analysis rpt   |
+# =============================================================================
+
+---
+
+# =============================================================================
+# Finding Entity (P1-P3) - Base Definition
+# =============================================================================
+Finding:
+  description: |
+    Security-related observation from phases 1-3 (factual discoveries).
+    Note: P4 uses GAP-xxx entities instead of F-P4-xxx findings.
+    Findings are factual observations; Gaps are control deficiencies.
+  id:
+    format: "F-P{N}-{Seq:03d}"
+    examples:
+      - "F-P1-001"
+      - "F-P2-005"
+      - "F-P3-003"
+  fields:
+    id:
+      type: string
+      required: true
+    phase:
+      type: integer
+      enum: [1, 2, 3]
+      required: true
+      description: "Phase 1, 2, or 3 (P4 uses GAP-xxx instead)"
+    type:
+      type: string
+      enum: [architecture, dataflow, boundary]
+      required: true
+    title:
+      type: string
+      required: true
+    description:
+      type: string
+      required: true
+    severity:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW, INFO]
+      required: true
+    category:
+      type: string
+      required: true
+      description: "Phase-specific category"
+    location:
+      type: object
+      properties:
+        file:
+          type: string
+        line:
+          type: integer
+        element_id:
+          type: string
+        module_id:
+          type: string
+        flow_id:
+          type: string
+        boundary_id:
+          type: string
+    security_relevance:
+      type: string
+      description: "Why this finding matters for security"
+    related_elements:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+          id:
+            type: string
+    recommended_action:
+      type: string
+      description: "What to investigate in later phases"
+
+# =============================================================================
+# ArchitectureFinding (P1)
+# =============================================================================
+ArchitectureFinding:
+  description: "Finding from P1 project structure and architecture analysis"
+  extends: Finding
+  id:
+    format: "F-P1-{Seq:03d}"
+    examples:
+      - "F-P1-001"
+      - "F-P1-015"
+  fields:
+    phase:
+      type: integer
+      const: 1
+    type:
+      type: string
+      const: architecture
+    category:
+      type: string
+      enum: [entry_point, module_structure, dependency, configuration, dynamic_route]
+      required: true
+    location:
+      type: object
+      properties:
+        module_id:
+          type: string
+          description: "M-xxx module ID"
+        entry_point_id:
+          type: string
+          description: "EP-xxx entry point ID"
+        file:
+          type: string
+        line:
+          type: integer
+
+# =============================================================================
+# DataFlowFinding (P2)
+# =============================================================================
+DataFlowFinding:
+  description: "Finding from P2 DFD and call flow analysis"
+  extends: Finding
+  id:
+    format: "F-P2-{Seq:03d}"
+    examples:
+      - "F-P2-001"
+      - "F-P2-020"
+  fields:
+    phase:
+      type: integer
+      const: 2
+    type:
+      type: string
+      const: dataflow
+    category:
+      type: string
+      enum: [missing_validation, sensitive_exposure, unencrypted_flow, checkpoint_gap]
+      required: true
+    location:
+      type: object
+      properties:
+        flow_id:
+          type: string
+          description: "DF-xxx data flow ID"
+        interface_id:
+          type: string
+          description: "IF-xxx interface ID"
+        data_store_id:
+          type: string
+          description: "DS-xxx data store ID"
+        file:
+          type: string
+        line:
+          type: integer
+    data_sensitivity:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+      description: "Sensitivity of affected data"
+    affected_elements:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [data_flow, data_store, interface, process]
+          id:
+            type: string
+
+# =============================================================================
+# BoundaryFinding (P3)
+# =============================================================================
+BoundaryFinding:
+  description: "Finding from P3 trust boundary analysis"
+  extends: Finding
+  id:
+    format: "F-P3-{Seq:03d}"
+    examples:
+      - "F-P3-001"
+      - "F-P3-012"
+  fields:
+    phase:
+      type: integer
+      const: 3
+    type:
+      type: string
+      const: boundary
+    category:
+      type: string
+      enum: [missing_control, weak_encryption, excessive_permission, unprotected_crossing]
+      required: true
+    location:
+      type: object
+      properties:
+        boundary_id:
+          type: string
+          description: "TB-xxx trust boundary ID"
+        interface_id:
+          type: string
+          description: "IF-xxx interface ID"
+        flow_id:
+          type: string
+          description: "DF-xxx data flow ID"
+    crossing_risk:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+      description: "Risk level of boundary crossing"
+    affected_elements:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [trust_boundary, cross_boundary_flow, interface]
+          id:
+            type: string
+
+# =============================================================================
+# DFD Elements (P2)
+# =============================================================================
+ExternalInteractor:
+  id:
+    format: "EI-{NNN}"
+    example: "EI-001"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    type:
+      type: string
+      enum: [Human, InternalService, ExternalSystem]
+      required: true
+    interacts_with:
+      type: array
+      items: string
+
+Process:
+  id:
+    format: "P-{NNN}"
+    example: "P-001"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    maps_to_module:
+      type: string
+      description: "Link to P1 module M-xxx"
+    auth_required:
+      type: boolean
+    entry_points:
+      type: array
+      items: string
+
+DataStore:
+  id:
+    format: "DS-{NNN}"
+    example: "DS-001"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    type:
+      type: string
+      examples: [PostgreSQL, MongoDB, Redis, S3]
+    sensitivity:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+      required: true
+    stores:
+      type: array
+      items: string
+      description: "Data types stored"
+    encryption:
+      type: object
+      properties:
+        at_rest:
+          type: boolean
+        in_transit:
+          type: boolean
+
+DataFlow:
+  id:
+    format: "DF-{NNN}"
+    example: "DF-001"
+  fields:
+    id:
+      type: string
+      required: true
+    from:
+      type: string
+      description: "Source element ID (EI/P/DS)"
+      required: true
+    to:
+      type: string
+      description: "Target element ID (EI/P/DS)"
+      required: true
+    data:
+      type: string
+      description: "Data being transferred"
+      required: true
+    protocol:
+      type: string
+      examples: [HTTPS, gRPC, TCP, Internal]
+    encrypted:
+      type: boolean
+
+TrustBoundary:
+  id:
+    format: "TB-{NNN}"
+    example: "TB-001"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    type:
+      type: string
+      enum: [Network, Process, User, Data, Service, Model, Agent]
+      required: true
+    description:
+      type: string
+      description: "Description of the boundary and its purpose"
+    inside:
+      type: array
+      items: string
+      description: "Element IDs inside boundary"
+    outside:
+      type: array
+      items: string
+      description: "Element IDs outside boundary"
+    crossing_points:
+      type: array
+      items:
+        type: object
+        properties:
+          flow_id:
+            type: string
+            description: "DF-xxx data flow crossing this boundary"
+          direction:
+            type: string
+            enum: [inbound, outbound, bidirectional]
+          controls:
+            type: array
+            items: string
+            description: "Security controls at crossing (e.g., TLS, WAF)"
+      description: "Data flows crossing this boundary"
+
+# =============================================================================
+# Threat Entity (P5)
+# =============================================================================
+Threat:
+  description: "Potential attack vector identified through STRIDE analysis"
+  id:
+    format: "T-{STRIDE}-{ElementID}-{Seq}"
+    examples:
+      - "T-S-P-001-001"
+      - "T-T-DS-001-002"
+      - "T-I-DF-003-001"
+  stride_codes:
+    S: Spoofing
+    T: Tampering
+    R: Repudiation
+    I: InformationDisclosure
+    D: DenialOfService
+    E: ElevationOfPrivilege
+  fields:
+    id:
+      type: string
+      required: true
+    element_id:
+      type: string
+      required: true
+      description: "DFD element ID (P-xxx, DS-xxx, DF-xxx, EI-xxx)"
+    element_name:
+      type: string
+      required: true
+    stride_type:
+      type: string
+      enum: [S, T, R, I, D, E]
+      required: true
+    stride_name:
+      type: string
+      required: true
+    title:
+      type: string
+      required: true
+    description:
+      type: string
+      required: true
+    attack_scenario:
+      type: string
+    affected_flows:
+      type: array
+      items: string
+    affected_stores:
+      type: array
+      items: string
+    cwe:
+      type: string
+      pattern: "CWE-\\d+"
+    capec:
+      type: string
+      pattern: "CAPEC-\\d+"
+    initial_priority:
+      type: string
+      enum: [P0, P1, P2, P3]
+    likelihood:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+    impact:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+
+# =============================================================================
+# ValidatedRisk Entity (P6)
+# =============================================================================
+ValidatedRisk:
+  description: "Verified exploitable risk after consolidation and validation"
+  id:
+    format: "VR-{Seq:03d}"
+    examples:
+      - "VR-001"
+      - "VR-015"
+  fields:
+    id:
+      type: string
+      required: true
+    title:
+      type: string
+      required: true
+    # MANDATORY: Traceability
+    threat_refs:
+      type: array
+      items: string
+      description: "All source threat IDs (T-xxx)"
+      required: true
+      min_items: 1
+    finding_refs:
+      type: array
+      items: string
+      description: "Related finding IDs (F-xxx, GAP-xxx)"
+    stride_types:
+      type: array
+      items: string
+      enum: [S, T, R, I, D, E]
+    priority:
+      type: string
+      enum: [P0, P1, P2, P3]
+      required: true
+    cvss_score:
+      type: number
+      minimum: 0.0
+      maximum: 10.0
+    cvss_vector:
+      type: string
+    location:
+      type: object
+      properties:
+        files:
+          type: array
+          items: string
+        elements:
+          type: array
+          items: string
+        trust_boundary:
+          type: string
+    detailed_analysis:
+      type: string
+    root_cause:
+      type: string
+    related_cwe:
+      type: string
+      required: true
+    related_capec:
+      type: string
+    related_attack:
+      type: string
+    related_poc:
+      type: string
+      description: "POC-xxx if available"
+    validation:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [verified, pending, theoretical, excluded]
+          required: true
+        poc_available:
+          type: boolean
+        test_cases:
+          type: array
+          items: string
+
+# =============================================================================
+# POC Entity (P6)
+# =============================================================================
+POC:
+  description: "Proof of Concept for exploiting a validated risk"
+  id:
+    format: "POC-{Seq:03d}"
+    examples:
+      - "POC-001"
+      - "POC-005"
+  fields:
+    id:
+      type: string
+      required: true
+      description: "Unique POC identifier (POC-xxx format)"
+    threat_ref:
+      type: string
+      description: "Primary threat ID"
+      required: true
+    stride_type:
+      type: string
+      enum: [S, T, R, I, D, E]
+    verification_status:
+      type: string
+      enum: [verified, pending, theoretical, excluded]
+      required: true
+    exploitation_difficulty:
+      type: string
+      enum: [low, medium, high]
+    prerequisites:
+      type: array
+      items: string
+    vulnerability_location:
+      type: object
+      properties:
+        file_path:
+          type: string
+        function_name:
+          type: string
+        line_number:
+          type: integer
+    vulnerable_code:
+      type: string
+    exploitation_steps:
+      type: array
+      items: string
+    poc_code:
+      type: string
+      description: "Complete executable POC code"
+    expected_result:
+      type: string
+    actual_result:
+      type: string
+    risk_assessment:
+      type: object
+      properties:
+        complexity:
+          type: string
+          enum: [low, medium, high]
+        attack_vector:
+          type: string
+        impact_scope:
+          type: string
+        data_sensitivity:
+          type: string
+
+# =============================================================================
+# AttackPath Entity (P6)
+# =============================================================================
+# SEMANTIC DISTINCTION:
+#   AttackPath (AP-xxx): A single attack VECTOR - one exploitation route from
+#   entry point to target. Represents a direct path through the system.
+#   Example: "External API → Auth bypass → Database read"
+#
+#   AttackChain (AC-xxx): A MULTI-STEP attack SEQUENCE - combines multiple
+#   techniques/vulnerabilities in sequence. Represents compound exploitation.
+#   Example: "Phishing → Credential theft → Lateral movement → Data exfil"
+# =============================================================================
+AttackPath:
+  description: |
+    A single attack VECTOR representing one exploitation route from entry point
+    to target. AttackPaths are direct paths; for multi-step compound attacks,
+    use AttackChain (AC-xxx) instead.
+  id:
+    format: "AP-{Seq:03d}"
+    example: "AP-001"
+  fields:
+    path_id:
+      type: string
+      required: true
+    path_name:
+      type: string
+      required: true
+    entry_point:
+      type: string
+      required: true
+    key_nodes:
+      type: array
+      items: string
+    final_target:
+      type: string
+      required: true
+    feasibility_score:
+      type: number
+      minimum: 0.0
+      maximum: 10.0
+    detection_difficulty:
+      type: string
+      enum: [low, medium, high]
+    priority_fix:
+      type: boolean
+    related_risks:
+      type: array
+      items: string
+
+# =============================================================================
+# AttackChain Entity (P6)
+# =============================================================================
+AttackChain:
+  description: |
+    A MULTI-STEP attack SEQUENCE combining multiple techniques or vulnerabilities.
+    AttackChains represent compound exploitation where success depends on chaining
+    multiple AttackPaths or techniques together. Use AttackPath (AP-xxx) for
+    single-vector attacks.
+  id:
+    format: "AC-{Seq:03d}"
+    example: "AC-001"
+  fields:
+    chain_id:
+      type: string
+      required: true
+    chain_name:
+      type: string
+      required: true
+    entry_point:
+      type: string
+      required: true
+    target:
+      type: string
+      required: true
+    impact_scope:
+      type: string
+    difficulty:
+      type: string
+      enum: [low, medium, high]
+    related_threats:
+      type: array
+      items: string
+    steps:
+      type: array
+      items:
+        type: object
+        properties:
+          step:
+            type: integer
+          title:
+            type: string
+          source:
+            type: string
+          target:
+            type: string
+          action:
+            type: string
+          code_location:
+            type: string
+          data_change:
+            type: string
+    attack_flow_diagram:
+      type: string
+      description: "ASCII box diagram"
+    prerequisites:
+      type: array
+      items: string
+    exploitation_commands:
+      type: string
+    ioc_indicators:
+      type: array
+      items: string
+    defense_recommendations:
+      type: array
+      items:
+        type: object
+        properties:
+          cutpoint:
+            type: string
+          recommendation:
+            type: string
+
+# =============================================================================
+# Mitigation Entity (P7)
+# =============================================================================
+Mitigation:
+  description: "Remediation measure for validated risks"
+  id:
+    format: "MIT-{Seq:03d}"
+    examples:
+      - "MIT-001"
+      - "MIT-012"
+    note: "Changed from M-xxx to MIT-xxx to avoid collision with Module entity"
+  fields:
+    id:
+      type: string
+      required: true
+    title:
+      type: string
+      required: true
+    risk_refs:
+      type: array
+      items: string
+      description: "VR-xxx IDs this mitigation addresses"
+      required: true
+      min_items: 1
+    threat_refs:
+      type: array
+      items: string
+      description: "Original threat IDs"
+    priority:
+      type: string
+      enum: [P0, P1, P2, P3]
+      required: true
+    effort:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+    implementation_time:
+      type: string
+    current_implementation:
+      type: string
+    recommended_fix:
+      type: string
+    implementation_steps:
+      type: array
+      items:
+        type: object
+        properties:
+          step:
+            type: integer
+          action:
+            type: string
+          file:
+            type: string
+          code:
+            type: string
+          before:
+            type: string
+          after:
+            type: string
+    verification:
+      type: object
+      properties:
+        test_cases:
+          type: array
+          items: string
+        asvs_requirement:
+          type: string
+        wstg_test:
+          type: string
+    security_controls:
+      type: array
+      items:
+        type: object
+        properties:
+          control:
+            type: string
+          domain:
+            type: string
+    additional_recommendations:
+      type: array
+      items: string
+
+# =============================================================================
+# TestCase Entity (P8)
+# =============================================================================
+TestCase:
+  description: |
+    Security test case generated from validated risks and POCs.
+    Maps POC-xxx → TC-xxx for structured penetration testing.
+  id:
+    format: "TC-{Seq:03d}"
+    examples:
+      - "TC-001"
+      - "TC-025"
+  fields:
+    id:
+      type: string
+      required: true
+    title:
+      type: string
+      required: true
+    target_ref:
+      type: string
+      description: "Primary target reference (VR-xxx, POC-xxx, or AP-xxx)"
+      required: true
+    poc_ref:
+      type: string
+      description: "POC-xxx ID this test case is derived from"
+    risk_ref:
+      type: string
+      description: "VR-xxx ID this test case validates"
+    test_type:
+      type: string
+      enum: [manual_pentest, automated_scan, code_review, configuration_audit]
+      required: true
+    priority:
+      type: string
+      enum: [critical, high, medium, low]
+      required: true
+    prerequisites:
+      type: array
+      items: string
+    test_steps:
+      type: array
+      items:
+        type: object
+        properties:
+          step:
+            type: integer
+          action:
+            type: string
+          expected_result:
+            type: string
+          tools:
+            type: array
+            items: string
+    verification_criteria:
+      type: string
+      description: "Criteria to determine pass/fail"
+    estimated_duration:
+      type: string
+      description: "Estimated time to execute test"
+    tools_required:
+      type: array
+      items: string
+    execution_environment:
+      type: string
+      enum: [staging, production_safe, isolated_lab]
+
+# =============================================================================
+# DetailedRiskReport Entity (P8R) - Per-VR Analysis Report
+# =============================================================================
+DetailedRiskReport:
+  description: |
+    Per-VR detailed analysis report generated in optional P8R phase.
+    Each report contains 12 analysis elements providing exhaustive depth
+    for a single validated risk. Uses the VR-xxx ID (no separate ID format).
+  id:
+    format: "VR-{Seq:03d}"
+    note: "Reuses ValidatedRisk ID — one report per VR"
+    examples:
+      - "VR-001"
+      - "VR-015"
+  fields:
+    vr_id:
+      type: string
+      required: true
+      description: "VR-xxx ID from P6"
+    title:
+      type: string
+      required: true
+    filename:
+      type: string
+      required: true
+      description: "Output filename: VR-{NNN}-{title-slug}.md"
+    priority:
+      type: string
+      enum: [P0, P1, P2, P3]
+      required: true
+    cvss:
+      type: number
+      required: true
+    cwe_id:
+      type: string
+      pattern: "CWE-\\d+"
+      description: "CWE-{id} reference"
+      required: true
+    stride_type:
+      type: string
+      enum: [S, T, R, I, D, E]
+      required: true
+    character_count:
+      type: integer
+      description: "Report length in characters"
+      required: true
+      minimum: 0
+    elements_completed:
+      type: integer
+      description: "Number of 12 analysis elements present (target: 12)"
+      required: true
+      minimum: 0
+      maximum: 12
+    poc_included:
+      type: boolean
+      description: "Whether POC code was included verbatim"
+    mitigation_included:
+      type: boolean
+      description: "Whether MIT-xxx cross-reference is present"
+    traceability_complete:
+      type: boolean
+      description: "Whether F→GAP→T→VR→MIT chain is complete"
+  analysis_elements:
+    - "1. Risk Overview (table: VR-ID, title, CVSS, CWE, priority, STRIDE, assets)"
+    - "2. Entry Points (attack entry points with conditions and triggers)"
+    - "3. Data Flow Analysis (ASCII diagram from entry to vulnerable point)"
+    - "4. Root Cause Analysis (direct + systemic causes with file:line)"
+    - "5. Exploit Scenario (step-by-step exploitation procedure)"
+    - "6. POC Code (VERBATIM from P6 — no summarization)"
+    - "7. Impact Analysis (business impact, data sensitivity, blast radius)"
+    - "8. Attack Chain Context (AC-xxx membership and position)"
+    - "9. Related Vulnerabilities (CWE details, CVEs, CAPEC patterns)"
+    - "10. Mitigation Strategy (MIT-xxx with before/after code)"
+    - "11. Verification Method (TC-xxx, ASVS/WSTG references)"
+    - "12. References & Traceability (F→GAP→T→VR→MIT chain)"
+  sizing_guidelines:
+    P0: "6K-30K chars, all 12 elements mandatory"
+    P1: "4K-20K chars, all 12 elements mandatory"
+    P2: "3K-10K chars, all 12 elements, §9 may be brief"
+    P3: "2K-6K chars, all 12 elements, §5/§6 may note low-risk"
+
+# =============================================================================
+# P8R Manifest Schema
+# =============================================================================
+P8RManifest:
+  description: |
+    Manifest file generated by P8R phase tracking all detailed risk reports.
+    Written to .phase_working/{SESSION_ID}/data/P8R_manifest.yaml
+  fields:
+    schema_version:
+      type: string
+      required: true
+      value: "3.2.0"
+    phase:
+      type: string
+      required: true
+      value: "P8R"
+    session_id:
+      type: string
+      required: true
+    generated_at:
+      type: string
+      format: "ISO 8601"
+      required: true
+    summary:
+      type: object
+      properties:
+        total_vr_count:
+          type: integer
+          required: true
+        reports_generated:
+          type: integer
+          required: true
+        total_characters:
+          type: integer
+        generation_order:
+          type: array
+          items: string
+          description: "Ordered list of VR-xxx IDs as generated"
+    reports:
+      type: array
+      items:
+        type: object
+        ref: "DetailedRiskReport"
+    cross_reference_integrity:
+      type: object
+      properties:
+        all_vr_covered:
+          type: boolean
+          required: true
+        all_poc_verbatim:
+          type: boolean
+          required: true
+        all_mit_linked:
+          type: boolean
+        all_chains_mapped:
+          type: boolean
+        traceability_complete:
+          type: boolean
+    count_check:
+      type: object
+      description: "Count conservation verification"
+      properties:
+        p6_vr_count:
+          type: integer
+          required: true
+        p8r_report_count:
+          type: integer
+          required: true
+        match:
+          type: boolean
+          required: true
+          description: "MUST be true — p6_vr_count == p8r_report_count"
+
+# =============================================================================
+# Module Entity (P1)
+# =============================================================================
+Module:
+  description: "Code module or component identified during project understanding"
+  id:
+    format: "M-{Seq:03d}"
+    examples:
+      - "M-001"
+      - "M-015"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    path:
+      type: string
+      description: "File path or directory path"
+    type:
+      type: string
+      enum: [core, service, utility, config, test, external]
+    description:
+      type: string
+    dependencies:
+      type: array
+      items: string
+      description: "Other module IDs this depends on"
+    entry_points:
+      type: array
+      items: string
+      description: "Entry point IDs within this module"
+    security_relevant:
+      type: boolean
+      description: "Whether module handles security-sensitive operations"
+
+# =============================================================================
+# CoverageConfidence Entity (P1) - GAP-3 FIX: Transparent Calculation
+# =============================================================================
+CoverageConfidence:
+  description: "Coverage confidence metrics from three-layer discovery (P1.0-P1.5)"
+
+  # ============================================================
+  # CALCULATION METHODOLOGY (GAP-3 FIX)
+  # This section defines the EXACT algorithm for reproducible confidence scores
+  # ============================================================
+  calculation_methodology:
+    formula: |
+      overall = base_confidence - uncertainty_penalty + tool_boost
+      base_confidence = (layer1_score × 0.6) + (layer2_score × 0.3) + (layer3_adjustment × 0.1)
+
+    layer_definitions:
+      layer1:
+        name: "Deterministic Static Discovery"
+        weight: 0.6
+        sources:
+          - "package.json/requirements.txt dependencies"
+          - "Framework route decorators (@app.route, @Get, etc.)"
+          - "OpenAPI/Swagger specifications"
+          - "Static file structure analysis"
+        scoring: |
+          layer1_score = discovered_deterministic / expected_deterministic
+          If OpenAPI spec exists and complete: layer1_score = max(0.95, layer1_score)
+
+      layer2:
+        name: "Heuristic Pattern Discovery"
+        weight: 0.3
+        sources:
+          - "Naming convention analysis (*Controller, *Service, *Handler)"
+          - "File pattern matching (routes/, controllers/, api/)"
+          - "Import/export graph analysis"
+        scoring: |
+          layer2_score = heuristic_matches / total_candidates
+          Penalize false positives: layer2_score *= (1 - false_positive_rate)
+
+      layer3:
+        name: "Dynamic Indicator Assessment"
+        weight: 0.1
+        sources:
+          - "Reflection/introspection usage detection"
+          - "Plugin/middleware registration patterns"
+          - "Runtime configuration indicators"
+        scoring: |
+          layer3_adjustment = 1.0 - (dynamic_indicator_penalty)
+          Each dynamic indicator reduces score based on impact
+
+    uncertainty_penalty_mapping:
+      # Each uncertainty source has a specific penalty value
+      conditional_registration:
+        penalty: 0.03
+        impact: MEDIUM
+        description: "Routes registered conditionally (if/else, environment checks)"
+      plugin_system:
+        penalty: 0.08
+        impact: HIGH
+        description: "Plugin architecture allows runtime route addition"
+      reflection_calls:
+        penalty: 0.05
+        impact: HIGH
+        description: "Reflection used to invoke methods dynamically"
+      dynamic_url_construction:
+        penalty: 0.04
+        impact: MEDIUM
+        description: "URLs built at runtime from variables"
+      runtime_registration:
+        penalty: 0.06
+        impact: HIGH
+        description: "Routes registered during application startup"
+      no_openapi_spec:
+        penalty: 0.02
+        impact: LOW
+        description: "No OpenAPI/Swagger specification found"
+      # Maximum total penalty capped at 0.20
+      max_total_penalty: 0.20
+
+    tool_boost_mapping:
+      # Tools that enhance discovery confidence
+      semgrep_available:
+        boost: 0.05
+        description: "Semgrep SAST rules for entry point detection"
+      tree_sitter_available:
+        boost: 0.03
+        description: "AST parsing for accurate function analysis"
+      openapi_complete:
+        boost: 0.05
+        description: "Complete OpenAPI spec covers all endpoints"
+      test_coverage_high:
+        boost: 0.02
+        description: "High test coverage indicates well-documented paths"
+      # Maximum total boost capped at 0.15
+      max_total_boost: 0.15
+
+    confidence_thresholds:
+      - range: [0.95, 1.00]
+        recommendation: HIGH_CONFIDENCE
+        action: "Proceed to P2 without additional review"
+      - range: "[0.80, 0.95)"
+        recommendation: MEDIUM_CONFIDENCE_REVIEW_RECOMMENDED
+        action: "Document uncertainty sources, proceed with caution"
+      - range: "[0.00, 0.80)"
+        recommendation: LOW_CONFIDENCE_INVESTIGATION_REQUIRED
+        action: "STOP - Investigate dynamic patterns before proceeding"
+
+  # Rounding Rule: All confidence scores use round-half-up to 2 decimal places
+  # Example: 0.865 → 0.87, 0.854 → 0.85, 0.855 → 0.86
+
+  fields:
+    overall_confidence:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      required: true
+      description: "Final confidence score after all adjustments (2 decimal places, round-half-up)"
+    confidence_breakdown:
+      type: object
+      required: true
+      properties:
+        layer1_score:
+          type: number
+          description: "Raw score from Layer 1 (0.0-1.0)"
+        layer2_score:
+          type: number
+          description: "Raw score from Layer 2 (0.0-1.0)"
+        layer3_adjustment:
+          type: number
+          description: "Adjustment from Layer 3 (0.0-1.0)"
+        layer1_contribution:
+          type: number
+          description: "Weighted contribution: layer1_score × 0.6"
+        layer2_contribution:
+          type: number
+          description: "Weighted contribution: layer2_score × 0.3"
+        layer3_contribution:
+          type: number
+          description: "Weighted contribution: layer3_adjustment × 0.1"
+        base_confidence:
+          type: number
+          description: "Sum of weighted contributions before penalties/boosts"
+        uncertainty_penalty:
+          type: number
+          description: "Total penalty from dynamic indicators (capped at 0.20)"
+        tool_boost:
+          type: number
+          description: "Total boost from enhanced tools (capped at 0.15)"
+        calculation_trace:
+          type: string
+          description: "Human-readable calculation trace for audit"
+    uncertainty_sources:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [conditional_registration, plugin_system, reflection_calls, dynamic_url_construction, runtime_registration, no_openapi_spec]
+          impact:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          penalty_applied:
+            type: number
+            description: "Actual penalty value applied for this source"
+          count:
+            type: integer
+          locations:
+            type: array
+            items:
+              type: string
+            description: "File paths where this uncertainty was detected"
+          description:
+            type: string
+    tool_boosts_applied:
+      type: array
+      items:
+        type: object
+        properties:
+          tool:
+            type: string
+          boost_value:
+            type: number
+          evidence:
+            type: string
+    has_uncertainty:
+      type: boolean
+      required: true
+    recommendation:
+      type: string
+      enum: [HIGH_CONFIDENCE, MEDIUM_CONFIDENCE_REVIEW_RECOMMENDED, LOW_CONFIDENCE_INVESTIGATION_REQUIRED]
+      required: true
+
+  # Example with full calculation trace
+  example:
+    overall_confidence: 0.87
+    confidence_breakdown:
+      layer1_score: 0.95
+      layer2_score: 0.85
+      layer3_adjustment: 0.70
+      layer1_contribution: 0.57      # 0.95 × 0.6
+      layer2_contribution: 0.255     # 0.85 × 0.3
+      layer3_contribution: 0.07      # 0.70 × 0.1
+      base_confidence: 0.895         # 0.57 + 0.255 + 0.07
+      uncertainty_penalty: 0.08      # plugin_system(0.08)
+      tool_boost: 0.05               # semgrep_available(0.05)
+      calculation_trace: "base(0.895) - penalty(0.08) + boost(0.05) = 0.865 → rounded 0.87"
+    uncertainty_sources:
+      - type: plugin_system
+        impact: HIGH
+        penalty_applied: 0.08
+        count: 1
+        locations: ["src/plugins/registry.py"]
+        description: "Plugin system allows dynamic route registration"
+    tool_boosts_applied:
+      - tool: semgrep_available
+        boost_value: 0.05
+        evidence: ".semgrep.yml found with 15 entry-point rules"
+    has_uncertainty: true
+    recommendation: MEDIUM_CONFIDENCE_REVIEW_RECOMMENDED
+
+# =============================================================================
+# SourceAlignment Entity (P1.4)
+# =============================================================================
+SourceAlignment:
+  description: "Three-source alignment analysis results from P1.4"
+  fields:
+    schema_version:
+      type: string
+      required: true
+    session_id:
+      type: string
+    analyzed_at:
+      type: string
+      format: iso8601
+    sources_analyzed:
+      type: array
+      items:
+        type: string
+        enum: [static_discovery, doc_inventory, llm_synthesis]
+      required: true
+    overall_alignment_score:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      required: true
+    alignment_by_category:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          total_items:
+            type: integer
+          in_all_three_sources:
+            type: array
+            items: string
+          in_two_sources:
+            type: array
+            items: string
+          only_in_static:
+            type: array
+            items: string
+          only_in_docs:
+            type: array
+            items: string
+          only_in_llm:
+            type: array
+            items: string
+          category_score:
+            type: number
+          needs_review:
+            type: boolean
+    recommendation:
+      type: string
+      enum: [HIGH_CONFIDENCE, MEDIUM_CONFIDENCE_REVIEW_RECOMMENDED, LOW_CONFIDENCE_INVESTIGATION_REQUIRED]
+
+# =============================================================================
+# DynamicRouteIndicator Entity (P1.3 Layer 3)
+# =============================================================================
+DynamicRouteIndicator:
+  description: "Dynamic route indicator detected in Layer 3 discovery (uncertainty source)"
+  fields:
+    type:
+      type: string
+      enum: [conditional_registration, plugin_system, reflection_calls, dynamic_url_construction, runtime_registration]
+      required: true
+    file:
+      type: string
+      required: true
+    line:
+      type: integer
+      required: true
+    pattern_matched:
+      type: string
+    context:
+      type: string
+      description: "Code snippet containing the indicator"
+    confidence:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+    risk:
+      type: string
+      enum: [HIGH, MEDIUM, LOW]
+      required: true
+    description:
+      type: string
+    layer:
+      type: integer
+      const: 3
+
+# =============================================================================
+# SecurityGap Entity (P4)
+# =============================================================================
+SecurityGap:
+  description: "Security design gap or deficiency identified in Phase 4"
+  id:
+    format: "GAP-{Seq:03d}"
+    examples:
+      - "GAP-001"
+      - "GAP-010"
+  fields:
+    id:
+      type: string
+      required: true
+    domain:
+      type: string
+      enum: [AUTHN, AUTHZ, INPUT, OUTPUT, CLIENT, CRYPTO, LOG, ERROR, API, DATA, INFRA, SUPPLY, AI, MOBILE, CLOUD, AGENT]
+      required: true
+      description: "Security domain code (16 domains: 10 core + 6 extended)"
+    title:
+      type: string
+      required: true
+    description:
+      type: string
+      required: true
+    severity:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+      required: true
+    affected_modules:
+      type: array
+      items: string
+      description: "Module IDs affected by this gap"
+    missing_controls:
+      type: array
+      items: string
+      description: "Expected security controls that are missing"
+    recommendations:
+      type: array
+      items: string
+
+# =============================================================================
+# DomainAssessment Entity (P4) - GAP-5 FIX
+# =============================================================================
+DomainAssessment:
+  description: "Security domain assessment result from P4"
+  fields:
+    domain_code:
+      type: string
+      enum: [AUTHN, AUTHZ, INPUT, OUTPUT, CLIENT, CRYPTO, LOG, ERROR, API, DATA, INFRA, SUPPLY, AI, MOBILE, CLOUD, AGENT]
+      required: true
+    domain_type:
+      type: string
+      enum: [core, extended]
+      required: true
+    assessed:
+      type: boolean
+      required: true
+      description: "Whether this domain was assessed"
+    assessment_result:
+      type: string
+      enum: [Yes, Partial, No, N/A]
+      required: true
+      description: "Assessment outcome"
+    checks_performed:
+      type: integer
+      description: "Number of checklist items evaluated"
+    checks_passed:
+      type: integer
+      description: "Number of checklist items passed"
+    gaps_identified:
+      type: array
+      items: string
+      description: "GAP-xxx IDs found in this domain"
+    coverage_detail:
+      type: object
+      properties:
+        module_refs:
+          type: array
+          items: string
+          description: "M-xxx module IDs assessed for this domain"
+        flow_refs:
+          type: array
+          items: string
+          description: "DF-xxx flow IDs relevant to this domain"
+        store_refs:
+          type: array
+          items: string
+          description: "DS-xxx store IDs relevant to this domain (DATA domain)"
+    kb_ref:
+      type: string
+      description: "Knowledge base reference used"
+    # Extended domain specific
+    trigger_evidence:
+      type: object
+      description: "For extended domains only"
+      properties:
+        trigger_patterns:
+          type: array
+          items: string
+        files_found:
+          type: array
+          items: string
+        detection_method:
+          type: string
+
+# =============================================================================
+# DomainCoverageVerification Entity (P4) - GAP-5 FIX
+# =============================================================================
+DomainCoverageVerification:
+  description: "P4 domain coverage verification summary"
+  fields:
+    core_domains:
+      type: object
+      required: true
+      properties:
+        domains_total:
+          type: integer
+          const: 10
+        domains_assessed:
+          type: integer
+          description: "MUST equal domains_total"
+        coverage_percentage:
+          type: number
+          description: "MUST be 100"
+        domain_status:
+          type: object
+          additionalProperties:
+            $ref: "#/DomainAssessment"
+    extended_domains:
+      type: object
+      required: true
+      properties:
+        domains_triggered:
+          type: integer
+          description: "Count of extended domains with detected triggers"
+        domains_assessed:
+          type: integer
+          description: "MUST equal domains_triggered"
+        domains_skipped:
+          type: integer
+          description: "Count of N/A extended domains"
+        assessment_coverage:
+          type: number
+          description: "domains_assessed / domains_triggered * 100"
+        domain_triggers:
+          type: object
+          additionalProperties:
+            $ref: "#/DomainAssessment"
+    overall:
+      type: object
+      required: true
+      properties:
+        total_domains:
+          type: integer
+          const: 16
+        core_assessed:
+          type: integer
+        extended_triggered:
+          type: integer
+        extended_skipped:
+          type: integer
+        total_assessed:
+          type: integer
+        assessment_completeness:
+          type: number
+          description: "MUST be 100 for all applicable domains"
+  validation_rules:
+    BLOCKING:
+      - "core_domains.coverage_percentage < 100"
+      - "extended_domains.assessment_coverage < 100"
+      - "Any triggered extended domain with assessed=false"
+    WARNING:
+      - "Core domain with assessment_result=N/A without documented reason"
+      - "checks_passed / checks_performed < 0.5 for any domain"
+
+# =============================================================================
+# Interface Entity (P3)
+# =============================================================================
+Interface:
+  description: "Cross-boundary interface point identified in trust boundary analysis"
+  id:
+    format: "IF-{Seq:03d}"
+    examples:
+      - "IF-001"
+      - "IF-008"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    type:
+      type: string
+      enum: [API, UI, CLI, IPC, Network, File, Database]
+      required: true
+    boundary_id:
+      type: string
+      description: "Trust boundary this interface crosses (TB-xxx)"
+      required: true
+    from_zone:
+      type: string
+      description: "Source trust zone"
+    to_zone:
+      type: string
+      description: "Target trust zone"
+    protocol:
+      type: string
+      examples: [HTTPS, gRPC, TCP, WebSocket, Internal]
+    authentication:
+      type: string
+      enum: [none, basic, token, certificate, mTLS]
+    data_classification:
+      type: string
+      enum: [public, internal, confidential, restricted]
+
+# =============================================================================
+# DataNode Entity (P3)
+# =============================================================================
+DataNode:
+  description: "Sensitive data location or handling point in data flow"
+  id:
+    format: "DN-{Seq:03d}"
+    examples:
+      - "DN-001"
+      - "DN-012"
+  fields:
+    id:
+      type: string
+      required: true
+    name:
+      type: string
+      required: true
+    data_type:
+      type: string
+      enum: [PII, credentials, financial, health, business, system, log]
+      required: true
+    location:
+      type: object
+      properties:
+        element_id:
+          type: string
+          description: "DFD element ID (DS-xxx, P-xxx)"
+        file_path:
+          type: string
+        storage_type:
+          type: string
+          enum: [memory, file, database, cache, session]
+    sensitivity:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW]
+      required: true
+    protection:
+      type: object
+      properties:
+        encrypted:
+          type: boolean
+        masked:
+          type: boolean
+        access_controlled:
+          type: boolean
+    retention:
+      type: string
+      description: "Data retention policy"
+    flows_to:
+      type: array
+      items: string
+      description: "DataNode IDs this data flows to"
+
+# =============================================================================
+# P2 Traversal Entities (Full-Path Traversal Enhancement)
+# =============================================================================
+
+TraversalTask:
+  description: "Task for sub-agent to analyze a module or entry point"
+  id:
+    format: "TT-{Seq:03d}"
+    examples:
+      - "TT-001"
+      - "TT-GAP-001"
+  fields:
+    id:
+      type: string
+      required: true
+      description: "Unique task identifier (TT-xxx format)"
+    type:
+      type: string
+      enum: [module_analysis, entry_point_analysis, interface_flow_analysis]
+      required: true
+    target_id:
+      type: string
+      description: "M-xxx or EP-xxx or IF-xxx"
+      required: true
+    target_name:
+      type: string
+      required: true
+    priority:
+      type: string
+      enum: [high, medium, low]
+      required: true
+    estimated_complexity:
+      type: integer
+      minimum: 1
+      maximum: 5
+    status:
+      type: string
+      enum: [pending, in_progress, completed, failed]
+      required: true
+    assigned_to:
+      type: string
+      description: "Sub-agent ID if assigned"
+    output_file:
+      type: string
+      description: "P2_traverse_{NNN}.yaml filename"
+
+TraversalResult:
+  description: "Result from sub-agent traversal analysis"
+  id:
+    format: "TR-{Seq:03d}"
+    examples:
+      - "TR-001"
+      - "TR-015"
+  fields:
+    id:
+      type: string
+      required: true
+      description: "Unique result identifier (TR-xxx format)"
+    task_id:
+      type: string
+      description: "Source TraversalTask ID"
+      required: true
+    target_id:
+      type: string
+      required: true
+    analyzed_at:
+      type: string
+      format: datetime
+      required: true
+    discovered_elements:
+      type: object
+      properties:
+        interfaces:
+          type: array
+          items:
+            type: object
+            description: "Interface objects per schema"
+        data_flows:
+          type: array
+          items:
+            type: object
+        call_flows:
+          type: array
+          items:
+            type: object
+        data_stores:
+          type: array
+          items:
+            type: object
+    coverage_metrics:
+      type: object
+      properties:
+        entry_points_analyzed:
+          type: integer
+        entry_points_total:
+          type: integer
+        coverage:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+CoverageReport:
+  description: "Coverage validation result for P2 full traversal"
+  id:
+    format: "CR-{Seq:03d}"
+    examples:
+      - "CR-001"
+  fields:
+    report_id:
+      type: string
+      required: true
+    session_id:
+      type: string
+      required: true
+    validated_at:
+      type: string
+      format: datetime
+      required: true
+    coverage_metrics:
+      type: object
+      required: true
+      properties:
+        modules:
+          type: object
+          properties:
+            analyzed:
+              type: integer
+            total:
+              type: integer
+            coverage:
+              type: number
+            status:
+              type: string
+              enum: [PASS, FAIL]
+        entry_points:
+          type: object
+          properties:
+            analyzed:
+              type: integer
+            total:
+              type: integer
+            coverage:
+              type: number
+            status:
+              type: string
+              enum: [PASS, FAIL]
+        interfaces:
+          type: object
+          properties:
+            with_data_flow:
+              type: integer
+            total:
+              type: integer
+            coverage:
+              type: number
+            status:
+              type: string
+              enum: [PASS, FAIL]
+        data_stores:
+          type: object
+          properties:
+            with_access_pattern:
+              type: integer
+            total:
+              type: integer
+            coverage:
+              type: number
+            status:
+              type: string
+              enum: [PASS, FAIL]
+    overall_status:
+      type: string
+      enum: [PASS, FAIL, HALTED]
+      required: true
+    iteration:
+      type: integer
+      minimum: 1
+      maximum: 3
+      required: true
+    max_iterations:
+      type: integer
+      const: 3
+    gaps:
+      type: array
+      items:
+        type: object
+        properties:
+          gap_type:
+            type: string
+            enum: [module_not_analyzed, entry_point_not_analyzed, interface_without_flow, store_without_access]
+          target_id:
+            type: string
+          target_name:
+            type: string
+          reason:
+            type: string
+          remediation_task:
+            type: object
+    validation_result:
+      type: object
+      properties:
+        ready_for_phase_3:
+          type: boolean
+        blocking_issues:
+          type: array
+          items: string
+        warnings:
+          type: array
+          items: string
+
+# =============================================================================
+# ID Generation Rules (GAP-7 FIX)
+# =============================================================================
+# Defines deterministic ID generation rules for reproducibility across sessions
+# =============================================================================
+
+IDGenerationRules:
+  description: "Deterministic ID generation for reproducibility and traceability"
+
+  # ============================================================
+  # Core Principles
+  # ============================================================
+  principles:
+    determinism: |
+      IDs MUST be reproducible: same input should produce same ID.
+      Order-independent where possible (use stable sorting).
+    uniqueness: |
+      IDs MUST be unique within their entity scope per session.
+      No collisions allowed within a session.
+    traceability: |
+      Every derived ID MUST reference its source ID(s).
+      ID chains: P1→P2→P3→P4→P5→P6→P7→P8
+
+  # ============================================================
+  # ID Formats by Entity Type
+  # ============================================================
+  entity_id_formats:
+    # Phase 1 Entities
+    Module:
+      format: "M-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by path"
+      determinism_key: "module.path"
+      example: "M-001"
+
+    EntryPoint:
+      format: "EP-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by path:function"
+      determinism_key: "entry_point.file_path + ':' + entry_point.function_name"
+      example: "EP-015"
+
+    # Phase 2 DFD Entities
+    ExternalInteractor:
+      format: "EI-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by name"
+      determinism_key: "external_interactor.name"
+      example: "EI-001"
+
+    Process:
+      format: "P-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by maps_to_module"
+      determinism_key: "process.maps_to_module"
+      example: "P-012"
+
+    DataStore:
+      format: "DS-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by name"
+      determinism_key: "data_store.name"
+      example: "DS-003"
+
+    DataFlow:
+      format: "DF-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by from→to"
+      determinism_key: "data_flow.from + '->' + data_flow.to"
+      example: "DF-045"
+
+    Interface:
+      format: "IF-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by path"
+      determinism_key: "interface.type + ':' + interface.name"
+      example: "IF-008"
+
+    # Phase 3 Entities
+    TrustBoundary:
+      format: "TB-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by type→name"
+      determinism_key: "trust_boundary.type + ':' + trust_boundary.name"
+      example: "TB-004"
+
+    DataNode:
+      format: "DN-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by location"
+      determinism_key: "data_node.location.element_id + ':' + data_node.data_type"
+      example: "DN-012"
+
+    # Phase 4 Entities
+    SecurityGap:
+      format: "GAP-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by domain→severity"
+      determinism_key: "security_gap.domain + ':' + security_gap.title_hash"
+      example: "GAP-007"
+
+    # Phase 4 Findings (all phases)
+    Finding:
+      format: "F-P{Phase}-{Seq:03d}"
+      range: "001-999 per phase"
+      generation_rule: "Sequential per phase, stable sort by type→severity"
+      determinism_key: "finding.phase + ':' + finding.type + ':' + finding.location_hash"
+      example: "F-P2-015"
+
+    # Phase 5 Entities (COMPOUND ID)
+    Threat:
+      format: "T-{STRIDE}-{ElementType}-{ElementSeq}-{ThreatSeq}"
+      components:
+        STRIDE: "S|T|R|I|D|E"
+        ElementType: "P|DS|DF|EI"
+        ElementSeq: "3-digit sequence from source element"
+        ThreatSeq: "3-digit sequence within element+STRIDE"
+      generation_rule: |
+        1. Extract element type and sequence from source element ID
+        2. Generate sequential threat number per element+STRIDE combination
+        3. Stable sort by STRIDE category, then element, then threat details
+      determinism_key: "threat.element_id + ':' + threat.stride_type + ':' + threat.title_hash"
+      example: "T-S-P-001-003"
+
+    # Phase 6 Entities
+    ValidatedRisk:
+      format: "VR-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by validation order, stable sort by priority→cvss"
+      determinism_key: "validated_risk.threat_refs[0] + ':' + validated_risk.title_hash"
+      example: "VR-015"
+
+    POC:
+      format: "POC-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by creation order, stable sort by threat_ref"
+      determinism_key: "poc.threat_ref"
+      example: "POC-003"
+
+    AttackPath:
+      format: "AP-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by discovery order, stable sort by entry_point→target"
+      determinism_key: "attack_path.entry_point + '->' + attack_path.final_target"
+      example: "AP-008"
+
+    AttackChain:
+      format: "AC-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by creation order, stable sort by entry→target"
+      determinism_key: "attack_chain.entry_point + '->' + attack_chain.target"
+      example: "AC-002"
+
+    # Phase 7 Entities
+    Mitigation:
+      format: "MIT-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by priority order, stable sort by risk_refs→priority"
+      determinism_key: "mitigation.risk_refs[0]"
+      example: "MIT-012"
+
+    # Phase 8 Entities
+    TestCase:
+      format: "TC-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by creation order, stable sort by target_ref"
+      determinism_key: "test_case.target_ref + ':' + test_case.test_type"
+      example: "TC-025"
+
+    # Phase 8R Entities (Optional)
+    DetailedRiskReport:
+      format: "VR-{Seq:03d}"
+      note: "Reuses VR-xxx ID — one report file per validated risk"
+      range: "001-999"
+      generation_rule: "Priority order (P0→P3), then CVSS descending within same priority"
+      determinism_key: "validated_risk.id"
+      example: "VR-001"
+
+    # Internal Workflow Entities
+    TraversalTask:
+      format: "TT-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by assignment order"
+      determinism_key: "traversal_task.target_id"
+      example: "TT-005"
+
+    TraversalResult:
+      format: "TR-{Seq:03d}"
+      range: "001-999"
+      generation_rule: "Sequential by completion order"
+      determinism_key: "traversal_result.task_id"
+      example: "TR-005"
+
+  # ============================================================
+  # Parallel Processing ID Offsets
+  # ============================================================
+  parallel_id_strategy:
+    description: |
+      When sub-agents analyze in parallel, they use offset sequences to avoid
+      ID collisions. The merge step normalizes all IDs to standard format.
+
+    offset_allocation:
+      sub_agent_1: "100-199"
+      sub_agent_2: "200-299"
+      sub_agent_3: "300-399"
+      sub_agent_4: "400-499"
+      sub_agent_5: "500-599"
+      # ... continues up to 900-999
+
+    merge_normalization:
+      algorithm: |
+        1. Collect all discovered entities from sub-agents
+        2. Sort by determinism_key (stable sort)
+        3. Assign new sequential IDs (001, 002, ...)
+        4. Record mapping in deduplication_log
+
+    deduplication_rules:
+      - "Same determinism_key → merge into single entity"
+      - "Conflicting attributes → use first discovered (by timestamp)"
+      - "Different perspectives → create relationship, not duplicate"
+
+  # ============================================================
+  # ID Reproducibility Verification
+  # ============================================================
+  reproducibility_verification:
+    method: |
+      To verify ID reproducibility:
+      1. Run analysis twice on same codebase (without changes)
+      2. Compare ID assignments
+      3. All determinism_key-based IDs MUST match
+      4. Order-dependent IDs MAY differ but SHOULD be stable
+
+    acceptable_variance:
+      - "Timestamp-based ordering (within same second)"
+      - "Tie-breaking in stable sort (use secondary key)"
+
+    unacceptable_variance:
+      - "Different IDs for same entity across runs"
+      - "Missing entities in second run"
+      - "Extra entities not present in codebase"
+
+  # ============================================================
+  # Session ID Rules
+  # ============================================================
+  session_id:
+    format: "{PROJECT_NAME}_{YYYYMMDD}_{HHMMSS}"
+    generation_rule: |
+      PROJECT_NAME: Uppercase, hyphens, no underscores
+      YYYYMMDD: Date of session start
+      HHMMSS: Time of session start (local timezone)
+    example: "OPEN-WEBUI_20260130_143022"
+    uniqueness: "Unique within .phase_working/ directory"
+
+# =============================================================================
+# Concurrency and Isolation Rules (FIX-P1-4)
+# =============================================================================
+# Defines how sub-agents operate in parallel and how data isolation is maintained
+# =============================================================================
+
+ConcurrencyRules:
+  description: "Rules governing parallel execution and data isolation across sub-agents"
+
+  # ============================================================
+  # Session Isolation Model
+  # ============================================================
+  session_isolation:
+    principle: |
+      Each threat modeling session operates in complete isolation.
+      No data sharing between sessions unless explicitly exported/imported.
+
+    directory_structure:
+      session_root: ".phase_working/{SESSION_ID}/"
+      data_dir: ".phase_working/{SESSION_ID}/data/"
+      reports_dir: ".phase_working/{SESSION_ID}/reports/"
+      temp_dir: ".phase_working/{SESSION_ID}/.temp/"
+
+    isolation_guarantees:
+      - "Session A cannot read Session B's data"
+      - "Session A cannot write to Session B's directories"
+      - "Each session has independent ID sequences"
+      - "Sessions can run concurrently on same project"
+
+  # ============================================================
+  # Sub-Agent Execution Model
+  # ============================================================
+  sub_agent_model:
+    description: "How sub-agents operate during parallel phases (e.g., P2.T, P6)"
+
+    spawning_rules:
+      max_concurrent_agents: 5
+      spawning_trigger: "Task tool with subagent_type parameter"
+      task_distribution: "Round-robin or complexity-based assignment"
+
+    agent_isolation:
+      file_isolation: |
+        Each sub-agent writes to its own output file:
+        - P2_traverse_{agent_seq}.yaml
+        - P6_validation_{agent_seq}.yaml
+        No sub-agent may write to another's file.
+
+      id_isolation: |
+        Each sub-agent uses offset ID ranges to avoid collisions:
+        - Agent 1: 100-199
+        - Agent 2: 200-299
+        - ...
+        IDs are normalized during merge phase.
+
+      memory_isolation: |
+        Sub-agents do not share state.
+        All inter-agent communication happens through YAML files.
+
+    synchronization_points:
+      P2_T_1_to_T_2:
+        barrier: "All traversal tasks must complete before merge"
+        output: "P2_traverse_{NNN}.yaml files"
+        merge_script: "phase_data.py --p2-merge-traversal"
+
+      P6_validation_merge:
+        barrier: "All validation tasks must complete before consolidation"
+        output: "P6_validation_{NNN}.yaml files"
+        merge_script: "phase_data.py --p6-merge-validation"
+
+  # ============================================================
+  # File Access Rules
+  # ============================================================
+  file_access_rules:
+    read_access:
+      any_phase: "Can read any upstream phase's YAML data files"
+      same_phase: "Can read phase's shared configuration"
+      restriction: "Cannot read other sub-agent's working files during parallel execution"
+
+    write_access:
+      exclusive_ownership: |
+        Each file has exactly one owner at any time.
+        Owner is determined by:
+        - Primary LLM for main phase files
+        - Sub-agent N for P{X}_*_{N}.yaml files
+        - Script for merge output files
+
+      locking_strategy: |
+        Implicit locking via file ownership.
+        No explicit file locks used.
+        Conflicts resolved by merge phase.
+
+      overwrite_rules:
+        - "Sub-agents: APPEND to own files, never overwrite others"
+        - "Merge scripts: OVERWRITE merged output file"
+        - "Primary LLM: OVERWRITE main phase files"
+
+  # ============================================================
+  # Data Flow Between Phases
+  # ============================================================
+  inter_phase_data_flow:
+    principle: |
+      Phases are strictly sequential at the data level.
+      Phase N cannot start until Phase N-1's YAML is complete.
+
+    validation_gates:
+      P1_to_P2:
+        required: "P1_project_context.yaml exists and valid"
+        provides: ["modules[]", "entry_points[]", "tech_stack"]
+
+      P2_to_P3:
+        required: "P2_dfd_elements.yaml exists and valid"
+        provides: ["processes[]", "data_stores[]", "data_flows[]", "external_interactors[]"]
+
+      P3_to_P4:
+        required: "P3_boundary_context.yaml exists and valid"
+        provides: ["boundaries[]", "interfaces[]", "data_nodes[]"]
+
+      P4_to_P5:
+        required: "P4_security_gaps.yaml exists and valid"
+        provides: ["gaps[]", "design_matrix"]
+
+      P5_to_P6:
+        required: "P5_threat_inventory.yaml exists and valid"
+        provides: ["threats[]", "summary.by_stride", "summary.by_priority"]
+
+      P6_to_P7:
+        required: "P6_validated_risks.yaml exists and valid"
+        provides: ["validated_risks[]", "pocs[]", "attack_paths[]"]
+
+      P7_to_P8:
+        required: "P7_mitigation_plan.yaml exists and valid"
+        provides: ["mitigations[]", "roadmap"]
+
+    blocking_rules:
+      - "Phase N blocks until Phase N-1 validation gate passes"
+      - "Sub-agents block until dispatch phase completes"
+      - "Merge blocks until all sub-agents complete"
+
+  # ============================================================
+  # Conflict Resolution
+  # ============================================================
+  conflict_resolution:
+    id_conflicts:
+      detection: "During merge phase, check for duplicate determinism_keys"
+      resolution: |
+        1. Same determinism_key → MERGE into single entity
+        2. Keep attributes from first discovered (earliest timestamp)
+        3. Log conflict in deduplication_log
+
+    data_conflicts:
+      detection: "Different values for same attribute on merged entity"
+      resolution: |
+        1. Prefer deterministic value over LLM-generated
+        2. Prefer higher-confidence source
+        3. Log conflict for manual review if unresolved
+
+    race_conditions:
+      prevention: |
+        Race conditions are prevented by:
+        1. Sequential phase execution
+        2. Sub-agent file isolation (no shared writes)
+        3. Merge phase as synchronization barrier
+
+  # ============================================================
+  # Error Handling in Concurrent Execution
+  # ============================================================
+  error_handling:
+    sub_agent_failure:
+      detection: "Sub-agent task timeout or error output"
+      recovery: |
+        1. Log failure with task ID and error details
+        2. Mark task as FAILED in tracking
+        3. Retry once with extended timeout
+        4. If retry fails, continue merge with available results
+        5. Document incomplete coverage in coverage_report
+
+    partial_completion:
+      handling: |
+        If some sub-agents fail but others succeed:
+        1. Merge available results
+        2. Mark coverage as incomplete
+        3. Generate gap remediation tasks for failed areas
+        4. Allow manual decision to proceed or retry
+
+    merge_failure:
+      detection: "Merge script returns error"
+      recovery: |
+        1. Preserve all source files
+        2. Log detailed error
+        3. Attempt manual merge or re-dispatch
+
+  # ============================================================
+  # Concurrency Metrics
+  # ============================================================
+  metrics:
+    tracking_required:
+      - "sub_agents_spawned: Count of sub-agents launched"
+      - "sub_agents_completed: Count of successful completions"
+      - "sub_agents_failed: Count of failures"
+      - "merge_conflicts_detected: Count of ID/data conflicts"
+      - "merge_conflicts_resolved: Count of auto-resolved conflicts"
+      - "total_parallel_time: Wall-clock time for parallel phase"
+      - "sequential_equivalent_time: Estimated sequential execution time"
+      - "parallelism_speedup: sequential_time / parallel_time"
+
+    output_location: "concurrency_metrics section in phase YAML"
+
+# =============================================================================
+# KB Query Contracts (GAP-4 FIX)
+# =============================================================================
+# Defines per-phase knowledge base query requirements, expected outputs, and
+# how results integrate into phase outputs.
+# =============================================================================
+
+KBQueryContract:
+  description: "Contract defining how phases query and use knowledge base resources"
+
+  # ============================================================
+  # Phase-Specific Query Requirements
+  # ============================================================
+  phase_requirements:
+
+    # P4: Security Design Review - MANDATORY KB queries
+    P4:
+      level: MANDATORY_FOR_DOMAIN_COVERAGE
+      description: "P4 MUST query KB for each assessed security domain"
+      required_queries:
+        # Core 10 domains require KB queries
+        - pattern: "--control {domain_code}"
+          domains: [AUTHN, AUTHZ, INPUT, OUTPUT, CLIENT, CRYPTO, LOG, ERROR, API, DATA]
+          purpose: "Retrieve security control requirements for domain assessment"
+          output_usage: "Inform gap identification and severity assessment"
+        # STRIDE-specific controls
+        - pattern: "--stride-controls {S|T|R|I|D|E}"
+          purpose: "Map threats to relevant control domains"
+          output_usage: "Validate STRIDE-to-domain mappings"
+      optional_queries:
+        - pattern: "--control {ext_domain_code}"
+          domains: [INFRA, SUPPLY, AI, MOBILE, CLOUD, AGENT]
+          purpose: "Extended domain assessment (may have limited KB support)"
+      output_integration:
+        yaml_section: "kb_usage_log"
+        required_fields:
+          - queries_made: "Array of query records with domain/findings mapping"
+          - coverage.domains_with_kb_support: "Count of domains queried"
+          - coverage.kb_coverage_percentage: "Percentage of assessed domains with KB queries"
+      validation_rules:
+        WARNING: "kb_coverage_percentage < 50% for core domains"
+        BLOCKING: "None - KB queries are best-effort"
+
+    # P5: STRIDE Analysis - MANDATORY for CWE/CAPEC mapping
+    P5:
+      level: MANDATORY_FOR_THREAT_ENRICHMENT
+      description: "P5 MUST query KB to map threats to CWE/CAPEC/ATT&CK"
+      required_queries:
+        - pattern: "--cwe CWE-{NNN}"
+          purpose: "Retrieve CWE details for threat classification"
+          output_usage: "Populate threat.cwe field"
+          trigger: "For each identified threat category"
+        - pattern: "--full-chain CWE-{NNN}"
+          purpose: "Get complete attack chain: STRIDE→CWE→CAPEC→ATT&CK"
+          output_usage: "Populate threat.capec and threat.attack_refs fields"
+        - pattern: "--attack-technique {technique_id}"
+          purpose: "Map to MITRE ATT&CK for threat context"
+          output_usage: "Populate threat.attack_refs field"
+      batch_queries:
+        - pattern: "--stride-controls {S|T|R|I|D|E}"
+          purpose: "Get all CWE/CAPEC mappings for a STRIDE category"
+          output_usage: "Validate threat classification completeness"
+      output_integration:
+        yaml_section: "kb_enrichment_log"
+        required_fields:
+          - cwes_queried: "List of CWE IDs queried"
+          - capecs_mapped: "List of CAPEC IDs identified"
+          - attack_techniques: "List of ATT&CK techniques mapped"
+          - enrichment_coverage: "Percentage of threats with KB enrichment"
+      validation_rules:
+        WARNING: "enrichment_coverage < 80%"
+        ERROR: "Any P0/P1 threat without CWE mapping"
+
+    # P6: Risk Validation - OPTIONAL KB queries for attack pattern context
+    P6:
+      level: OPTIONAL_FOR_ATTACK_CONTEXT
+      description: "P6 MAY query KB for attack pattern details during POC design"
+      optional_queries:
+        - pattern: "--capec {CAPEC-NNN}"
+          purpose: "Get detailed attack pattern for POC design"
+          output_usage: "Inform POC exploitation steps"
+        - pattern: "--attack-technique {T-XXXX}"
+          purpose: "Get real-world procedure examples"
+          output_usage: "Validate attack feasibility"
+      output_integration:
+        yaml_section: "kb_consultation_log"
+        required_fields: []  # Optional section
+      validation_rules:
+        NONE: "KB queries are optional in P6"
+
+    # P7: Mitigation Planning - MANDATORY for remediation guidance
+    P7:
+      level: MANDATORY_FOR_MITIGATION_QUALITY
+      description: "P7 MUST query KB for mitigation recommendations"
+      required_queries:
+        - pattern: "--cwe CWE-{NNN} --mitigations"
+          purpose: "Get CWE-specific mitigation strategies"
+          output_usage: "Inform mitigation.recommended_fix"
+          trigger: "For each risk's related_cwe"
+        - pattern: "--asvs-level {L1|L2|L3}"
+          purpose: "Get ASVS verification requirements"
+          output_usage: "Populate mitigation.verification.asvs_requirement"
+        - pattern: "--asvs-chapter {V1-V14}"
+          purpose: "Get chapter-specific requirements"
+          output_usage: "Detailed verification mapping"
+        - pattern: "--control {domain}"
+          purpose: "Get security control implementation guidance"
+          output_usage: "Inform implementation_steps detail level"
+      output_integration:
+        yaml_section: "kb_mitigation_sources"
+        required_fields:
+          - cwes_with_mitigations: "Count of CWEs queried for mitigations"
+          - asvs_requirements_mapped: "Count of mitigations with ASVS refs"
+          - control_guidance_applied: "Count of mitigations with control refs"
+          - mitigation_kb_coverage: "Percentage of mitigations with KB support"
+      validation_rules:
+        WARNING: "mitigation_kb_coverage < 70%"
+        ERROR: "P0/P1 mitigation without any KB reference"
+
+    # P8: Report Generation - MANDATORY for compliance mapping
+    P8:
+      level: MANDATORY_FOR_COMPLIANCE_REPORTS
+      description: "P8 MUST query KB for compliance framework mappings"
+      required_queries:
+        - pattern: "--compliance {framework}"
+          frameworks: [nist-csf, iso27001, soc2, pci-dss, hipaa, csa-ccm]
+          purpose: "Get compliance control mappings"
+          output_usage: "Generate compliance matrix in report"
+        - pattern: "--asvs-level L2 --chapter {V1-V14}"
+          purpose: "Get ASVS requirement details"
+          output_usage: "Populate verification requirements section"
+      output_integration:
+        yaml_section: "compliance_mapping_log"
+        required_fields:
+          - frameworks_queried: "List of compliance frameworks mapped"
+          - controls_mapped: "Total control mappings generated"
+          - gaps_with_compliance_ref: "Risks mapped to compliance requirements"
+      validation_rules:
+        WARNING: "No compliance frameworks queried when compliance_report requested"
+        BLOCKING: "None"
+
+  # ============================================================
+  # KB Query Response Schema
+  # ============================================================
+  response_schema:
+    cwe_response:
+      fields:
+        - id: "CWE-NNN"
+        - name: "string"
+        - description: "string"
+        - likelihood: "CRITICAL|HIGH|MEDIUM|LOW"
+        - mitigations: "array of strings"
+        - related_capec: "array of CAPEC IDs"
+
+    capec_response:
+      fields:
+        - id: "CAPEC-NNN"
+        - name: "string"
+        - description: "string"
+        - prerequisites: "array"
+        - related_cwes: "array of CWE IDs"
+        - related_attack: "array of ATT&CK IDs"
+
+    control_response:
+      fields:
+        - domain: "string"
+        - controls: "array of control objects"
+        - stride_relevance: "array of S|T|R|I|D|E"
+        - asvs_mapping: "array of ASVS requirement IDs"
+
+    compliance_response:
+      fields:
+        - framework: "string"
+        - version: "string"
+        - controls: "array of control mappings"
+        - gaps_alignment: "array of GAP-to-control mappings"
+
+  # ============================================================
+  # KB Error Handling
+  # ============================================================
+  error_handling:
+    cwe_not_found:
+      action: "Log warning, continue without enrichment"
+      fallback: "Use LLM knowledge for general CWE context"
+      documentation: "Note in kb_usage_log.errors[]"
+
+    kb_unavailable:
+      action: "Continue analysis with LLM knowledge only"
+      fallback: "Mark kb_available: false in output"
+      documentation: "Add warning to phase validation_result"
+
+    query_timeout:
+      action: "Retry once, then continue"
+      fallback: "Use cached results if available"
+      documentation: "Log timeout in kb_usage_log.errors[]"
+
+  # ============================================================
+  # KB Usage Logging Template
+  # ============================================================
+  usage_log_template:
+    schema_version: "3.2.0 (20260512a)"
+    phase: "P{N}"
+    kb_available: true
+    queries_made:
+      - query: "--control authentication"
+        timestamp: "ISO8601"
+        result_count: 15
+        usage: "Informed GAP-001, GAP-002"
+        cache_hit: false
+      - query: "--cwe CWE-89"
+        timestamp: "ISO8601"
+        result_count: 1
+        usage: "Enriched T-T-P-001-003"
+        cache_hit: true
+    errors:
+      - query: "--full-chain CWE-999"
+        error_type: "not_found"
+        action_taken: "Skipped full-chain mapping"
+    coverage_summary:
+      total_queries: 25
+      successful_queries: 24
+      cache_hits: 10
+      error_count: 1
+      coverage_percentage: 96.0
+
+# =============================================================================
+# Count Conservation Rule
+# =============================================================================
+CountConservation:
+  description: "Formula ensuring all threats are accounted for in Phase 6"
+  formula: "P5.threat_inventory.total = verified + theoretical + pending + excluded"
+  validation:
+    rule: |
+      FOR each threat T in P5.threat_inventory:
+        T MUST appear in exactly one VR.threat_refs[]
+        OR T.status = 'excluded' with documented reason
+  checkpoints:
+    cp1: "P6.input_count = P5.threat_inventory.summary.total"
+    cp2: "sum(verified, theoretical, pending, excluded) = input_count"
+    cp3: "RISK-INVENTORY.count = P6.final_risk_count"

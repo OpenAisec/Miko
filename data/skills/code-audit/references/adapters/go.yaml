@@ -1,0 +1,327 @@
+# Go Security Controls Adapter
+# Go 安全控制适配器
+#
+# 定义 Go 生态系统中各安全控制的检测模式
+# 支持: net/http, Gin, Echo, Fiber, Chi
+#
+# 版本: 1.0.0
+
+language: go
+file_extensions:
+  - ".go"
+
+# ============================================================================
+# 安全控制检测模式 (Control Detection Patterns)
+# ============================================================================
+
+control_patterns:
+  # ---------------------------------------------------------------------------
+  # 身份认证 (Authentication)
+  # ---------------------------------------------------------------------------
+  authentication:
+    jwt:
+      - 'jwt\.Parse'
+      - 'jwt\.ParseWithClaims'
+      - 'JWTMiddleware'
+      - 'JWTAuth'
+      - 'jwt-go|golang-jwt'
+      - 'token\.Valid'
+      - 'Claims\.'
+
+    session:
+      - 'session\.Get'
+      - 'gorilla/sessions'
+      - 'scs\.SessionManager'
+      - 'gin\.Context.*Get.*user'
+      - 'c\.Get\("user'
+
+    middleware:
+      - 'AuthMiddleware'
+      - 'RequireAuth'
+      - 'IsAuthenticated'
+      - 'checkAuth'
+      - 'authRequired'
+
+  # ---------------------------------------------------------------------------
+  # 授权检查 (Authorization)
+  # ---------------------------------------------------------------------------
+  authorization:
+    patterns:
+      - 'checkPermission|hasPermission'
+      - 'checkRole|hasRole'
+      - 'isAdmin|IsAdmin'
+      - 'authorize\('
+      - 'rbac\.'
+      - 'casbin\.'
+      - 'can\('
+      - 'PermissionMiddleware'
+      - 'RoleMiddleware'
+      - 'AdminOnly'
+
+  # ---------------------------------------------------------------------------
+  # 资源所有权验证 (Ownership Check)
+  # ---------------------------------------------------------------------------
+  ownership_check:
+    patterns:
+      - 'UserID\s*==|userId\s*=='
+      - 'OwnerID\s*==|ownerId\s*=='
+      - '\.Where\("user_id.*='
+      - '\.Where\("owner_id.*='
+      - 'user_id =\s*\?'
+      - 'FindByUserID'
+      - 'isOwner\('
+      - 'belongsToUser'
+
+  # ---------------------------------------------------------------------------
+  # CSRF保护 (CSRF Protection)
+  # ---------------------------------------------------------------------------
+  csrf_protection:
+    patterns:
+      - 'csrf\.'
+      - 'gorilla/csrf'
+      - 'nosurf'
+      - 'CSRF'
+      - 'X-CSRF-Token'
+      - 'csrfToken'
+      - 'VerifyCSRF'
+      - 'csrf\.Protect'
+
+  # ---------------------------------------------------------------------------
+  # 输入验证 (Input Validation)
+  # ---------------------------------------------------------------------------
+  input_validation:
+    patterns:
+      - 'validator\.'
+      - 'validate\.'
+      - 'binding:"required'
+      - 'validate:"required'
+      - 'ShouldBind|MustBind'
+      - 'BindJSON|BindQuery'
+      - 'go-playground/validator'
+      - 'ozzo-validation'
+      - 'regexp\.MustCompile'
+      - 'strconv\.Atoi|strconv\.ParseInt'
+
+  # ---------------------------------------------------------------------------
+  # 审计日志 (Audit Logging)
+  # ---------------------------------------------------------------------------
+  audit_log:
+    patterns:
+      - 'log\.'
+      - 'logrus\.'
+      - 'zap\.'
+      - 'zerolog\.'
+      - 'Logger\.'
+      - 'AuditLog'
+      - 'auditEvent'
+      - 'logAction'
+
+  # ---------------------------------------------------------------------------
+  # 速率限制 (Rate Limiting)
+  # ---------------------------------------------------------------------------
+  rate_limit:
+    patterns:
+      - 'rate\.Limiter'
+      - 'RateLimiter'
+      - 'tollbooth'
+      - 'limiter\.'
+      - 'throttle'
+      - 'ulule/limiter'
+      - 'didip/tollbooth'
+      - 'x/time/rate'
+      - 'NewLimiter\('
+
+  # ---------------------------------------------------------------------------
+  # 安全传输 (Secure Transport)
+  # ---------------------------------------------------------------------------
+  secure_transport:
+    patterns:
+      - 'tls\.Config'
+      - 'ListenAndServeTLS'
+      - 'https://'
+      - 'TLSConfig'
+      - 'MinVersion.*tls\.Version'
+      - 'InsecureSkipVerify.*false'
+
+  # ---------------------------------------------------------------------------
+  # 安全存储 (Secure Storage)
+  # ---------------------------------------------------------------------------
+  secure_storage:
+    patterns:
+      - 'bcrypt\.'
+      - 'argon2\.'
+      - 'scrypt\.'
+      - 'crypto/aes'
+      - 'crypto/cipher'
+      - 'HashPassword'
+      - 'CompareHashAndPassword'
+      - 'GenerateFromPassword'
+      - 'golang\.org/x/crypto'
+
+  # ---------------------------------------------------------------------------
+  # 会话管理 (Session Management)
+  # ---------------------------------------------------------------------------
+  session_management:
+    patterns:
+      - 'session\.Options'
+      - 'MaxAge'
+      - 'HttpOnly.*true'
+      - 'Secure.*true'
+      - 'SameSite'
+      - 'session\.Save'
+      - 'session\.Clear|session\.Delete'
+      - 'DestroySession'
+
+  # ---------------------------------------------------------------------------
+  # 错误处理 (Error Handling)
+  # ---------------------------------------------------------------------------
+  error_handling:
+    patterns:
+      - 'if\s+err\s*!=\s*nil'
+      - 'recover\(\)'
+      - 'defer.*recover'
+      - 'ErrorHandler'
+      - 'CustomHTTPErrorHandler'
+      - 'AbortWithError'
+      - 'errors\.New|fmt\.Errorf'
+
+  # ---------------------------------------------------------------------------
+  # 安全响应头 (Security Headers)
+  # ---------------------------------------------------------------------------
+  security_headers:
+    patterns:
+      - 'X-Frame-Options'
+      - 'X-Content-Type-Options'
+      - 'X-XSS-Protection'
+      - 'Strict-Transport-Security'
+      - 'Content-Security-Policy'
+      - 'Header\(\)\.Set\('
+      - 'c\.Header\('
+      - 'secure\.New'
+      - 'unrolled/secure'
+
+  # ---------------------------------------------------------------------------
+  # 文件验证 (File Validation)
+  # ---------------------------------------------------------------------------
+  file_validation:
+    patterns:
+      - 'http\.DetectContentType'
+      - 'mime\.TypeByExtension'
+      - 'filepath\.Ext'
+      - 'allowedExtensions'
+      - 'MaxMultipartMemory'
+      - 'FormFile'
+      - 'multipart\.FileHeader'
+      - 'file\.Size'
+
+  # ---------------------------------------------------------------------------
+  # 文件操作 CRUD (File Operations CRUD) - v2.5.0 新增
+  # ---------------------------------------------------------------------------
+  file_operations_crud:
+    create:
+      - 'os\.Create\('
+      - 'ioutil\.WriteFile\('
+      - 'os\.WriteFile\('
+      - 'os\.OpenFile\('
+      - 'io\.Copy\('
+    read:
+      - 'os\.Open\('
+      - 'ioutil\.ReadFile\('
+      - 'os\.ReadFile\('
+      - 'bufio\.NewReader'
+    update:
+      - 'os\.OpenFile.*O_WRONLY'
+      - 'os\.OpenFile.*O_TRUNC'
+      - 'os\.Truncate\('
+    delete:  # ⚠️ 易遗漏！
+      - 'os\.Remove\('
+      - 'os\.RemoveAll\('
+
+  # ---------------------------------------------------------------------------
+  # 参数化查询 (Parameterized Query)
+  # ---------------------------------------------------------------------------
+  parameterized_query:
+    patterns:
+      - 'db\.Query.*\?'
+      - 'db\.Exec.*\?'
+      - 'db\.QueryRow.*\?'
+      - 'Prepare\('
+      - 'gorm.*Where.*\?'
+      - 'sqlx\..*\$\d'
+      - 'NamedQuery'
+      - 'In\(\)'  # sqlx IN 查询
+
+# ============================================================================
+# 敏感操作识别模式 (Sensitive Operation Patterns)
+# ============================================================================
+
+operation_patterns:
+  method_patterns:
+    delete:
+      - 'func.*Delete'
+      - 'func.*Remove'
+      - 'func.*Destroy'
+      - '\.DELETE\('
+      - '\.Delete\('
+
+    update:
+      - 'func.*Update'
+      - 'func.*Edit'
+      - 'func.*Modify'
+      - '\.PUT\('
+      - '\.PATCH\('
+      - '\.Put\('
+      - '\.Patch\('
+
+    create:
+      - 'func.*Create'
+      - 'func.*Add'
+      - 'func.*Insert'
+      - '\.POST\('
+      - '\.Post\('
+
+  route_patterns:
+    gin:
+      - '\.DELETE\('
+      - '\.PUT\('
+      - '\.PATCH\('
+      - '\.POST\('
+
+    echo:
+      - 'e\.DELETE\('
+      - 'e\.PUT\('
+      - 'e\.PATCH\('
+      - 'e\.POST\('
+
+    fiber:
+      - 'app\.Delete\('
+      - 'app\.Put\('
+      - 'app\.Patch\('
+      - 'app\.Post\('
+
+    chi:
+      - 'r\.Delete\('
+      - 'r\.Put\('
+      - 'r\.Patch\('
+      - 'r\.Post\('
+
+# ============================================================================
+# 框架特定配置 (Framework-Specific Configuration)
+# ============================================================================
+
+frameworks:
+  gin:
+    middleware_pattern: '\.Use\('
+    group_pattern: '\.Group\('
+
+  echo:
+    middleware_pattern: 'e\.Use\('
+    group_pattern: 'e\.Group\('
+
+  fiber:
+    middleware_pattern: 'app\.Use\('
+    group_pattern: 'app\.Group\('
+
+  chi:
+    middleware_pattern: 'r\.Use\('
+    group_pattern: 'r\.Group\('

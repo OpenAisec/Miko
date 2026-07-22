@@ -1,0 +1,47 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+# Secure Coding Rules - Language-agnostic security coding guidelines
+# Language-specific extensions: TBD
+# Referenced in: Phase 7 mitigation
+
+# Language-agnostic rules
+universal_rules:
+  injection_prevention:
+    rule: "Use parameterized queries; never concatenate user input into commands."
+    applies_to: [SQL, LDAP, OS_Command, XPath]
+
+  output_encoding:
+    rule: "Encode output by context (HTML, JS, URL, CSS) before rendering."
+    applies_to: [XSS, Template_Injection]
+
+  authentication:
+    rule: "Use proven libraries; never implement custom crypto or auth."
+    applies_to: [Password_Storage, Session_Management, Token_Validation]
+
+  secrets_management:
+    rule: "Never hardcode secrets; use environment variables or secret managers."
+    applies_to: [API_Keys, Database_Credentials, Encryption_Keys]
+
+  error_handling:
+    rule: "Log detailed errors internally; return generic messages to users."
+    applies_to: [Information_Disclosure, Stack_Trace_Exposure]
+
+  file_operations:
+    rule: "Validate file paths; prevent path traversal; restrict file types."
+    applies_to: [File_Upload, File_Include, Path_Traversal]
+
+# Language-specific extensions (placeholder)
+language_extensions:
+  python: null    # TBD
+  javascript: null # TBD
+  java: null      # TBD
+  go: null        # TBD
+  csharp: null    # TBD
+
+# Framework-specific extensions (placeholder)
+framework_extensions:
+  django: null
+  flask: null
+  express: null
+  spring: null
+  dotnet: null

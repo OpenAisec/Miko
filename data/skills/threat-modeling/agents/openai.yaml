@@ -1,0 +1,7 @@
+interface:
+  display_name: "STRIDE Threat Modeling"
+  short_description: "Automated 8-phase security risk assessment with STRIDE methodology"
+  default_prompt: "Run a comprehensive threat model on this codebase using the 8-phase STRIDE workflow."
+
+policy:
+  allow_implicit_invocation: true

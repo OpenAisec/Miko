@@ -1,0 +1,235 @@
+# Threat Modeling Skill | Version 3.2.0 (20260512a) | https://github.com/fr33d3m0n/threat-modeling | License: BSD-3-Clause
+
+metadata:
+  version: '1.0'
+  description: STRIDE Threat Library for Automated Threat Modeling
+  last_updated: '2025-12-23'
+stride_categories:
+  spoofing:
+    name: Spoofing
+    code: S
+    description: Impersonating something or someone else
+    security_property: Authentication
+    threat_examples:
+    - Spoofing user identity
+    - Spoofing external system identity
+    - Spoofing process identity
+    applicable_targets:
+    - process
+    - external_interactor
+    typical_mitigations:
+    - Strong authentication mechanisms
+    - Multi-factor authentication
+    - Certificate-based authentication
+    - Session management best practices
+    primary_cwes:
+    - CWE-287
+    - CWE-290
+    - CWE-294
+    - CWE-306
+    - CWE-384
+    primary_capec:
+    - CAPEC-151
+    - CAPEC-194
+    - CAPEC-21
+    - CAPEC-22
+    - CAPEC-94
+  tampering:
+    name: Tampering
+    code: T
+    description: Modifying data or code
+    security_property: Integrity
+    threat_examples:
+    - Tampering with data in transit
+    - Tampering with data at rest
+    - Tampering with code or binaries
+    applicable_targets:
+    - process
+    - data_store
+    - data_flow
+    typical_mitigations:
+    - Data integrity controls (checksums, HMAC)
+    - Digital signatures
+    - Access control on sensitive data
+    - Code signing
+    primary_cwes:
+    - CWE-20
+    - CWE-74
+    - CWE-89
+    - CWE-79
+    - CWE-94
+    - CWE-502
+    primary_capec:
+    - CAPEC-13
+    - CAPEC-14
+    - CAPEC-17
+    - CAPEC-39
+    - CAPEC-66
+  repudiation:
+    name: Repudiation
+    code: R
+    description: Denying having performed an action
+    security_property: Non-Repudiation
+    threat_examples:
+    - User denies performing an action
+    - Attacker covers tracks
+    - Log tampering or deletion
+    applicable_targets:
+    - process
+    - external_interactor
+    typical_mitigations:
+    - Comprehensive audit logging
+    - Secure log storage
+    - Digital signatures for transactions
+    - Timestamps and sequence numbers
+    primary_cwes:
+    - CWE-223
+    - CWE-778
+    - CWE-779
+    - CWE-532
+    - CWE-117
+    primary_capec:
+    - CAPEC-93
+    - CAPEC-268
+    - CAPEC-81
+  information_disclosure:
+    name: Information Disclosure
+    code: I
+    description: Exposing information to unauthorized users
+    security_property: Confidentiality
+    threat_examples:
+    - Exposing sensitive data in error messages
+    - Data leakage through side channels
+    - Unauthorized access to stored data
+    applicable_targets:
+    - process
+    - data_store
+    - data_flow
+    typical_mitigations:
+    - Data encryption at rest and in transit
+    - Access control enforcement
+    - Data masking and anonymization
+    - Secure error handling
+    primary_cwes:
+    - CWE-200
+    - CWE-209
+    - CWE-319
+    - CWE-359
+    - CWE-532
+    primary_capec:
+    - CAPEC-116
+    - CAPEC-117
+    - CAPEC-118
+    - CAPEC-169
+    - CAPEC-497
+  denial_of_service:
+    name: Denial of Service
+    code: D
+    description: Denying access to legitimate users
+    security_property: Availability
+    threat_examples:
+    - Resource exhaustion
+    - Application crash
+    - Network flooding
+    applicable_targets:
+    - process
+    - data_store
+    - data_flow
+    typical_mitigations:
+    - Rate limiting
+    - Resource quotas
+    - Input validation
+    - Failover and redundancy
+    primary_cwes:
+    - CWE-400
+    - CWE-770
+    - CWE-789
+    - CWE-476
+    - CWE-835
+    primary_capec:
+    - CAPEC-125
+    - CAPEC-130
+    - CAPEC-131
+    - CAPEC-227
+  elevation_of_privilege:
+    name: Elevation of Privilege
+    code: E
+    description: Gaining capabilities without authorization
+    security_property: Authorization
+    threat_examples:
+    - Privilege escalation
+    - Breaking out of sandbox
+    - Unauthorized administrative access
+    applicable_targets:
+    - process
+    typical_mitigations:
+    - Principle of least privilege
+    - Role-based access control
+    - Sandboxing and isolation
+    - Input validation
+    primary_cwes:
+    - CWE-269
+    - CWE-250
+    - CWE-863
+    - CWE-862
+    - CWE-266
+    primary_capec:
+    - CAPEC-17
+    - CAPEC-30
+    - CAPEC-69
+    - CAPEC-233
+stride_per_element:
+  process:
+  - spoofing
+  - tampering
+  - repudiation
+  - information_disclosure
+  - denial_of_service
+  - elevation_of_privilege
+  data_store:
+  - tampering
+  - repudiation
+  - information_disclosure
+  - denial_of_service
+  data_flow:
+  - tampering
+  - information_disclosure
+  - denial_of_service
+  external_interactor:
+  - spoofing
+  - repudiation
+generation_filters:
+  spoofing:
+    include:
+    - authenticated: false
+    exclude:
+    - authenticated: true
+  tampering:
+    include:
+    - encrypted: false
+    exclude:
+    - encrypted: true
+      signed: true
+  repudiation:
+    include:
+    - logging_enabled: false
+    exclude:
+    - logging_enabled: true
+      non_repudiation: true
+  information_disclosure:
+    include:
+    - encrypted: false
+    exclude:
+    - encrypted: true
+  denial_of_service:
+    include:
+    - rate_limited: false
+    exclude:
+    - rate_limited: true
+      redundant: true
+  elevation_of_privilege:
+    include:
+    - sandboxed: false
+    exclude:
+    - sandboxed: true
+      least_privilege: true

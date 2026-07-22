@@ -1,0 +1,404 @@
+# JavaScript/Node.js Security Controls Adapter
+# JavaScript 安全控制适配器
+#
+# 定义 JavaScript/Node.js 生态系统中各安全控制的检测模式
+# 支持: Express, NestJS, Koa, Fastify, Hapi
+#
+# 版本: 1.0.0
+
+language: javascript
+file_extensions:
+  - ".js"
+  - ".ts"
+  - ".jsx"
+  - ".tsx"
+
+# ============================================================================
+# 安全控制检测模式 (Control Detection Patterns)
+# ============================================================================
+
+control_patterns:
+  # ---------------------------------------------------------------------------
+  # 身份认证 (Authentication)
+  # ---------------------------------------------------------------------------
+  authentication:
+    passport:
+      - 'passport\.authenticate'
+      - 'passport\.initialize'
+      - 'isAuthenticated\(\)'
+      - 'req\.isAuthenticated'
+      - 'LocalStrategy|JwtStrategy'
+
+    jwt:
+      - 'jwt\.verify'
+      - 'jsonwebtoken'
+      - 'verifyToken'
+      - 'JwtAuthGuard'
+      - '@UseGuards.*Auth'
+      - 'express-jwt'
+
+    session:
+      - 'req\.session\.user'
+      - 'req\.user'
+      - 'express-session'
+      - 'connect-session'
+
+    nestjs:
+      - '@UseGuards\(.*AuthGuard'
+      - 'AuthGuard\('
+      - '@AuthGuard'
+      - 'JwtAuthGuard'
+      - 'LocalAuthGuard'
+
+    middleware:
+      - 'isAuthenticated'
+      - 'requireAuth'
+      - 'authMiddleware'
+      - 'ensureAuthenticated'
+      - 'checkAuth'
+
+  # ---------------------------------------------------------------------------
+  # 授权检查 (Authorization)
+  # ---------------------------------------------------------------------------
+  authorization:
+    express:
+      - 'checkPermission'
+      - 'hasPermission'
+      - 'checkRole'
+      - 'hasRole'
+      - 'isAdmin'
+      - 'authorize\('
+      - 'rbac\.'
+      - 'accesscontrol'
+
+    nestjs:
+      - '@Roles\('
+      - '@Permissions\('
+      - 'RolesGuard'
+      - 'PermissionsGuard'
+      - 'CanActivate'
+      - '@SetMetadata.*role'
+      - 'CASL|casl'
+
+    acl:
+      - 'acl\.isAllowed'
+      - 'node_acl'
+      - 'accesscontrol\.can'
+      - 'role\.can\('
+
+  # ---------------------------------------------------------------------------
+  # 资源所有权验证 (Ownership Check)
+  # ---------------------------------------------------------------------------
+  ownership_check:
+    patterns:
+      - 'userId\s*===?\s*'
+      - 'ownerId\s*===?\s*'
+      - 'req\.user\.id\s*===?'
+      - 'req\.user\._id\s*===?'
+      - 'user:\s*req\.user'
+      - 'owner:\s*req\.user'
+      - '\.\$match.*userId'
+      - 'where.*user_id.*req\.user'
+      - 'belongsTo.*User'
+
+  # ---------------------------------------------------------------------------
+  # CSRF保护 (CSRF Protection)
+  # ---------------------------------------------------------------------------
+  csrf_protection:
+    patterns:
+      - 'csurf'
+      - 'csrf\('
+      - 'csrfToken'
+      - '_csrf'
+      - 'X-CSRF-Token'
+      - 'X-XSRF-Token'
+      - 'lusca\.csrf'
+      - '@nestjs/csurf'
+
+  # ---------------------------------------------------------------------------
+  # 输入验证 (Input Validation)
+  # ---------------------------------------------------------------------------
+  input_validation:
+    express:
+      - 'express-validator'
+      - 'body\(.*\)\.is'
+      - 'param\(.*\)\.is'
+      - 'query\(.*\)\.is'
+      - 'validationResult'
+      - 'check\('
+      - 'sanitize\('
+
+    joi:
+      - 'Joi\.'
+      - '\.validate\('
+      - 'celebrate'
+      - 'Joi\.object'
+
+    nestjs:
+      - 'class-validator'
+      - '@IsString|@IsNumber|@IsEmail'
+      - '@IsNotEmpty|@MinLength|@MaxLength'
+      - 'ValidationPipe'
+      - 'class-transformer'
+      - '@Transform'
+
+    zod:
+      - 'z\.'
+      - 'zod'
+      - '\.parse\(|\.safeParse\('
+
+    yup:
+      - 'yup\.'
+      - 'Yup\.'
+      - '\.shape\('
+
+    general:
+      - 'typeof.*===|typeof.*!=='
+      - 'Number\.isInteger'
+      - 'Array\.isArray'
+      - 'validator\.'
+
+  # ---------------------------------------------------------------------------
+  # 审计日志 (Audit Logging)
+  # ---------------------------------------------------------------------------
+  audit_log:
+    patterns:
+      - 'winston'
+      - 'bunyan'
+      - 'pino'
+      - 'morgan'
+      - 'logger\.'
+      - 'console\.log|console\.info|console\.warn'
+      - 'auditLog'
+      - 'audit-log'
+      - '@nestjs/common.*Logger'
+
+  # ---------------------------------------------------------------------------
+  # 速率限制 (Rate Limiting)
+  # ---------------------------------------------------------------------------
+  rate_limit:
+    patterns:
+      - 'express-rate-limit'
+      - 'rate-limiter'
+      - 'rateLimit\('
+      - '@nestjs/throttler'
+      - 'ThrottlerGuard'
+      - '@Throttle'
+      - 'slowDown'
+      - 'bottleneck'
+      - 'limiter'
+
+  # ---------------------------------------------------------------------------
+  # 安全传输 (Secure Transport)
+  # ---------------------------------------------------------------------------
+  secure_transport:
+    patterns:
+      - 'https://'
+      - '\.createServer\(.*https'
+      - 'secure:\s*true'
+      - 'forceSSL'
+      - 'helmet\.hsts'
+      - 'HTTPS.*true|SSL.*true'
+
+  # ---------------------------------------------------------------------------
+  # 安全存储 (Secure Storage)
+  # ---------------------------------------------------------------------------
+  secure_storage:
+    patterns:
+      - 'bcrypt'
+      - 'argon2'
+      - 'scrypt'
+      - 'crypto\.createHash'
+      - 'crypto\.createCipher'
+      - 'hashPassword'
+      - 'comparePassword'
+      - 'genSalt'
+      - 'pbkdf2'
+
+  # ---------------------------------------------------------------------------
+  # 会话管理 (Session Management)
+  # ---------------------------------------------------------------------------
+  session_management:
+    patterns:
+      - 'express-session'
+      - 'cookie-session'
+      - 'maxAge'
+      - 'httpOnly.*true'
+      - 'secure.*true'
+      - 'sameSite'
+      - 'req\.session\.destroy'
+      - 'session\.regenerate'
+      - 'rolling.*true'
+
+  # ---------------------------------------------------------------------------
+  # 错误处理 (Error Handling)
+  # ---------------------------------------------------------------------------
+  error_handling:
+    patterns:
+      - 'try\s*{|catch\s*\('
+      - 'app\.use\(.*err'
+      - 'errorHandler'
+      - 'next\(err\)'
+      - '@Catch\('
+      - 'ExceptionFilter'
+      - 'HttpException'
+      - 'process\.env\.NODE_ENV.*production'
+
+  # ---------------------------------------------------------------------------
+  # 安全响应头 (Security Headers)
+  # ---------------------------------------------------------------------------
+  security_headers:
+    patterns:
+      - 'helmet'
+      - 'X-Frame-Options'
+      - 'X-Content-Type-Options'
+      - 'X-XSS-Protection'
+      - 'Content-Security-Policy'
+      - 'Strict-Transport-Security'
+      - 'res\.setHeader'
+      - 'res\.set\('
+      - 'lusca'
+
+  # ---------------------------------------------------------------------------
+  # 文件验证 (File Validation)
+  # ---------------------------------------------------------------------------
+  file_validation:
+    patterns:
+      - 'multer'
+      - 'fileFilter'
+      - 'mimetype'
+      - 'allowedMimeTypes'
+      - 'allowedExtensions'
+      - 'limits.*fileSize'
+      - 'file-type'
+      - 'magic-bytes'
+      - 'busboy'
+
+  # ---------------------------------------------------------------------------
+  # 文件操作 CRUD (File Operations CRUD) - v2.5.0 新增
+  # ---------------------------------------------------------------------------
+  file_operations_crud:
+    create:
+      - 'fs\.writeFile'
+      - 'fs\.writeFileSync'
+      - 'createWriteStream'
+      - '\.pipe\('
+      - 'fs\.promises\.writeFile'
+    read:
+      - 'fs\.readFile'
+      - 'fs\.readFileSync'
+      - 'createReadStream'
+      - 'fs\.promises\.readFile'
+    update:
+      - 'fs\.writeFile'
+      - 'fs\.truncate'
+      - 'fs\.ftruncate'
+    delete:  # ⚠️ 易遗漏！
+      - 'fs\.unlink'
+      - 'fs\.unlinkSync'
+      - 'fs\.rm\('
+      - 'fs\.rmSync'
+      - 'fs\.rmdir'
+      - 'rimraf'
+      - 'fs-extra.*remove'
+      - 'fs\.promises\.unlink'
+      - 'fs\.promises\.rm'
+
+  # ---------------------------------------------------------------------------
+  # 参数化查询 (Parameterized Query)
+  # ---------------------------------------------------------------------------
+  parameterized_query:
+    patterns:
+      - '\?\s*,|:\w+'  # 占位符
+      - 'query\(.*,\s*\['  # 数组参数
+      - 'prepare\('
+      - 'knex.*where.*='
+      - 'sequelize.*where'
+      - 'prisma\.'
+      - 'typeorm.*where'
+      - 'mongoose.*find\(.*\)'
+      - '\$match|\$eq'
+
+# ============================================================================
+# 敏感操作识别模式 (Sensitive Operation Patterns)
+# ============================================================================
+
+operation_patterns:
+  method_patterns:
+    delete:
+      - 'async.*delete'
+      - 'function.*delete'
+      - 'const.*delete.*='
+      - '@Delete\('
+
+    update:
+      - 'async.*update'
+      - 'function.*update'
+      - 'async.*edit'
+      - '@Put\(|@Patch\('
+
+    create:
+      - 'async.*create'
+      - 'function.*create'
+      - 'async.*add'
+      - '@Post\('
+
+  route_patterns:
+    express:
+      - '\.delete\('
+      - '\.put\('
+      - '\.patch\('
+      - '\.post\('
+      - 'router\.delete'
+      - 'router\.put'
+
+    nestjs:
+      - '@Delete\('
+      - '@Put\('
+      - '@Patch\('
+      - '@Post\('
+
+    koa:
+      - 'router\.delete'
+      - 'router\.put'
+      - 'router\.patch'
+      - 'router\.post'
+
+    fastify:
+      - 'fastify\.delete'
+      - 'fastify\.put'
+      - 'fastify\.patch'
+      - 'fastify\.post'
+
+# ============================================================================
+# 框架特定配置 (Framework-Specific Configuration)
+# ============================================================================
+
+frameworks:
+  express:
+    middleware_pattern: '\.use\('
+    router_pattern: 'express\.Router\(\)'
+    config_files:
+      - 'app.js'
+      - 'server.js'
+      - 'index.js'
+
+  nestjs:
+    middleware_pattern: '\.use\(|@UseGuards'
+    controller_pattern: '@Controller'
+    module_pattern: '@Module'
+    config_files:
+      - 'main.ts'
+      - 'app.module.ts'
+
+  koa:
+    middleware_pattern: '\.use\('
+    router_pattern: 'new Router\(\)|koa-router'
+
+  fastify:
+    middleware_pattern: '\.register\('
+    plugin_pattern: 'fastify-plugin'
+
+  hapi:
+    middleware_pattern: 'server\.ext\('
+    route_pattern: 'server\.route'
