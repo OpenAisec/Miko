@@ -452,7 +452,10 @@ function appendChildToolCall(
   }
 }
 
-export function buildRenderModel(messages: UIMessage[], activeAskUserQuestionToolUseId?: string | null): RenderModel {
+export function buildRenderModel(
+  messages: UIMessage[],
+  activeAskUserQuestionToolUseIds?: ReadonlySet<string>,
+): RenderModel {
   const items: RenderItem[] = []
   const toolResultMap = new Map<string, ToolResult>()
   const childToolCallsByParent = new Map<string, ToolCall[]>()
@@ -529,14 +532,15 @@ export function buildRenderModel(messages: UIMessage[], activeAskUserQuestionToo
         }
         if (
           !isResolved &&
-          activeAskUserQuestionToolUseId &&
-          msg.toolUseId !== activeAskUserQuestionToolUseId
+          activeAskUserQuestionToolUseIds &&
+          activeAskUserQuestionToolUseIds.size > 0 &&
+          !activeAskUserQuestionToolUseIds.has(msg.toolUseId)
         ) {
           continue
         }
         if (
           !isResolved &&
-          !activeAskUserQuestionToolUseId &&
+          (!activeAskUserQuestionToolUseIds || activeAskUserQuestionToolUseIds.size === 0) &&
           lastUnresolvedAskUserQuestionIndex !== null &&
           messages[lastUnresolvedAskUserQuestionIndex] !== msg
         ) {
@@ -1224,10 +1228,14 @@ export function MessageList({ sessionId, compact = false }: MessageListProps = {
   const streamingText = sessionState?.streamingText ?? ''
   const activeThinkingId = sessionState?.activeThinkingId ?? null
   const agentTaskNotifications = sessionState?.agentTaskNotifications ?? EMPTY_AGENT_TASK_NOTIFICATIONS
-  const activeAskUserQuestionToolUseId =
-    sessionState?.pendingPermission?.toolName === 'AskUserQuestion'
-      ? sessionState.pendingPermission.toolUseId
-      : null
+  const activeAskUserQuestionToolUseIds = useMemo(() => {
+    const pendingPermissions = sessionState?.pendingPermissions
+    if (!pendingPermissions) return undefined
+    const toolUseIds = Object.values(pendingPermissions)
+      .filter((request) => request.toolName === 'AskUserQuestion' && request.toolUseId)
+      .map((request) => request.toolUseId!)
+    return toolUseIds.length > 0 ? new Set(toolUseIds) : undefined
+  }, [sessionState?.pendingPermissions])
   const shouldFollowContentResize =
     streamingText.trim().length > 0 ||
     chatState === 'streaming' ||
@@ -1508,8 +1516,8 @@ export function MessageList({ sessionId, compact = false }: MessageListProps = {
   }, [scrollToBottom, shouldFollowContentResize])
 
   const { toolResultMap, childToolCallsByParent, renderItems } = useMemo(
-    () => buildRenderModel(messages, activeAskUserQuestionToolUseId),
-    [activeAskUserQuestionToolUseId, messages],
+    () => buildRenderModel(messages, activeAskUserQuestionToolUseIds),
+    [activeAskUserQuestionToolUseIds, messages],
   )
   // Defer the per-message branchable / completed-turn computations so the first
   // commit on tab switch can render the virtualization window without doing two

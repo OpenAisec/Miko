@@ -11,6 +11,7 @@ import {
   addMcpConfig,
   getAllMcpConfigs,
   getClaudeCodeMcpConfigs,
+  getManualMcpFilePath,
   getMcpConfigByName,
   isMcpServerDisabled,
   removeMcpConfig,
@@ -29,11 +30,10 @@ import type {
 import { describeMcpConfigFilePath, ensureConfigScope } from '../../services/mcp/utils.js'
 import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { getCwd, runWithCwdOverride } from '../../utils/cwd.js'
-import { getDataDir } from '../../utils/kimoPaths.js'
 import { homedir } from 'os'
 import { join } from 'path'
-import { mkdir, readFile, readdir, writeFile } from 'fs/promises'
-import { existsSync, statSync, writeFileSync } from 'fs'
+import { mkdir, readFile, writeFile } from 'fs/promises'
+import { statSync } from 'fs'
 import { dirname } from 'path'
 import { ApiError, errorResponse } from '../middleware/errorHandler.js'
 import { conversationService } from '../services/conversationService.js'
@@ -671,8 +671,8 @@ function getDefaultMcpPaths(): Response {
     { name: 'claude-code', label: 'Claude Code', path: join(home, '.claude'), exists: false },
     { name: 'claude-desktop', label: 'Claude Desktop', path: claudeDesktopDir || '', exists: false },
     { name: 'codex', label: 'Codex', path: codexDir, exists: false },
-    { name: 'project-mcp', label: 'Project .mcp.json', path: projectMcpJson, exists: false },
-    { name: 'project-claude', label: 'Project .claude/mcp.json', path: claudeDirMcpJson, exists: false },
+    { name: 'project-mcp', label: 'Legacy project .mcp.json', path: projectMcpJson, exists: false },
+    { name: 'project-claude', label: 'Legacy project .claude/mcp.json', path: claudeDirMcpJson, exists: false },
   ]
 
   for (const entry of paths) {
@@ -782,7 +782,7 @@ async function importMcpConfigs(body: Record<string, unknown>): Promise<Response
 }
 
 async function getMcpJson(): Promise<Response> {
-  const mcpJsonPath = join(getCwd(), '.mcp.json')
+  const mcpJsonPath = getManualMcpFilePath()
   try {
     const content = await readFile(mcpJsonPath, 'utf-8')
     return Response.json({ content, path: mcpJsonPath })
@@ -804,7 +804,7 @@ async function putMcpJson(body: Record<string, unknown>): Promise<Response> {
     throw ApiError.badRequest('Invalid JSON')
   }
 
-  const mcpJsonPath = join(getCwd(), '.mcp.json')
+  const mcpJsonPath = getManualMcpFilePath()
   await mkdir(dirname(mcpJsonPath), { recursive: true })
   await writeFile(mcpJsonPath, content, 'utf-8')
   return Response.json({ ok: true })

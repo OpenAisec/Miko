@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
-import { chmod, open, rename, stat, unlink } from 'fs/promises'
+import { chmod, mkdir, open, rename, stat, unlink } from 'fs/promises'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
-import { dirname, join, parse } from 'path'
+import { dirname, join } from 'path'
 import { getPlatform } from 'src/utils/platform.js'
 import type { PluginError } from '../../types/plugin.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
@@ -21,7 +21,7 @@ import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
 import { getPluginMcpServers } from '../../utils/plugins/mcpPluginIntegration.js'
 import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
-import { isSettingSourceEnabled } from '../../utils/settings/constants.js'
+import { getMcpFile } from '../../utils/kimoPaths.js'
 import { getManagedFilePath } from '../../utils/settings/managedPath.js'
 import { isRestrictedToPluginOnly } from '../../utils/settings/pluginOnlyPolicy.js'
 import {
@@ -54,7 +54,6 @@ import {
   type McpWebSocketServerConfig,
   type ScopedMcpServerConfig,
 } from './types.js'
-import { getProjectMcpServerStatus } from './utils.js'
 
 function getMcpProjectConfig() {
   return getCurrentProjectConfig(getCwd())
@@ -91,12 +90,20 @@ function addScopeToServers(
 }
 
 /**
- * Internal utility: Write MCP config to .mcp.json file.
+ * Path to the user-owned MCP configuration file.
+ */
+export function getManualMcpFilePath(): string {
+  return getMcpFile()
+}
+
+/**
+ * Internal utility: Write MCP config to data/mcp.json.
  * Preserves file permissions and flushes to disk before rename.
  * Uses the original path for rename (does not follow symlinks).
  */
 async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
-  const mcpJsonPath = join(getCwd(), '.mcp.json')
+  const mcpJsonPath = getManualMcpFilePath()
+  await mkdir(dirname(mcpJsonPath), { recursive: true })
 
   // Read existing file permissions to preserve them
   let existingMode: number | undefined
@@ -691,7 +698,7 @@ export async function addMcpConfig(
     case 'project': {
       const { servers } = getProjectMcpConfigsFromCwd()
       if (servers[name]) {
-        throw new Error(`MCP server ${name} already exists in .mcp.json`)
+        throw new Error(`MCP server ${name} already exists in data/mcp.json`)
       }
       break
     }
@@ -716,11 +723,11 @@ export async function addMcpConfig(
       mcpServers[name] = validatedConfig
       const mcpConfig = { mcpServers }
 
-      // Write back to .mcp.json
+      // Write back to data/mcp.json
       try {
         await writeMcpjsonFile(mcpConfig)
       } catch (error) {
-        throw new Error(`Failed to write to .mcp.json: ${error}`)
+        throw new Error(`Failed to write to data/mcp.json: ${error}`)
       }
       break
       break
@@ -746,10 +753,10 @@ export async function removeMcpConfig(
       const { servers: existingServers } = getProjectMcpConfigsFromCwd()
 
       if (!existingServers[name]) {
-        throw new Error(`No MCP server found with name: ${name} in .mcp.json`)
+        throw new Error(`No MCP server found with name: ${name} in data/mcp.json`)
       }
 
-      // Strip scope information when writing back to .mcp.json
+      // Strip scope information when writing back to data/mcp.json
       const mcpServers: Record<string, McpServerConfig> = {}
       for (const [serverName, serverConfig] of Object.entries(
         existingServers,
@@ -763,7 +770,7 @@ export async function removeMcpConfig(
       try {
         await writeMcpjsonFile(mcpConfig)
       } catch (error) {
-        throw new Error(`Failed to remove from .mcp.json: ${error}`)
+        throw new Error(`Failed to remove from data/mcp.json: ${error}`)
       }
       break
     }
@@ -773,22 +780,17 @@ export async function removeMcpConfig(
 }
 
 /**
- * Get MCP configs from current directory only (no parent traversal).
- * Used by addMcpConfig and removeMcpConfig to modify the local .mcp.json file.
+ * Get user-owned MCP configs from data/mcp.json.
+ * Used by addMcpConfig and removeMcpConfig to modify the local MCP file.
  * Exported for testing purposes.
  *
- * @returns Servers with scope information and any validation errors from current directory's .mcp.json
+ * @returns Servers with scope information and any validation errors from data/mcp.json
  */
 export function getProjectMcpConfigsFromCwd(): {
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
-  // Check if project source is enabled
-  if (!isSettingSourceEnabled('projectSettings')) {
-    return { servers: {}, errors: [] }
-  }
-
-  const mcpJsonPath = join(getCwd(), '.mcp.json')
+  const mcpJsonPath = getManualMcpFilePath()
 
   const { config, errors } = parseMcpConfigFromFilePath({
     filePath: mcpJsonPath,
@@ -796,7 +798,7 @@ export function getProjectMcpConfigsFromCwd(): {
     scope: 'project',
   })
 
-  // Missing .mcp.json is expected, but malformed files should report errors
+  // Missing data/mcp.json is expected, but malformed files should report errors
   if (!config) {
     const nonMissingErrors = errors.filter(
       e => !e.message.startsWith('MCP config file not found'),
@@ -830,64 +832,9 @@ export function getMcpConfigsByScope(
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
-  // Check if this source is enabled
-  if (scope === 'project' && !isSettingSourceEnabled('projectSettings')) {
-    return { servers: {}, errors: [] }
-  }
-
   switch (scope) {
     case 'project': {
-      const allServers: Record<string, ScopedMcpServerConfig> = {}
-      const allErrors: ValidationError[] = []
-
-      // Build list of directories to check
-      const dirs: string[] = []
-      let currentDir = getCwd()
-
-      while (currentDir !== parse(currentDir).root) {
-        dirs.push(currentDir)
-        currentDir = dirname(currentDir)
-      }
-
-      // Process from root downward to CWD (so closer files have higher priority)
-      for (const dir of dirs.reverse()) {
-        const mcpJsonPath = join(dir, '.mcp.json')
-
-        const { config, errors } = parseMcpConfigFromFilePath({
-          filePath: mcpJsonPath,
-          expandVars: true,
-          scope: 'project',
-        })
-
-        // Missing .mcp.json in parent directories is expected, but malformed files should report errors
-        if (!config) {
-          const nonMissingErrors = errors.filter(
-            e => !e.message.startsWith('MCP config file not found'),
-          )
-          if (nonMissingErrors.length > 0) {
-            logForDebugging(
-              `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map(e => e.message))}`,
-              { level: 'error' },
-            )
-            allErrors.push(...nonMissingErrors)
-          }
-          continue
-        }
-
-        if (config.mcpServers) {
-          // Merge servers, with files closer to CWD overriding parent configs
-          Object.assign(allServers, addScopeToServers(config.mcpServers, scope))
-        }
-
-        if (errors.length > 0) {
-          allErrors.push(...errors)
-        }
-      }
-
-      return {
-        servers: allServers,
-        errors: allErrors,
-      }
+      return getProjectMcpConfigsFromCwd()
     }
     case 'enterprise': {
       const enterpriseMcpPath = getEnterpriseMcpFilePath()
@@ -1035,13 +982,9 @@ export async function getClaudeCodeMcpConfigs(
     }
   }
 
-  // Filter project servers to only include approved ones
-  const approvedProjectServers: Record<string, ScopedMcpServerConfig> = {}
-  for (const [name, config] of Object.entries(projectServers)) {
-    if (getProjectMcpServerStatus(name) === 'approved') {
-      approvedProjectServers[name] = config
-    }
-  }
+  // data/mcp.json is user-owned application data, not a repository-provided
+  // .mcp.json file, so these configs do not require project MCP approval.
+  const approvedProjectServers = projectServers
 
   // Dedup plugin servers against manually-configured ones (and each other).
   // Plugin server keys are namespaced `plugin:x:y` so they never collide with

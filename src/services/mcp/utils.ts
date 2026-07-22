@@ -1,12 +1,10 @@
 import { createHash } from 'crypto'
-import { join } from 'path'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import type { AgentMcpServerInfo } from '../../components/mcp/types.js'
 import type { Tool } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import { getCwd } from '../../utils/cwd.js'
-import { getGlobalClaudeFile } from '../../utils/env.js'
+import { getMcpFile } from '../../utils/kimoPaths.js'
 import { isSettingSourceEnabled } from '../../utils/settings/constants.js'
 import {
   getSettings_DEPRECATED,
@@ -263,7 +261,7 @@ export function isMcpCommand(command: Command): boolean {
 export function describeMcpConfigFilePath(scope: ConfigScope): string {
   switch (scope) {
     case 'project':
-      return join(getCwd(), '.mcp.json')
+      return getMcpFile()
     case 'dynamic':
       return 'Dynamically configured'
     case 'enterprise':
@@ -276,7 +274,7 @@ export function describeMcpConfigFilePath(scope: ConfigScope): string {
 export function getScopeLabel(scope: ConfigScope): string {
   switch (scope) {
     case 'project':
-      return 'Project config (shared via .mcp.json)'
+      return 'MCP config (data/mcp.json)'
     case 'dynamic':
       return 'Dynamic config (from command line)'
     case 'enterprise':

@@ -37,6 +37,21 @@ type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecti
 type ToolCall = Extract<UIMessage, { type: 'tool_use' }>
 type CompactSummaryMessage = Extract<UIMessage, { type: 'compact_summary' }>
 
+export type PendingPermissionRequest = {
+  requestId: string
+  toolName: string
+  toolUseId?: string
+  input: unknown
+  description?: string
+  runtimeEpoch: number
+}
+
+export type PendingComputerUsePermissionRequest = {
+  requestId: string
+  request: ComputerUsePermissionRequest
+  runtimeEpoch: number
+}
+
 export type ComposerDraftState = {
   input: string
   attachments: ComposerAttachment[]
@@ -65,17 +80,9 @@ export type PerSessionState = {
   activeToolUseId: string | null
   activeToolName: string | null
   activeThinkingId: string | null
-  pendingPermission: {
-    requestId: string
-    toolName: string
-    toolUseId?: string
-    input: unknown
-    description?: string
-  } | null
-  pendingComputerUsePermission: {
-    requestId: string
-    request: ComputerUsePermissionRequest
-  } | null
+  runtimeEpoch: number
+  pendingPermissions: Record<string, PendingPermissionRequest>
+  pendingComputerUsePermissions: Record<string, PendingComputerUsePermissionRequest>
   tokenUsage: TokenUsage
   elapsedSeconds: number
   statusVerb: string
@@ -107,8 +114,9 @@ const DEFAULT_SESSION_STATE: PerSessionState = {
   activeToolUseId: null,
   activeToolName: null,
   activeThinkingId: null,
-  pendingPermission: null,
-  pendingComputerUsePermission: null,
+  runtimeEpoch: 0,
+  pendingPermissions: {},
+  pendingComputerUsePermissions: {},
   tokenUsage: { input_tokens: 0, output_tokens: 0 },
   elapsedSeconds: 0,
   statusVerb: '',
@@ -124,7 +132,42 @@ const DEFAULT_SESSION_STATE: PerSessionState = {
 }
 
 function createDefaultSessionState(): PerSessionState {
-  return { ...DEFAULT_SESSION_STATE, messages: [], tokenUsage: { input_tokens: 0, output_tokens: 0 } }
+  return {
+    ...DEFAULT_SESSION_STATE,
+    messages: [],
+    pendingPermissions: {},
+    pendingComputerUsePermissions: {},
+    tokenUsage: { input_tokens: 0, output_tokens: 0 },
+    slashCommands: [],
+    agentTaskNotifications: {},
+    backgroundAgentTasks: {},
+  }
+}
+
+function hasPendingApprovals(session: Pick<PerSessionState, 'pendingPermissions' | 'pendingComputerUsePermissions'>): boolean {
+  return Object.keys(session.pendingPermissions).length > 0 ||
+    Object.keys(session.pendingComputerUsePermissions).length > 0
+}
+
+function chatStateAfterApprovalChange(
+  pendingPermissions: Record<string, PendingPermissionRequest>,
+  pendingComputerUsePermissions: Record<string, PendingComputerUsePermissionRequest>,
+  fallback: ChatState,
+): ChatState {
+  return Object.keys(pendingPermissions).length > 0 || Object.keys(pendingComputerUsePermissions).length > 0
+    ? 'permission_pending'
+    : fallback
+}
+
+function clearPendingApprovalsForRuntimeTransition(session: PerSessionState): Partial<PerSessionState> {
+  return {
+    runtimeEpoch: session.runtimeEpoch + 1,
+    pendingPermissions: {},
+    pendingComputerUsePermissions: {},
+    chatState: session.chatState === 'permission_pending' ? 'idle' : session.chatState,
+    activeThinkingId: session.chatState === 'permission_pending' ? null : session.activeThinkingId,
+    apiRetry: null,
+  }
 }
 
 type ChatStore = {
@@ -679,7 +722,7 @@ function shouldUseRestoredHistorySnapshot(
   if (session.chatState !== 'idle') return false
   if (session.streamingText.trim()) return false
   if (session.activeToolUseId || session.activeToolName || session.activeThinkingId) return false
-  if (session.pendingPermission || session.pendingComputerUsePermission) return false
+  if (hasPendingApprovals(session)) return false
   return countVisibleTurnTextMessages(restoredMessages) >= countVisibleTurnTextMessages(session.messages)
 }
 
@@ -1027,6 +1070,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   respondToPermission: (sessionId, requestId, allowed, options) => {
+    const session = get().sessions[sessionId]
+    if (!session?.pendingPermissions[requestId]) return
     wsManager.send(sessionId, {
       type: 'permission_response',
       requestId,
@@ -1034,24 +1079,51 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       ...(options?.rule ? { rule: options.rule } : {}),
       ...(options?.updatedInput ? { updatedInput: options.updatedInput } : {}),
     })
-    set((s) => ({ sessions: updateSessionIn(s.sessions, sessionId, () => ({ pendingPermission: null, chatState: allowed ? 'tool_executing' : 'idle' })) }))
+    set((s) => ({
+      sessions: updateSessionIn(s.sessions, sessionId, (current) => {
+        const { [requestId]: _removed, ...pendingPermissions } = current.pendingPermissions
+        const fallbackState: ChatState = allowed ? 'tool_executing' : 'idle'
+        return {
+          pendingPermissions,
+          chatState: chatStateAfterApprovalChange(
+            pendingPermissions,
+            current.pendingComputerUsePermissions,
+            fallbackState,
+          ),
+        }
+      }),
+    }))
   },
 
   respondToComputerUsePermission: (sessionId, requestId, response) => {
+    const session = get().sessions[sessionId]
+    if (!session?.pendingComputerUsePermissions[requestId]) return
     wsManager.send(sessionId, {
       type: 'computer_use_permission_response',
       requestId,
       response,
     })
     set((s) => ({
-      sessions: updateSessionIn(s.sessions, sessionId, () => ({
-        pendingComputerUsePermission: null,
-        chatState: response.userConsented === false ? 'idle' : 'tool_executing',
-      })),
+      sessions: updateSessionIn(s.sessions, sessionId, (current) => {
+        const { [requestId]: _removed, ...pendingComputerUsePermissions } = current.pendingComputerUsePermissions
+        const fallbackState: ChatState = response.userConsented === false ? 'idle' : 'tool_executing'
+        return {
+          pendingComputerUsePermissions,
+          chatState: chatStateAfterApprovalChange(
+            current.pendingPermissions,
+            pendingComputerUsePermissions,
+            fallbackState,
+          ),
+        }
+      }),
     }))
   },
 
   setSessionRuntime: (sessionId, selection) => {
+    if (!get().sessions[sessionId]) return
+    set((s) => ({
+      sessions: updateSessionIn(s.sessions, sessionId, clearPendingApprovalsForRuntimeTransition),
+    }))
     wsManager.send(sessionId, {
       type: 'set_runtime_config',
       ...selection,
@@ -1060,7 +1132,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   setSessionPermissionMode: (sessionId, mode) => {
     if (!get().sessions[sessionId]) return
+    const currentMode = useSessionStore.getState().sessions.find((session) => session.id === sessionId)?.permissionMode
+    const needsRuntimeRestart = mode === 'bypassPermissions' || currentMode === 'bypassPermissions'
     useSessionStore.getState().updateSessionPermissionMode(sessionId, mode)
+    if (needsRuntimeRestart) {
+      set((s) => ({
+        sessions: updateSessionIn(s.sessions, sessionId, clearPendingApprovalsForRuntimeTransition),
+      }))
+    }
     wsManager.send(sessionId, { type: 'set_permission_mode', mode })
   },
 
@@ -1075,6 +1154,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           ...s.sessions,
           [sessionId]: {
             ...session,
+            ...clearPendingApprovalsForRuntimeTransition(session),
             securityModeEnabled: enabled,
             securityModeTarget: opts?.target,
           },
@@ -1101,8 +1181,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           [sessionId]: {
             ...session,
             chatState: 'idle',
-            pendingPermission: null,
-            pendingComputerUsePermission: null,
+            runtimeEpoch: session.runtimeEpoch + 1,
+            pendingPermissions: {},
+            pendingComputerUsePermissions: {},
             apiRetry: null,
             elapsedTimer: null,
           },
@@ -1244,8 +1325,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             activeToolName: null,
             streamingText: '',
             streamingToolInput: '',
-            pendingPermission: null,
-            pendingComputerUsePermission: null,
+            pendingPermissions: {},
+            pendingComputerUsePermissions: {},
             elapsedTimer: null,
             statusVerb: '',
             apiRetry: null,
@@ -1325,10 +1406,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     clearPendingTaskToolUseIds(sessionId)
     clearPendingToolParentUseIds(sessionId)
     clearPendingToolInputDelta(sessionId)
-    set((s) => ({ sessions: updateSessionIn(s.sessions, sessionId, () => ({
+    set((s) => ({ sessions: updateSessionIn(s.sessions, sessionId, (session) => ({
       messages: [],
       activeGoal: null,
       streamingText: '',
+      streamingToolInput: '',
+      activeToolUseId: null,
+      activeToolName: null,
+      activeThinkingId: null,
+      runtimeEpoch: session.runtimeEpoch + 1,
+      pendingPermissions: {},
+      pendingComputerUsePermissions: {},
       chatState: 'idle',
       apiRetry: null,
     })) }))
@@ -1371,7 +1459,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             nextMessages = dropTailCompactingCompactSummary(nextMessages)
           }
           return {
-            chatState: preserveStreamingTurn ? 'streaming' : msg.state,
+            chatState: hasPendingApprovals(session)
+              ? 'permission_pending'
+              : preserveStreamingTurn
+                ? 'streaming'
+                : msg.state,
             statusVerb: msg.state === 'idle'
               ? ''
               : msg.verb && msg.verb !== 'Thinking'
@@ -1424,7 +1516,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         if (msg.blockType === 'text') {
           update((s) => ({
             ...(pendingText !== s.streamingText ? { streamingText: pendingText } : {}),
-            chatState: 'streaming',
+            chatState: hasPendingApprovals(s) ? 'permission_pending' : 'streaming',
             activeThinkingId: null,
             apiRetry: null,
           }))
@@ -1452,7 +1544,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             activeToolUseId: toolUseId,
             activeToolName: toolName,
             streamingToolInput: '',
-            chatState: 'tool_executing',
+            chatState: hasPendingApprovals(s) ? 'permission_pending' : 'tool_executing',
             activeThinkingId: null,
             apiRetry: null,
           }))
@@ -1543,12 +1635,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           if (last && last.type === 'thinking') {
             const updated = [...base]
             updated[updated.length - 1] = { ...last, content: last.content + msg.text }
-            return { messages: updated, chatState: 'thinking', activeThinkingId: last.id, streamingText: '' }
+            return {
+              messages: updated,
+              chatState: hasPendingApprovals(s) ? 'permission_pending' : 'thinking',
+              activeThinkingId: last.id,
+              streamingText: '',
+            }
           }
           const id = nextId()
           return {
             messages: [...base, { id, type: 'thinking', content: msg.text, timestamp: Date.now() }],
-            chatState: 'thinking',
+            chatState: hasPendingApprovals(s) ? 'permission_pending' : 'thinking',
             activeThinkingId: id,
             streamingText: '',
           }
@@ -1614,7 +1711,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           return {
             messages,
             ...(stoppedTask ? { backgroundAgentTasks } : {}),
-            chatState: 'thinking',
+            chatState: hasPendingApprovals(s) ? 'permission_pending' : 'thinking',
             activeThinkingId: null,
           }
         })
@@ -1635,32 +1732,38 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             : '有一个工具请求正在等待允许。',
           target: { type: 'session', sessionId },
         })
-        update((s) => ({
-          pendingPermission: {
-            requestId: msg.requestId,
-            toolName: msg.toolName,
-            toolUseId: msg.toolUseId,
-            input: msg.input,
-            description: msg.description,
-          },
-          pendingComputerUsePermission: null,
-          chatState: 'permission_pending',
-          activeThinkingId: null,
-          apiRetry: null,
-          messages:
-            msg.toolName === 'AskUserQuestion'
-              ? s.messages
-              : [...s.messages, {
-                  id: nextId(),
-                  type: 'permission_request',
-                  requestId: msg.requestId,
-                  toolName: msg.toolName,
-                  toolUseId: msg.toolUseId,
-                  input: msg.input,
-                  description: msg.description,
-                  timestamp: Date.now(),
-                }],
-        }))
+        update((s) => {
+          const alreadyKnown = Boolean(s.pendingPermissions[msg.requestId])
+          return {
+            pendingPermissions: {
+              ...s.pendingPermissions,
+              [msg.requestId]: {
+                requestId: msg.requestId,
+                toolName: msg.toolName,
+                toolUseId: msg.toolUseId,
+                input: msg.input,
+                description: msg.description,
+                runtimeEpoch: s.runtimeEpoch,
+              },
+            },
+            chatState: 'permission_pending',
+            activeThinkingId: null,
+            apiRetry: null,
+            messages:
+              msg.toolName === 'AskUserQuestion' || alreadyKnown
+                ? s.messages
+                : [...s.messages, {
+                    id: nextId(),
+                    type: 'permission_request',
+                    requestId: msg.requestId,
+                    toolName: msg.toolName,
+                    toolUseId: msg.toolUseId,
+                    input: msg.input,
+                    description: msg.description,
+                    timestamp: Date.now(),
+                  }],
+          }
+        })
         break
 
       case 'computer_use_permission_request':
@@ -1672,12 +1775,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           body: msg.request.reason || 'Computer Use 正在等待允许。',
           target: { type: 'session', sessionId },
         })
-        update(() => ({
-          pendingComputerUsePermission: {
-            requestId: msg.requestId,
-            request: msg.request,
+        update((s) => ({
+          pendingComputerUsePermissions: {
+            ...s.pendingComputerUsePermissions,
+            [msg.requestId]: {
+              requestId: msg.requestId,
+              request: msg.request,
+              runtimeEpoch: s.runtimeEpoch,
+            },
           },
-          pendingPermission: null,
           chatState: 'permission_pending',
           activeThinkingId: null,
           apiRetry: null,
@@ -1704,8 +1810,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           tokenUsage: msg.usage,
           chatState: 'idle',
           activeThinkingId: null,
-          pendingPermission: null,
-          pendingComputerUsePermission: null,
+          pendingPermissions: {},
+          pendingComputerUsePermissions: {},
           elapsedTimer: null,
           apiRetry: null,
         }))
@@ -1752,8 +1858,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             activeThinkingId: null,
             streamingText: '',
             statusVerb: '',
-            pendingPermission: null,
-            pendingComputerUsePermission: null,
+            pendingPermissions: {},
+            pendingComputerUsePermissions: {},
             apiRetry: null,
           }
         })
@@ -1804,15 +1910,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         if (msg.subtype === 'session_cleared') {
           const session = get().sessions[sessionId]
           if (session?.elapsedTimer) clearInterval(session.elapsedTimer)
-          update(() => ({
+          update((s) => ({
             messages: [],
             streamingText: '',
             streamingToolInput: '',
             activeToolUseId: null,
             activeToolName: null,
             activeThinkingId: null,
-            pendingPermission: null,
-            pendingComputerUsePermission: null,
+            runtimeEpoch: s.runtimeEpoch + 1,
+            pendingPermissions: {},
+            pendingComputerUsePermissions: {},
             chatState: 'idle',
             elapsedTimer: null,
             elapsedSeconds: 0,

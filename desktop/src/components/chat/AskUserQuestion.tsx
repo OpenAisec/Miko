@@ -68,7 +68,13 @@ export function AskUserQuestion({ sessionId, toolUseId, input, result }: Props) 
   const { respondToPermission } = useChatStore()
   const activeTabId = useTabStore((s) => s.activeTabId)
   const targetSessionId = sessionId ?? activeTabId
-  const pendingPermission = useChatStore((s) => targetSessionId ? s.sessions[targetSessionId]?.pendingPermission : undefined)
+  const pendingRequest = useChatStore((s) => {
+    const pendingPermissions = targetSessionId ? s.sessions[targetSessionId]?.pendingPermissions : undefined
+    if (!pendingPermissions) return null
+    return Object.values(pendingPermissions).find((request) =>
+      request.toolName === 'AskUserQuestion' && request.toolUseId === toolUseId
+    ) ?? null
+  })
   const t = useTranslation()
   const questions = parseInput(input)
   const inputObject = (input && typeof input === 'object') ? input as Record<string, unknown> : {}
@@ -93,7 +99,6 @@ export function AskUserQuestion({ sessionId, toolUseId, input, result }: Props) 
   const hasStructuredAnswers = Object.keys(resultAnswers).length > 0
   const hasTerminalResult = hasStructuredAnswers || resultText.length > 0
 
-  const pendingRequest = pendingPermission?.toolUseId === toolUseId ? pendingPermission : null
   const answeredText = useMemo(() => {
     if (hasStructuredAnswers) {
       return questions

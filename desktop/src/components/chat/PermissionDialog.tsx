@@ -116,9 +116,11 @@ export function PermissionDialog({ sessionId, requestId, toolName, input, descri
   const { respondToPermission } = useChatStore()
   const activeTabId = useTabStore((s) => s.activeTabId)
   const targetSessionId = sessionId ?? activeTabId
-  const pendingPermission = useChatStore((s) => targetSessionId ? s.sessions[targetSessionId]?.pendingPermission : undefined)
+  const pendingPermission = useChatStore((s) =>
+    targetSessionId ? s.sessions[targetSessionId]?.pendingPermissions[requestId] : undefined,
+  )
   const t = useTranslation()
-  const isPending = pendingPermission?.requestId === requestId
+  const isPending = Boolean(pendingPermission)
   const [showRaw, setShowRaw] = useState(false)
 
   const meta = TOOL_META[toolName] || { icon: 'shield', label: toolName, color: 'var(--color-text-tertiary)' }

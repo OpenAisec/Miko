@@ -828,7 +828,7 @@ export function McpSettings() {
 
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden mb-4">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-container-low)]">
-            <span className="text-xs font-mono text-[var(--color-text-secondary)]">.mcp.json</span>
+            <span className="text-xs font-mono text-[var(--color-text-secondary)]">data/mcp.json</span>
           </div>
           <textarea
             value={jsonContent}
@@ -1181,12 +1181,12 @@ export function McpSettings() {
                   {rootDataPath || (currentWorkDir ? `${currentWorkDir}/data` : 'data/')}
                 </span>
                 <DirectoryPicker
-                  value={rootDataPath || (currentWorkDir ? `${currentWorkDir}/data` : './data/mcp')}
+                  value={rootDataPath || (currentWorkDir ? `${currentWorkDir}/data` : 'data/')}
                   onChange={(path) => setRootDataPathAndSave(path)}
                 />
               </div>
               <p className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5 ml-1">
-                MCP configs are stored in <code className="text-[var(--color-text-secondary)]">data/mcp/</code>.
+                MCP configs are stored in <code className="text-[var(--color-text-secondary)]">data/mcp.json</code>.
               </p>
             </div>
 
@@ -1194,7 +1194,7 @@ export function McpSettings() {
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] mb-2">Import From</div>
               <div className="flex flex-wrap gap-2">
-                {defaultPaths.filter(p => p.name !== 'project-mcp' && p.name !== 'project-claude').map((entry) => (
+                {defaultPaths.map((entry) => (
                   <button
                     key={entry.name}
                     type="button"
@@ -1266,7 +1266,7 @@ export function McpSettings() {
                         disabled={Object.values(selectedServers).every(s => s.size === 0)}
                       >
                         <span className="material-symbols-outlined text-[14px]">download</span>
-                        Copy to MCP directory
+                        Copy to data/mcp.json
                       </Button>
                       {importResult && (
                         <span className="text-xs text-[var(--color-text-tertiary)]">

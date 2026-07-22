@@ -263,7 +263,7 @@ export function ActiveSession() {
   const sessions = useSessionStore((s) => s.sessions)
   const connectToSession = useChatStore((s) => s.connectToSession)
   const sessionState = useChatStore((s) => activeTabId ? s.sessions[activeTabId] : undefined)
-  const pendingComputerUsePermission = sessionState?.pendingComputerUsePermission ?? null
+  const pendingComputerUsePermissions = Object.values(sessionState?.pendingComputerUsePermissions ?? {})
   const fetchSessionTasks = useCLITaskStore((s) => s.fetchSessionTasks)
   const trackedTaskSessionId = useCLITaskStore((s) => s.sessionId)
   const hasIncompleteTasks = useCLITaskStore((s) => s.tasks.some((task) => task.status !== 'completed'))
@@ -577,12 +577,15 @@ export function ActiveSession() {
         ) : null}
       </div>
 
-      {!isMemberSession && activeTabId ? (
-        <ComputerUsePermissionModal
-          sessionId={activeTabId}
-          request={pendingComputerUsePermission?.request ?? null}
-        />
-      ) : null}
+      {!isMemberSession && activeTabId
+        ? pendingComputerUsePermissions.map((permission) => (
+            <ComputerUsePermissionModal
+              key={permission.requestId}
+              sessionId={activeTabId}
+              request={permission.request}
+            />
+          ))
+        : null}
     </div>
   )
 }
