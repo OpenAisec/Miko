@@ -383,6 +383,13 @@ function appendAssistantTextMessage(
   if (!trimmedContent) return messages
 
   const last = messages[messages.length - 1]
+  if (
+    last?.type === 'assistant_text' &&
+    last.content.trim() === trimmedContent &&
+    (!transcriptMessageId || last.transcriptMessageId === transcriptMessageId)
+  ) {
+    return messages
+  }
   // Wake/reconnect replay can resend persisted assistant text without a
   // transcript id. Ignore chunks that are already present in the hydrated tail.
   if (
@@ -654,6 +661,26 @@ function mergeRestoredHistoryIntoLiveMessages(
     ),
     restoredMessages,
   )
+}
+
+function countVisibleTurnTextMessages(messages: UIMessage[]): number {
+  return messages.filter((message) => {
+    if (message.type === 'user_text') {
+      return message.content.trim().length > 0 || Boolean(message.attachments?.length)
+    }
+    return message.type === 'assistant_text' && message.content.trim().length > 0
+  }).length
+}
+
+function shouldUseRestoredHistorySnapshot(
+  session: PerSessionState,
+  restoredMessages: UIMessage[],
+): boolean {
+  if (session.chatState !== 'idle') return false
+  if (session.streamingText.trim()) return false
+  if (session.activeToolUseId || session.activeToolName || session.activeThinkingId) return false
+  if (session.pendingPermission || session.pendingComputerUsePermission) return false
+  return countVisibleTurnTextMessages(restoredMessages) >= countVisibleTurnTextMessages(session.messages)
 }
 
 function needsTranscriptIdHydrationRetry(session: PerSessionState | undefined): boolean {
@@ -1122,10 +1149,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 s.backgroundAgentTasks ?? {},
                 restoredBackgroundTasks,
               ),
-              messages: mergeRestoredHistoryIntoLiveMessages(
-                mergeBackgroundTaskMessages(s.messages, restoredBackgroundTasks),
-                uiMessages,
-              ),
+              messages: shouldUseRestoredHistorySnapshot(s, uiMessages)
+                ? mergeBackgroundTaskMessages(uiMessages, restoredBackgroundTasks)
+                : mergeRestoredHistoryIntoLiveMessages(
+                    mergeBackgroundTaskMessages(s.messages, restoredBackgroundTasks),
+                    uiMessages,
+                  ),
             })) }
           }
           return { sessions: updateSessionIn(state.sessions, sessionId, (s) => ({

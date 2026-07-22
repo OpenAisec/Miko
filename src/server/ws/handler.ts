@@ -287,6 +287,7 @@ async function handleUserMessage(
   // Clear any stale stop flag from a previous turn
   sessionStopRequested.delete(sessionId)
   clearPrewarmState(sessionId)
+  resetFallbackAssistantText(getStreamState(sessionId))
 
   const desktopSlashCommand = getDesktopSlashCommand(message.content)
   if (desktopSlashCommand?.commandName === 'clear' && desktopSlashCommand.args.trim()) {
@@ -892,6 +893,7 @@ type SessionStreamState = {
   hasReceivedStreamEvents: boolean
   activeBlockTypes: Map<number, 'text' | 'tool_use' | 'thinking'>
   activeToolBlocks: Map<number, { toolName: string; toolUseId: string; inputJson: string; parentToolUseId?: string }>
+  fallbackAssistantTextByBlock: Map<number, string>
   pendingLocalCommand?: { name: string; args: string }
   /** Tool blocks whose input JSON failed to parse in content_block_stop.
    *  The assistant message carries the complete input — defer to that. */
@@ -912,6 +914,7 @@ function getStreamState(sessionId: string): SessionStreamState {
       hasReceivedStreamEvents: false,
       activeBlockTypes: new Map(),
       activeToolBlocks: new Map(),
+      fallbackAssistantTextByBlock: new Map(),
       pendingLocalCommand: undefined,
       pendingToolBlocks: new Map(),
       toolParentUseIds: new Map(),
@@ -945,6 +948,24 @@ function consumeToolParentUseId(
   const parentToolUseId = streamState.toolParentUseIds.get(toolUseId)
   streamState.toolParentUseIds.delete(toolUseId)
   return parentToolUseId
+}
+
+function getFallbackAssistantTextDelta(
+  streamState: SessionStreamState,
+  blockIndex: number,
+  text: string,
+): string {
+  const previous = streamState.fallbackAssistantTextByBlock.get(blockIndex) ?? ''
+  streamState.fallbackAssistantTextByBlock.set(blockIndex, text)
+
+  if (!previous) return text
+  if (text === previous) return ''
+  if (text.startsWith(previous)) return text.slice(previous.length)
+  return text
+}
+
+function resetFallbackAssistantText(streamState: SessionStreamState): void {
+  streamState.fallbackAssistantTextByBlock.clear()
 }
 
 /** Clean up stream state when session disconnects */
@@ -1164,7 +1185,8 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
       if (cliMsg.message?.content && Array.isArray(cliMsg.message.content)) {
         const messages: ServerMessage[] = []
 
-        for (const block of cliMsg.message.content) {
+        for (let blockIndex = 0; blockIndex < cliMsg.message.content.length; blockIndex++) {
+          const block = cliMsg.message.content[blockIndex]
           if (streamState.hasReceivedStreamEvents) {
             // Stream events handled most blocks — but any tool_use whose
             // input JSON failed to parse in content_block_stop was deferred.
@@ -1186,8 +1208,11 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
             if (block.type === 'thinking' && block.thinking) {
               messages.push({ type: 'thinking', text: block.thinking })
             } else if (block.type === 'text' && block.text) {
-              messages.push({ type: 'content_start', blockType: 'text' })
-              messages.push({ type: 'content_delta', text: block.text })
+              const deltaText = getFallbackAssistantTextDelta(streamState, blockIndex, block.text)
+              if (deltaText) {
+                messages.push({ type: 'content_start', blockType: 'text' })
+                messages.push({ type: 'content_delta', text: deltaText })
+              }
             } else if (block.type === 'tool_use') {
               const parentToolUseId = cliParentToolUseId(cliMsg)
               rememberToolParentUseId(streamState, block.id, parentToolUseId)
@@ -1283,6 +1308,7 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
 
     case 'stream_event': {
       streamState.hasReceivedStreamEvents = true
+      resetFallbackAssistantText(streamState)
       const event = cliMsg.event
       if (!event) return []
 
@@ -1422,6 +1448,7 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
       return []
 
     case 'result': {
+      resetFallbackAssistantText(streamState)
       // 对话结果（成功或错误）
       const usage = {
         input_tokens: cliMsg.usage?.input_tokens || 0,
