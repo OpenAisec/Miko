@@ -3026,6 +3026,10 @@ const AGENT_COLORS: Record<string, string> = {
   cyan: '#06b6d4',
 }
 
+const AGENT_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/
+const AGENT_NAME_HELP = 'Use letters, numbers, hyphens, or underscores. Start with a letter or number.'
+const AGENT_DESCRIPTION_REQUIRED = 'Description is required.'
+const AGENT_SYSTEM_PROMPT_REQUIRED = 'System prompt is required.'
 
 function AgentsSettings() {
   const {
@@ -3062,6 +3066,25 @@ function AgentsSettings() {
 
   const activeSession = sessions.find((s) => s.id === activeSessionId)
   const currentWorkDir = activeSession?.workDir || undefined
+  const trimmedNewName = newName.trim()
+  const trimmedNewDesc = newDesc.trim()
+  const trimmedNewSystemPrompt = newSystemPrompt.trim()
+  const hasAgentName = trimmedNewName.length > 0
+  const hasAgentDescription = trimmedNewDesc.length > 0
+  const hasAgentSystemPrompt = trimmedNewSystemPrompt.length > 0
+  const hasAgentFormInput = hasAgentName || hasAgentDescription || hasAgentSystemPrompt
+  const agentNameInvalid = hasAgentName && !AGENT_NAME_PATTERN.test(trimmedNewName)
+  const agentNameDuplicate = !editingAgent && hasAgentName && allAgents.some((agent) => agent.agentType.toLowerCase() === trimmedNewName.toLowerCase())
+  const agentNameError = agentNameInvalid
+    ? AGENT_NAME_HELP
+    : agentNameDuplicate
+      ? `Agent already exists: ${trimmedNewName}`
+      : null
+  const agentDescriptionError = hasAgentFormInput && !hasAgentDescription ? AGENT_DESCRIPTION_REQUIRED : null
+  const agentSystemPromptError = hasAgentFormInput && !hasAgentSystemPrompt ? AGENT_SYSTEM_PROMPT_REQUIRED : null
+  const canSaveAgent = editingAgent
+    ? hasAgentDescription && hasAgentSystemPrompt && !creating
+    : hasAgentName && hasAgentDescription && hasAgentSystemPrompt && !agentNameInvalid && !agentNameDuplicate && !creating
 
   useEffect(() => {
     void fetchAgents(currentWorkDir)
@@ -3192,14 +3215,14 @@ function AgentsSettings() {
               footer={(
                 <>
                   <Button variant="secondary" size="sm" onClick={() => { setShowCreate(false); setEditingAgent(null) }}>{t('common.cancel')}</Button>
-                  <Button variant="primary" size="sm" loading={creating} onClick={async () => {
-                    if (!newName.trim()) return
+                  <Button variant="primary" size="sm" loading={creating} disabled={!canSaveAgent} onClick={async () => {
+                    if (!canSaveAgent) return
                     setCreating(true)
                     try {
                       const payload = {
-                        name: newName.trim(),
-                        description: newDesc.trim() || undefined,
-                        systemPrompt: newSystemPrompt.trim() || undefined,
+                        name: trimmedNewName,
+                        description: trimmedNewDesc,
+                        systemPrompt: trimmedNewSystemPrompt,
                         skills: newSkills,
                         mcpServers: newMcp,
                         tools: newTools,
@@ -3224,17 +3247,38 @@ function AgentsSettings() {
                   <div>
                     <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Name *</label>
                     <input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={!!editingAgent}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-border-focus)] disabled:opacity-50" />
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none disabled:opacity-50 ${
+                        agentNameError
+                          ? 'border-[var(--color-error)] focus:border-[var(--color-error)]'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-border-focus)]'
+                      }`} />
+                    {agentNameError ? (
+                      <p className="mt-1 text-xs leading-5 text-[var(--color-error)]">{agentNameError}</p>
+                    ) : null}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Description</label>
+                    <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Description *</label>
                     <input value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-border-focus)]" />
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none ${
+                        agentDescriptionError
+                          ? 'border-[var(--color-error)] focus:border-[var(--color-error)]'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-border-focus)]'
+                      }`} />
+                    {agentDescriptionError ? (
+                      <p className="mt-1 text-xs leading-5 text-[var(--color-error)]">{agentDescriptionError}</p>
+                    ) : null}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t('settings.agents.systemPrompt')}</label>
+                    <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t('settings.agents.systemPrompt')} *</label>
                     <textarea value={newSystemPrompt} onChange={(e) => setNewSystemPrompt(e.target.value)} rows={4}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-border-focus)] resize-y" />
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none resize-y ${
+                        agentSystemPromptError
+                          ? 'border-[var(--color-error)] focus:border-[var(--color-error)]'
+                          : 'border-[var(--color-border)] focus:border-[var(--color-border-focus)]'
+                      }`} />
+                    {agentSystemPromptError ? (
+                      <p className="mt-1 text-xs leading-5 text-[var(--color-error)]">{agentSystemPromptError}</p>
+                    ) : null}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
