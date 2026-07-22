@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
 import { Copy, Eye, EyeOff, PowerOff, QrCode, RotateCw } from 'lucide-react'
 import { useSettingsStore, UI_ZOOM_DEFAULT, UI_ZOOM_MIN, UI_ZOOM_MAX, UI_ZOOM_STEP } from '../stores/settingsStore'
@@ -3184,13 +3183,44 @@ function AgentsSettings() {
             </Button>
           </div>
 
-          {showCreate && createPortal(
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40" onClick={() => setShowCreate(false)}>
-              <div className="w-full max-w-lg mx-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl" onClick={(e) => e.stopPropagation()}>
-                <div className="px-5 py-4 border-b border-[var(--color-border)]">
-                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{editingAgent ? t('common.edit') : t('settings.agents.newAgent')}</h3>
-                </div>
-                <div className="px-5 py-4 space-y-4">
+          {showCreate && (
+            <Modal
+              open={true}
+              onClose={() => { setShowCreate(false); setEditingAgent(null) }}
+              title={editingAgent ? t('common.edit') : t('settings.agents.newAgent')}
+              width={560}
+              footer={(
+                <>
+                  <Button variant="secondary" size="sm" onClick={() => { setShowCreate(false); setEditingAgent(null) }}>{t('common.cancel')}</Button>
+                  <Button variant="primary" size="sm" loading={creating} onClick={async () => {
+                    if (!newName.trim()) return
+                    setCreating(true)
+                    try {
+                      const payload = {
+                        name: newName.trim(),
+                        description: newDesc.trim() || undefined,
+                        systemPrompt: newSystemPrompt.trim() || undefined,
+                        skills: newSkills,
+                        mcpServers: newMcp,
+                        tools: newTools,
+                      }
+                      if (editingAgent) {
+                        await useAgentStore.getState().updateAgent(editingAgent.agentType, payload, currentWorkDir)
+                      } else {
+                        await createAgent(payload, currentWorkDir)
+                      }
+                      setShowCreate(false)
+                      setEditingAgent(null)
+                    } catch (e) {
+                      alert(e instanceof Error ? e.message : 'Failed to save agent')
+                    } finally {
+                      setCreating(false)
+                    }
+                  }}>{editingAgent ? t('common.save') : t('common.create')}</Button>
+                </>
+              )}
+            >
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Name *</label>
                     <input value={newName} onChange={(e) => setNewName(e.target.value)} disabled={!!editingAgent}
@@ -3273,37 +3303,7 @@ function AgentsSettings() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 px-5 py-4 border-t border-[var(--color-border)]">
-                  <Button variant="secondary" size="sm" onClick={() => { setShowCreate(false); setEditingAgent(null) }}>{t('common.cancel')}</Button>
-                  <Button variant="primary" size="sm" loading={creating} onClick={async () => {
-                    if (!newName.trim()) return
-                    setCreating(true)
-                    try {
-                      const payload = {
-                        name: newName.trim(),
-                        description: newDesc.trim() || undefined,
-                        systemPrompt: newSystemPrompt.trim() || undefined,
-                        skills: newSkills,
-                        mcpServers: newMcp,
-                        tools: newTools,
-                      }
-                      if (editingAgent) {
-                        await useAgentStore.getState().updateAgent(editingAgent.agentType, payload, currentWorkDir)
-                      } else {
-                        await createAgent(payload, currentWorkDir)
-                      }
-                      setShowCreate(false)
-                      setEditingAgent(null)
-                    } catch (e) {
-                      alert(e instanceof Error ? e.message : 'Failed to save agent')
-                    } finally {
-                      setCreating(false)
-                    }
-                  }}>{editingAgent ? t('common.save') : t('common.create')}</Button>
-                </div>
-              </div>
-            </div>,
-            document.body
+            </Modal>
           )}
 
           <div className="flex flex-col gap-2">
