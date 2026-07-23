@@ -78,6 +78,7 @@ export function SkillDetail() {
   const currentFile = files.find((f) => f.path === normalizedSelection) || files[0]
   const frontmatter = currentFile?.frontmatter
   const metaEntries = getMetaEntries(frontmatter)
+  const canEdit = meta.canEdit ?? (meta.source === 'project' && !meta.protected)
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 min-w-0">
@@ -90,7 +91,7 @@ export function SkillDetail() {
           {t('settings.skills.back')}
         </button>
 
-        {meta.source === 'project' && !meta.protected && (
+        {canEdit && (
           <button
             onClick={() => setConfirmDelete(true)}
             className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-[var(--color-error)] transition-colors hover:bg-[var(--color-error-container)]"
@@ -158,6 +159,7 @@ export function SkillDetail() {
               <MetaPill>{t(`settings.skills.source.${meta.source}`)}</MetaPill>
               {meta.version && <MetaPill>v{meta.version}</MetaPill>}
               {meta.userInvocable && <MetaPill>{t('settings.skills.slashCommand')}</MetaPill>}
+              {!canEdit && <MetaPill>只读</MetaPill>}
             </div>
             <p className="max-w-4xl text-sm leading-6 text-[var(--color-text-secondary)]">
               {meta.description}
@@ -266,8 +268,8 @@ export function SkillDetail() {
               <span className="rounded-full bg-[var(--color-surface)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] border border-[var(--color-border)]">
                 {currentFile?.language}
               </span>
-              {/* 分类下拉：仅 project 来源可改（写回 data/skills/<name>/SKILL.md frontmatter） */}
-              {selectedSkill.meta.source === 'project' && (
+              {/* 分类下拉：仅客户端可编辑 skill 可改（写回 data/skills/<name>/SKILL.md frontmatter）。 */}
+              {canEdit && (
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[14px] text-[var(--color-text-tertiary)]">category</span>
                   <select
@@ -295,13 +297,15 @@ export function SkillDetail() {
                   </select>
                 </div>
               )}
-              <button
-                onClick={() => setShowAiEdit((v) => !v)}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
-              >
-                <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                AI 编辑
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setShowAiEdit((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
+                >
+                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  AI 编辑
+                </button>
+              )}
             </div>
           </div>
 
@@ -327,7 +331,7 @@ export function SkillDetail() {
           </div>
 
           <div className="min-h-0 flex-1 overflow-hidden bg-[var(--color-surface-container-lowest)]">
-            {showAiEdit ? (
+            {showAiEdit && canEdit ? (
               <div className="flex h-full flex-col">
                 <div className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface-container-low)] px-4 py-3">
                   <input

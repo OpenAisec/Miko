@@ -12,6 +12,8 @@ export type SkillMeta = {
   pluginName?: string
   /** 内置受保护 skill（A 档保护）—— true 时隐藏删除入口。 */
   protected?: boolean
+  /** 是否允许客户端直接修改元数据或打开编辑入口。 */
+  canEdit?: boolean
   /** 领域分类（web/audit/asset/mobile/binary/redteam/forensics/cloud/custom）。
    *  缺失兜底 'custom'。前端据此分组展示，与设置-工具页面保持一致。 */
   category?: string

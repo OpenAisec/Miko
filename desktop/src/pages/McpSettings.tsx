@@ -17,6 +17,7 @@ type EditorMode =
   | { type: 'edit'; server: McpServerRecord }
   | { type: 'details'; server: McpServerRecord }
   | { type: 'json' }
+  | { type: 'serverJson'; server: McpServerRecord }
 
 type TransportKind = 'stdio' | 'http' | 'sse'
 
@@ -192,6 +193,14 @@ function buildPayload(draft: McpDraft): McpUpsertPayload {
         : {}),
     },
   }
+}
+
+function parseServerConfigJson(content: string): McpServerRecord['config'] {
+  const parsed = JSON.parse(content) as unknown
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('MCP config JSON must be an object')
+  }
+  return parsed as McpServerRecord['config']
 }
 
 function isDraftValid(draft: McpDraft) {
@@ -593,6 +602,12 @@ export function McpSettings() {
     setView({ type: 'edit', server })
   }
 
+  const beginServerJsonEdit = (server: McpServerRecord) => {
+    if (!server.canEdit) return
+    setJsonContent(JSON.stringify(server.config, null, 2))
+    setView({ type: 'serverJson', server })
+  }
+
   useEffect(() => {
     if (!selectedServer) return
     if (selectedServer.canEdit) {
@@ -864,6 +879,78 @@ export function McpSettings() {
     )
   }
 
+  if (view.type === 'serverJson') {
+    const server = view.server
+    return (
+      <div className="w-full min-w-0">
+        <button
+          type="button"
+          onClick={() => {
+            setJsonContent('')
+            setView(server.canEdit ? { type: 'edit', server } : { type: 'details', server })
+          }}
+          className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+        >
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          {t('settings.mcp.form.back')}
+        </button>
+
+        <h2 className="text-[1.6rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] mb-1">
+          {t('settings.mcp.currentJson.title', { name: server.name })}
+        </h2>
+        <p className="text-sm text-[var(--color-text-tertiary)] mb-4">
+          {t('settings.mcp.currentJson.hint')}
+        </p>
+
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden mb-4">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-container-low)]">
+            <span className="text-xs font-mono text-[var(--color-text-secondary)]">
+              mcpServers.{server.name}
+            </span>
+          </div>
+          <textarea
+            value={jsonContent}
+            onChange={(e) => setJsonContent(e.target.value)}
+            spellCheck={false}
+            className="w-full min-h-[360px] p-5 font-mono text-sm leading-relaxed bg-[var(--color-surface)] text-[var(--color-text-primary)] outline-none resize-y border-0"
+            style={{ tabSize: 2 }}
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button variant="primary" onClick={async () => {
+            setJsonSaving(true)
+            try {
+              const config = parseServerConfigJson(jsonContent)
+              const saved = await updateServer(
+                server,
+                { scope: 'project', config },
+                resolveOperationCwd(server),
+              )
+              addToast({ type: 'success', message: t('settings.mcp.toast.saved', { name: saved.name }) })
+              setJsonContent('')
+              setDraft(draftFromServer(saved))
+              setView({ type: 'edit', server: saved })
+              await fetchServers(projectPathsForFetchRef.current, currentWorkDir)
+            } catch (e) {
+              addToast({ type: 'error', message: e instanceof Error ? e.message : t('common.error') })
+            } finally {
+              setJsonSaving(false)
+            }
+          }} loading={jsonSaving}>
+            {t('common.save')}
+          </Button>
+          <Button variant="secondary" onClick={() => {
+            setJsonContent('')
+            setView(server.canEdit ? { type: 'edit', server } : { type: 'details', server })
+          }}>
+            {t('common.cancel')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (view.type === 'details') {
     const server = view.server
     return (
@@ -960,6 +1047,12 @@ export function McpSettings() {
             </div>
 
             <div className="flex items-center gap-3">
+              {editing && targetServer?.canEdit && (
+                <Button variant="secondary" onClick={() => beginServerJsonEdit(targetServer)}>
+                  <span className="material-symbols-outlined text-[16px]">data_object</span>
+                  {t('settings.mcp.currentJson.action')}
+                </Button>
+              )}
               {editing && targetServer?.canReconnect && (
                 <Button variant="secondary" onClick={() => handleReconnect(targetServer)} loading={busyServerKey === getServerIdentityKey(targetServer)}>
                   <span className="material-symbols-outlined text-[16px]">sync</span>

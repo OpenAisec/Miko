@@ -43,12 +43,60 @@ function Import-VsDevEnvironment {
   if (-not (Test-Path $vsDevCmd)) { throw "[build-portable] VsDevCmd.bat not found under $installationPath" }
   Write-Step "Importing MSVC env from $vsDevCmd"
   $env:VSCMD_SKIP_SENDTELEMETRY = '1'
-  $envDump = & cmd.exe /d /s /c "`"$vsDevCmd`" -arch=x64 -host_arch=x64 >nul && set"
-  if ($LASTEXITCODE -ne 0) { throw "[build-portable] VsDevCmd init failed (exit $LASTEXITCODE)" }
+
+  $originalPath = $env:Path
+  $systemRoot = $env:SystemRoot
+  if (-not $systemRoot) { $systemRoot = 'C:\Windows' }
+  $bootstrapPath = @(
+    (Join-Path $systemRoot 'System32'),
+    $systemRoot,
+    (Join-Path $systemRoot 'System32\Wbem'),
+    (Join-Path $systemRoot 'System32\WindowsPowerShell\v1.0'),
+    (Join-Path $systemRoot 'System32\OpenSSH')
+  ) | Where-Object { Test-Path $_ }
+
+  $cmdFile = Join-Path ([System.IO.Path]::GetTempPath()) ("miko-vsdevcmd-{0}.cmd" -f ([System.Guid]::NewGuid().ToString('N')))
+  $cmdLines = @(
+    '@echo off',
+    'setlocal',
+    ('set "PATH={0}"' -f (($bootstrapPath | Select-Object -Unique) -join ';')),
+    'set VSCMD_VER=',
+    'set VSINSTALLDIR=',
+    'set VCINSTALLDIR=',
+    'set __VSCMD_PREINIT_PATH=',
+    ('call "{0}" -arch=x64 -host_arch=x64 >nul' -f $vsDevCmd),
+    'if errorlevel 1 exit /b %errorlevel%',
+    'set'
+  )
+  [System.IO.File]::WriteAllLines($cmdFile, $cmdLines, [System.Text.ASCIIEncoding]::new())
+  try {
+    $envDump = & cmd.exe /d /s /c "`"$cmdFile`""
+    if ($LASTEXITCODE -ne 0) { throw "[build-portable] VsDevCmd init failed (exit $LASTEXITCODE)" }
+  } finally {
+    Remove-Item -LiteralPath $cmdFile -Force -ErrorAction SilentlyContinue
+  }
+
+  $capturedEnv = @{}
   foreach ($line in $envDump) {
     if ($line -match '^(.*?)=(.*)$') {
-      [Environment]::SetEnvironmentVariable($matches[1], $matches[2], 'Process')
+      $capturedEnv[$matches[1]] = $matches[2]
     }
+  }
+
+  foreach ($name in $capturedEnv.Keys) {
+    if ($name -ieq 'Path') { continue }
+    if ($name -like '__VSCMD_PREINIT_*') { continue }
+    [Environment]::SetEnvironmentVariable($name, $capturedEnv[$name], 'Process')
+  }
+
+  if ($capturedEnv.ContainsKey('Path')) {
+    $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+    $mergedPath = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($entry in @(($capturedEnv['Path'] -split ';') + ($originalPath -split ';'))) {
+      if (-not $entry) { continue }
+      if ($seen.Add($entry)) { $mergedPath.Add($entry) }
+    }
+    [Environment]::SetEnvironmentVariable('Path', ($mergedPath -join ';'), 'Process')
   }
 }
 function Ensure-ToolPath {

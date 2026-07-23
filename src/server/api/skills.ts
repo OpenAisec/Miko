@@ -38,6 +38,8 @@ type SkillMeta = {
   pluginName?: string
   /** 内置受保护 skill（A 档保护）—— 前端据此隐藏删除入口，删除 API 亦兜底拒绝。 */
   protected?: boolean
+  /** 是否允许客户端直接修改此 skill 的元数据或触发编辑入口。 */
+  canEdit: boolean
   /** 领域分类（web/audit/asset/mobile/binary/redteam/forensics/cloud/custom）。
    *  读 frontmatter.category，缺失兜底 'custom'。前端据此分组展示。 */
   category: string
@@ -116,6 +118,8 @@ async function loadSkillMeta(
         ?.trim() ||
       'No description'
 
+    const protectedSkill = isProtectedSkill(skillName)
+
     return {
       name: skillName,
       displayName: (frontmatter.name as string) || undefined,
@@ -126,7 +130,8 @@ async function loadSkillMeta(
       contentLength: raw.length,
       hasDirectory: true,
       pluginName,
-      protected: isProtectedSkill(skillName) || undefined,
+      protected: protectedSkill || undefined,
+      canEdit: source === 'project' && !protectedSkill,
       category:
         typeof frontmatter.category === 'string' && frontmatter.category.trim()
           ? frontmatter.category.trim()
@@ -576,6 +581,10 @@ async function updateSkillCategory(rawName: string, req: Request): Promise<Respo
   if (!category) throw ApiError.badRequest('Missing "category"')
   if (!BUILTIN_CATEGORIES.some((c) => c.id === category)) {
     throw ApiError.badRequest(`Unknown category: ${category}`)
+  }
+
+  if (isProtectedSkill(name)) {
+    throw ApiError.badRequest(`内置 Skill 不可修改：${name}`)
   }
 
   const skillFile = path.join(getSkillsDir(), name, 'SKILL.md')

@@ -24,12 +24,61 @@ export const PROTECTED_AGENTS: readonly string[] = [
   'statusline-setup',
 ]
 
-/** 内置 Skill：代码审计套件 + skill 创建器。用户自加的领域 skill 不在此列、可删。 */
+/**
+ * 内置 Skill：随包预置到 data/skills 的 skill。用户自加的领域 skill 不在此列、可删。
+ *
+ * 注意：当前打包策略会把内置 skill 和运行期用户 skill 放在同一个 data/skills 目录，
+ * 因此这里不能用“目录级只读”粗暴判断，只能按内置名称登记。
+ */
 export const PROTECTED_SKILLS: readonly string[] = [
+  'android-reverse-engineering',
+  'audit-skills',
+  'browser-use',
+  'bypassav-skills',
+  'cloud',
   'code-audit',
   'code-audit-workspace',
+  'code-review-skill',
+  'ctf-ai-ml',
+  'ctf-crypto',
+  'ctf-forensics',
+  'ctf-malware',
+  'ctf-misc',
+  'ctf-osint',
+  'ctf-pwn',
+  'ctf-reverse',
+  'ctf-web',
+  'ctf-writeup',
+  'game-hacking',
+  'libtv-cli',
+  'medical-cybersecurity-report',
+  'open-source',
+  'pentest-api',
+  'pentest-js',
+  'pentest-login',
+  'pentest-main',
+  'pentest-recon',
+  'pentest-rules',
+  'pentest-tools',
+  'pentest-vulns',
   'php-deep-audit-workspace',
+  'qa',
+  'remote-browser',
+  'rev-dex-dumper',
+  'rev-frida',
+  'rev-idapython',
+  'rev-ios-dump',
+  'rev-struct',
+  'rev-symbol',
+  'rev-u3d-dump',
+  'rev-unicorn-debug',
+  'reverse-engineering',
+  'shellcode-loader',
   'skill-creator',
+  'solve-challenge',
+  'web-access',
+  'threat-modeling',
+  'x402',
 ]
 
 /**
