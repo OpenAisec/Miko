@@ -1170,16 +1170,7 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
       // 而是直接发送多条 assistant 消息。需要将 hasReceivedStreamEvents 视为
       // "当前消息是否有对应的 stream_event"，而不是"整个会话是否收到过 stream_event"。
       // 检测方式：如果是中间块（stop_reason=null 且 output_tokens=0），说明没有 stream_event。
-      const isStreamingChunk =
-        cliMsg.message?.stop_reason === null &&
-        cliMsg.message?.usage?.output_tokens === 0
-
       // 如果是流式中间块，临时将 hasReceivedStreamEvents 设为 false 以确保内容被处理
-      const originalHasReceivedStreamEvents = streamState.hasReceivedStreamEvents
-      if (isStreamingChunk) {
-        streamState.hasReceivedStreamEvents = false
-      }
-
       // If we already received stream_events, text/thinking were already sent.
       // Only extract tool_use blocks (stream_event's content_block_stop lacks complete tool info).
       if (cliMsg.message?.content && Array.isArray(cliMsg.message.content)) {
@@ -1229,19 +1220,12 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
 
         // Reset flags for next turn
         // 但如果是流式中间块，恢复原始状态而不是重置（因为流式响应还没结束）
-        if (isStreamingChunk) {
-          streamState.hasReceivedStreamEvents = originalHasReceivedStreamEvents
-        } else {
-          streamState.hasReceivedStreamEvents = false
-          streamState.pendingToolBlocks.clear()
-        }
+        streamState.hasReceivedStreamEvents = false
+        streamState.pendingToolBlocks.clear()
         return messages
       }
 
       // 如果是流式中间块但没有 content，恢复状态
-      if (isStreamingChunk) {
-        streamState.hasReceivedStreamEvents = originalHasReceivedStreamEvents
-      }
       return []
     }
 
